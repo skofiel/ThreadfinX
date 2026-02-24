@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/kardianos/osext"
 )
@@ -36,7 +37,8 @@ func DoUpdate(fileType, filenameBIN string) (err error) {
 		log.Println("["+strings.ToUpper(fileType)+"]", "New version ("+Updater.Name+"):", Updater.Response.Version)
 
 		// Download new binary
-		resp, err := http.Get(url)
+		httpClient := &http.Client{Timeout: 5 * time.Minute}
+		resp, err := httpClient.Get(url)
 		if err != nil {
 			return err
 		}
@@ -134,7 +136,11 @@ func DoUpdate(fileType, filenameBIN string) (err error) {
 			}
 
 			var pid = os.Getpid()
-			var process, _ = os.FindProcess(pid)
+			process, findErr := os.FindProcess(pid)
+			if findErr != nil {
+				restorOldBinary(oldBinary, newBinary)
+				return findErr
+			}
 
 			if proc, err := start(bin); err == nil {
 
@@ -149,7 +155,11 @@ func DoUpdate(fileType, filenameBIN string) (err error) {
 		} else {
 
 			// Restart binary (Linux and UNIX)
-			file, _ := osext.Executable()
+			file, err := osext.Executable()
+			if err != nil {
+				restorOldBinary(oldBinary, newBinary)
+				return err
+			}
 			os.RemoveAll(oldBinary)
 			err = syscall.Exec(file, os.Args, os.Environ())
 			if err != nil {
@@ -244,24 +254,33 @@ func extractZIP(archive, target string) (err error) {
 	for _, file := range reader.File {
 
 		path := filepath.Join(target, file.Name)
+		// Prevent path traversal in ZIP entries
+		if !strings.HasPrefix(filepath.Clean(path), filepath.Clean(target)+string(os.PathSeparator)) {
+			return fmt.Errorf("invalid file path in archive: %s", file.Name)
+		}
 		if file.FileInfo().IsDir() {
 			os.MkdirAll(path, file.Mode())
 			continue
 		}
 
-		fileReader, err := file.Open()
-		if err != nil {
-			return err
-		}
-		defer fileReader.Close()
+		if err := func() error {
+			fileReader, err := file.Open()
+			if err != nil {
+				return err
+			}
+			defer fileReader.Close()
 
-		targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
-		if err != nil {
-			return err
-		}
-		defer targetFile.Close()
+			targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+			if err != nil {
+				return err
+			}
+			defer targetFile.Close()
 
-		if _, err := io.Copy(targetFile, fileReader); err != nil {
+			if _, err := io.Copy(targetFile, fileReader); err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
 			return err
 		}
 

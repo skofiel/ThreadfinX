@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Cache : Cache strcut
@@ -102,17 +103,18 @@ func New(path, cacheURL string, caching bool) (c *Cache, err error) {
 		c.Lock()
 		defer c.Unlock()
 
+		httpClient := &http.Client{Timeout: 30 * time.Second}
 		var filename string
 
 		for _, src := range c.Queue {
 
-			resp, err := http.Get(src)
+			resp, err := httpClient.Get(src)
 			if err != nil {
 				continue
 			}
-			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
+				resp.Body.Close()
 				continue
 			}
 
@@ -121,12 +123,13 @@ func New(path, cacheURL string, caching bool) (c *Cache, err error) {
 
 			file, err := os.Create(filename)
 			if err != nil {
+				resp.Body.Close()
 				continue
 			}
 
-			defer file.Close()
-
 			_, err = io.Copy(file, resp.Body)
+			resp.Body.Close()
+			file.Close()
 			if err != nil {
 				continue
 			}

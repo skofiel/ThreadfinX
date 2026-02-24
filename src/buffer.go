@@ -11,8 +11,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
-	"net/url"
+	neturl "net/url"
 	"os"
 	"os/exec"
 	"path"
@@ -805,11 +806,11 @@ func parseM3U8(stream *ThisStream) (err error) {
 	var parseURL = func(line string, segment *Segment) {
 
 		// Check if the address is a valid URL (http://... or /path/to/stream)
-		_, err := url.ParseRequestURI(line)
+		_, err := neturl.ParseRequestURI(line)
 		if err == nil {
 
 			// Check if the domain is included in the address
-			u, _ := url.Parse(line)
+			u, _ := neturl.Parse(line)
 
 			if len(u.Host) == 0 {
 				// Address does not contain the domain, redirect is added to the address
@@ -1061,6 +1062,21 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 		stream.Status = false
 
+		// Validate streaming URL scheme to prevent option injection
+		parsedStreamURL, parseErr := neturl.Parse(url)
+		if parseErr != nil || parsedStreamURL.Scheme == "" {
+			log.Printf("Invalid streaming URL: %s", url)
+			killClientConnection(streamID, playlistID, false)
+			return
+		}
+		allowedSchemes := map[string]bool{"http": true, "https": true, "rtsp": true, "rtp": true, "udp": true, "mmsh": true}
+		if !allowedSchemes[strings.ToLower(parsedStreamURL.Scheme)] {
+			log.Printf("Unsupported streaming URL scheme: %s", parsedStreamURL.Scheme)
+			killClientConnection(streamID, playlistID, false)
+			return
+		}
+		url = parsedStreamURL.String()
+
 		bufferType = strings.ToUpper(playlist.Buffer)
 
 		switch playlist.Buffer {
@@ -1253,7 +1269,10 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 		f, err = bufferVFS.OpenFile(tmpFile, os.O_APPEND|os.O_WRONLY, 0600)
 		if err != nil {
-			panic(err)
+			ShowError(err, 0)
+			killClientConnection(streamID, playlistID, false)
+			addErrorToStream(err)
+			return
 		}
 		defer f.Close()
 

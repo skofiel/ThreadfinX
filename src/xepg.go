@@ -1238,15 +1238,19 @@ func createLiveProgram(xepgChannel XEPGChannelStruct, channelId string) []*Progr
 
 		// Handle timezone if present
 		var location *time.Location
+		var locErr error
 		if strings.Contains(timeString, "ET") || strings.Contains(timeString, "EST") {
-			location, _ = time.LoadLocation("America/New_York")
+			location, locErr = time.LoadLocation("America/New_York")
 		} else if strings.Contains(timeString, "CT") || strings.Contains(timeString, "CST") {
-			location, _ = time.LoadLocation("America/Chicago")
+			location, locErr = time.LoadLocation("America/Chicago")
 		} else if strings.Contains(timeString, "MT") || strings.Contains(timeString, "MST") {
-			location, _ = time.LoadLocation("America/Denver")
+			location, locErr = time.LoadLocation("America/Denver")
 		} else if strings.Contains(timeString, "PT") || strings.Contains(timeString, "PST") {
-			location, _ = time.LoadLocation("America/Los_Angeles")
+			location, locErr = time.LoadLocation("America/Los_Angeles")
 		} else {
+			location = currentTime.Location()
+		}
+		if locErr != nil || location == nil {
 			location = currentTime.Location()
 		}
 

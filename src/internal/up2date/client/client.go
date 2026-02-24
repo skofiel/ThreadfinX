@@ -76,28 +76,36 @@ func serverRequest() (err error) {
 
 		// Check redirect 301 <---> 308
 		redirect, err := http.NewRequest("POST", Updater.URL, nil)
+		if err != nil {
+			return err
+		}
 
-		client := &http.Client{}
+		client := &http.Client{Timeout: 30 * time.Second}
 		client.CheckRedirect = func(redirect *http.Request, via []*http.Request) error {
 			return errors.New("Redirect")
 		}
 
 		resp, err := client.Do(redirect)
-
 		if err != nil {
 			// Redirect
-			if resp.StatusCode >= 301 && resp.StatusCode <= 308 { //status code 301 <---> 308
+			if resp != nil && resp.StatusCode >= 301 && resp.StatusCode <= 308 {
 				Updater.URL = resp.Header.Get("Location")
 			} else {
 				return err
 			}
 		}
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
 		// ---
 
 		req, err := http.NewRequest("POST", Updater.URL, bytes.NewBuffer(jsonByte))
+		if err != nil {
+			return err
+		}
 		req.Header.Set("Content-Type", "application/json")
 
-		client = &http.Client{}
+		client = &http.Client{Timeout: 30 * time.Second}
 		resp, err = client.Do(req)
 
 		if err != nil {
@@ -113,7 +121,10 @@ func serverRequest() (err error) {
 		Updater.CMD = ""
 		defer resp.Body.Close()
 
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
 
 		err = json.Unmarshal(body, &serverResponse)
 

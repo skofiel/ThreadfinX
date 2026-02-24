@@ -3,10 +3,18 @@ package src
 import (
   b64 "encoding/base64"
   "fmt"
+  "path/filepath"
   "strings"
 )
 
 func uploadLogo(input, filename string) (logoURL string, err error) {
+
+  // Sanitize filename to prevent path traversal attacks
+  filename = filepath.Base(filename)
+  if filename == "." || filename == ".." || filename == "" {
+    err = fmt.Errorf("invalid filename")
+    return
+  }
 
   b64data := input[strings.IndexByte(input, ',')+1:]
 

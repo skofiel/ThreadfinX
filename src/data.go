@@ -224,13 +224,17 @@ func updateServerSettings(request RequestStruct) (settings SettingsStruct, err e
 						createXMLTVFile()
 						createM3UFile()
 
+						systemMutex.Lock()
 						System.ImageCachingInProgress = 1
+						systemMutex.Unlock()
 						showInfo("Image Caching:Images are cached")
 
 						Data.Cache.Images.Image.Caching()
 						showInfo("Image Caching:Done")
 
+						systemMutex.Lock()
 						System.ImageCachingInProgress = 0
+						systemMutex.Unlock()
 
 						buildXEPG(false)
 
