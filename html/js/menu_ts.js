@@ -611,7 +611,10 @@ class Cell {
             td.innerHTML = this.value;
         }
         if (this.onclick == true) {
-            td.setAttribute("onclick", this.onclickFunktion);
+            td.setAttribute("data-sort-col", this.sortColumn !== undefined ? this.sortColumn : "");
+            if (this.sortTableId) {
+                td.setAttribute("data-sort-table", this.sortTableId);
+            }
             td.className = "pointer";
         }
         if (this.tdClassName != undefined) {
@@ -772,11 +775,12 @@ class ShowContent extends Content {
                 cell.value = element;
                 if (sortableColumns[element] !== undefined) {
                     cell.onclick = true;
-                    cell.onclickFunktion = "javascript: sortTable(" + sortableColumns[element] + ");";
+                    cell.sortColumn = sortableColumns[element];
                     if (sortableColumns[element] == 1) cell.tdClassName = "sortThis";
                 }
                 header.appendChild(cell.createCell());
             });
+            attachSortClickHandlers("content_table");
             // Column filter row
             var filterRow = buildFilterRow(tableHeader, "content_table");
             table.appendChild(filterRow);
@@ -801,11 +805,13 @@ class ShowContent extends Content {
                     cell.value = element;
                     if (sortableColumns[element] !== undefined) {
                         cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(" + sortableColumns[element] + ", 'inactive_content_table');";
+                        cell.sortColumn = sortableColumns[element];
+                        cell.sortTableId = "inactive_content_table";
                         if (sortableColumns[element] == 1) cell.tdClassName = "sortThis";
                     }
                     iheader.appendChild(cell.createCell());
                 });
+                attachSortClickHandlers("inactive_content_table");
                 var iFilterRow = buildFilterRow(tableHeader, "inactive_content_table");
                 inactivetable.appendChild(iFilterRow);
                 var irows = this.createInactiveTableContent(menuKey);
@@ -953,6 +959,59 @@ function loadColumnWidths(tableId) {
         return saved || {};
     } catch(e) { return {}; }
 }
+// --- Smart Sort Click Handlers (distinguishes click from drag) ---
+function attachSortClickHandlers(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var headerRow = table.querySelector(".content_table_header") || table.querySelector(".inactive_content_table_header");
+    if (!headerRow) return;
+    var tds = headerRow.getElementsByTagName("TD");
+    for (var i = 0; i < tds.length; i++) {
+        var td = tds[i];
+        var sortCol = td.getAttribute("data-sort-col");
+        if (sortCol === null || sortCol === "") continue;
+        (function(cell, col, tblId) {
+            var startX, startY, wasDrag;
+            cell.addEventListener("mousedown", function(e) {
+                // Ignore if clicking on the resize handle
+                if (e.target.classList.contains("col-resize-handle")) return;
+                startX = e.pageX;
+                startY = e.pageY;
+                wasDrag = false;
+            });
+            cell.addEventListener("mousemove", function(e) {
+                if (startX !== undefined) {
+                    var dx = Math.abs(e.pageX - startX);
+                    var dy = Math.abs(e.pageY - startY);
+                    if (dx > 5 || dy > 5) {
+                        wasDrag = true;
+                    }
+                }
+            });
+            cell.addEventListener("click", function(e) {
+                // Ignore if clicking on the resize handle
+                if (e.target.classList.contains("col-resize-handle")) return;
+                if (wasDrag) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    wasDrag = false;
+                    startX = undefined;
+                    startY = undefined;
+                    return;
+                }
+                // Real click - trigger sort
+                var sortTableArg = cell.getAttribute("data-sort-table");
+                if (sortTableArg) {
+                    sortTable(parseInt(col), sortTableArg);
+                } else {
+                    sortTable(parseInt(col));
+                }
+                startX = undefined;
+                startY = undefined;
+            });
+        })(td, sortCol, tableId);
+    }
+}
 // --- Column Resize Handles ---
 function addResizeHandles(tableId) {
     var table = document.getElementById(tableId);
@@ -971,6 +1030,7 @@ function addResizeHandles(tableId) {
         handle.setAttribute("data-col-idx", i);
         handle.setAttribute("data-table-id", tableId);
         handle.addEventListener("mousedown", initColResize);
+        handle.addEventListener("click", function(e) { e.stopPropagation(); });
         tds[i].appendChild(handle);
     }
 }
