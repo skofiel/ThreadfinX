@@ -1,55 +1,54 @@
 class MainMenu {
     constructor() {
         this.DocumentID = "main-menu";
+        this.BottomDocumentID = "sidebar-bottom-menu";
         this.HTMLTag = "LI";
         this.ImagePath = "img/";
-        this.iconMap = {
-            "m3u.png": "playlist_play",
-            "xmltv.png": "live_tv",
-            "filter.png": "filter_alt",
-            "mapping.png": "account_tree",
-            "users.png": "group",
-            "settings.png": "settings",
-            "log.png": "receipt_long",
-            "logout.png": "logout"
-        };
+    }
+    createIcon(iconName) {
+        var element = document.createElement("SPAN");
+        element.className = "material-symbols-outlined sidebar-icon";
+        element.textContent = iconName;
+        return element;
     }
     createIMG(src) {
-        var iconName = this.iconMap[src];
-        if (iconName) {
-            var element = document.createElement("SPAN");
-            element.className = "material-symbols-outlined";
-            element.textContent = iconName;
-            return element;
-        }
         var element = document.createElement("IMG");
         element.setAttribute("src", this.ImagePath + src);
         return element;
     }
     createValue(value) {
-        var element = document.createElement("P");
+        var element = document.createElement("SPAN");
+        element.className = "sidebar-label";
         element.innerHTML = value;
         return element;
     }
 }
 class MainMenuItem extends MainMenu {
-    constructor(menuKey, value, image, headline) {
+    constructor(menuKey, value, image, headline, iconName, isBottom) {
         super();
         this.menuKey = menuKey;
         this.value = value;
         this.imgSrc = image;
+        this.iconName = iconName || "";
         this.headline = headline;
+        this.isBottom = isBottom || false;
     }
     createItem() {
         var item = document.createElement("LI");
         item.setAttribute("onclick", "javascript: openThisMenu(this)");
         item.setAttribute("id", this.id);
-        item.setAttribute("class", "nav-item");
-        var img = this.createIMG(this.imgSrc);
+        item.setAttribute("class", "sidebar-item");
+        if (this.iconName) {
+            var icon = this.createIcon(this.iconName);
+            item.appendChild(icon);
+        } else {
+            var img = this.createIMG(this.imgSrc);
+            item.appendChild(img);
+        }
         var value = this.createValue(this.value);
-        item.appendChild(img);
         item.appendChild(value);
-        var doc = document.getElementById(this.DocumentID);
+        var targetID = this.isBottom ? this.BottomDocumentID : this.DocumentID;
+        var doc = document.getElementById(targetID);
         doc.appendChild(item);
         switch (this.menuKey) {
             case "playlist":
@@ -68,7 +67,6 @@ class MainMenuItem extends MainMenu {
                 this.tableHeader = ["{{.mapping.table.chNo}}", "{{.mapping.table.logo}}", "{{.mapping.table.channelName}}", "{{.mapping.table.playlist}}", "{{.mapping.table.groupTitle}}", "{{.mapping.table.xmltvFile}}", "{{.mapping.table.xmltvID}}"];
                 break;
         }
-        //console.log(this.menuKey, this.tableHeader);
     }
 }
 class Content {
@@ -1330,7 +1328,7 @@ function createLayout() {
         else if (SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] >= 0.8) {
             activeClass = "text-danger";
         }
-        document.getElementById("playlist-connection-information").innerHTML = "{{.status.playlistConnections}}: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
+        document.getElementById("playlist-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>playlist_play</span>Playlist: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
     }
     if (document.getElementById("client-connection-information")) {
         let activeClass = "text-accent";
@@ -1340,13 +1338,19 @@ function createLayout() {
         else if (SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] >= 0.8) {
             activeClass = "text-danger";
         }
-        document.getElementById("client-connection-information").innerHTML = "{{.status.clientConnections}}: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activeClients"] + " / " + SERVER["clientInfo"]["totalClients"] + "</span>";
+        document.getElementById("client-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>devices</span>Clients: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activeClients"] + " / " + SERVER["clientInfo"]["totalClients"] + "</span>";
     }
+    // Update error badge
+    updateErrorBadge();
     if (!document.getElementById("main-menu")) {
         return;
     }
-    // Create menu
+    // Create sidebar menu
     document.getElementById("main-menu").innerHTML = "";
+    var bottomMenu = document.getElementById("sidebar-bottom-menu");
+    if (bottomMenu) {
+        bottomMenu.innerHTML = "";
+    }
     for (let i = 0; i < menuItems.length; i++) {
         menuItems[i].id = i;
         switch (menuItems[i]["menuKey"]) {
@@ -1394,7 +1398,55 @@ function createLayout() {
     }
     return;
 }
+function updateErrorBadge() {
+    var badge = document.getElementById("error-badge-count");
+    var badgeBtn = document.getElementById("error-badge");
+    if (!badge || !badgeBtn) return;
+    var errorCount = 0;
+    if (SERVER["log"] && SERVER["log"]["log"]) {
+        var logs = SERVER["log"]["log"];
+        var logKeys = getObjKeys(logs);
+        logKeys.forEach(function(logID) {
+            if (logs[logID].indexOf("ERROR") != -1) {
+                errorCount++;
+            }
+        });
+    }
+    if (SERVER["clientInfo"] && SERVER["clientInfo"]["errors"]) {
+        var serverErrors = parseInt(SERVER["clientInfo"]["errors"]);
+        if (!isNaN(serverErrors) && serverErrors > errorCount) {
+            errorCount = serverErrors;
+        }
+    }
+    badge.textContent = errorCount.toString();
+    if (errorCount > 0) {
+        badgeBtn.classList.add("has-errors");
+        badgeBtn.classList.remove("no-errors");
+    } else {
+        badgeBtn.classList.remove("has-errors");
+        badgeBtn.classList.add("no-errors");
+    }
+    // Bind click to navigate to log screen (only once)
+    if (!badgeBtn.dataset.bound) {
+        badgeBtn.dataset.bound = "true";
+        badgeBtn.addEventListener("click", function() {
+            for (var i = 0; i < menuItems.length; i++) {
+                if (menuItems[i].menuKey === "log") {
+                    var logEl = document.getElementById(menuItems[i].id);
+                    if (logEl) logEl.click();
+                    break;
+                }
+            }
+        });
+    }
+}
 function openThisMenu(element) {
+    // Update active state on sidebar
+    var allItems = document.querySelectorAll(".sidebar-item");
+    for (var i = 0; i < allItems.length; i++) {
+        allItems[i].classList.remove("menu-active");
+    }
+    element.classList.add("menu-active");
     var id = element.id;
     // Track current menu for potential reload
     if (menuItems[id]) {

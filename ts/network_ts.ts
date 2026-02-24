@@ -113,9 +113,9 @@ class Server {
             } else if (response["clientInfo"]["activePlaylist"] / response["clientInfo"]["totalPlaylist"] >= 0.8) {
               activeClass = "text-danger"
             }
-            document.getElementById("playlist-connection-information").innerHTML = "Playlist Connections: <span class='" + activeClass + "'>" + response["clientInfo"]["activePlaylist"] + " / " + response["clientInfo"]["totalPlaylist"] + "</span>"
+            document.getElementById("playlist-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>playlist_play</span>Playlist: <span class='" + activeClass + "'>" + response["clientInfo"]["activePlaylist"] + " / " + response["clientInfo"]["totalPlaylist"] + "</span>"
           }
-          
+
           if (document.getElementById("client-connection-information")) {
             let activeClass = "text-primary"
             if (response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] >= 0.6 && response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] < 0.8) {
@@ -123,8 +123,9 @@ class Server {
             } else if (response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] >= 0.8) {
               activeClass = "text-danger"
             }
-            document.getElementById("client-connection-information").innerHTML = "Client Connections: <span class='" + activeClass + "'>" + response["clientInfo"]["activeClients"] + " / " + response["clientInfo"]["totalClients"] + "</span>"
+            document.getElementById("client-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>devices</span>Clients: <span class='" + activeClass + "'>" + response["clientInfo"]["activeClients"] + " / " + response["clientInfo"]["totalClients"] + "</span>"
           }
+          updateErrorBadge()
           return
           break;
 

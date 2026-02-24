@@ -100,7 +100,6 @@ class Server {
                         showLogs(false);
                     }
                     if (document.getElementById("playlist-connection-information")) {
-                        var playlistEl = document.getElementById("playlist-connection-information");
                         var activePlaylist = response["clientInfo"]["activePlaylist"];
                         var totalPlaylist = response["clientInfo"]["totalPlaylist"];
                         var playlistClass = "text-accent";
@@ -109,15 +108,9 @@ class Server {
                         } else if (activePlaylist / totalPlaylist >= 0.6) {
                             playlistClass = "text-warning";
                         }
-                        playlistEl.textContent = "";
-                        playlistEl.appendChild(document.createTextNode("{{.status.playlistConnections}}: "));
-                        var span = document.createElement("SPAN");
-                        span.className = playlistClass;
-                        span.textContent = activePlaylist + " / " + totalPlaylist;
-                        playlistEl.appendChild(span);
+                        document.getElementById("playlist-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>playlist_play</span>Playlist: <span class='" + playlistClass + "'>" + activePlaylist + " / " + totalPlaylist + "</span>";
                     }
                     if (document.getElementById("client-connection-information")) {
-                        var clientEl = document.getElementById("client-connection-information");
                         var activeClients = response["clientInfo"]["activeClients"];
                         var totalClients = response["clientInfo"]["totalClients"];
                         var clientClass = "text-accent";
@@ -126,13 +119,9 @@ class Server {
                         } else if (activeClients / totalClients >= 0.6) {
                             clientClass = "text-warning";
                         }
-                        clientEl.textContent = "";
-                        clientEl.appendChild(document.createTextNode("{{.status.clientConnections}}: "));
-                        var cspan = document.createElement("SPAN");
-                        cspan.className = clientClass;
-                        cspan.textContent = activeClients + " / " + totalClients;
-                        clientEl.appendChild(cspan);
+                        document.getElementById("client-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>devices</span>Clients: <span class='" + clientClass + "'>" + activeClients + " / " + totalClients + "</span>";
                     }
+                    updateErrorBadge();
                     return;
                 case "saveSettings":
                     // Update local data without re-rendering the page
