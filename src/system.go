@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"strings"
@@ -282,7 +281,7 @@ func setGlobalDomain(domain string) {
 	}
 
 	if Settings.EpgSource != "XEPG" {
-		log.Println("SOURCE: ", Settings.EpgSource)
+		showDebug(fmt.Sprintf("EPG Source: %s", Settings.EpgSource), 1)
 		System.Addresses.M3U = getErrMsg(2106)
 		System.Addresses.XML = getErrMsg(2106)
 	}

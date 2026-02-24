@@ -602,10 +602,17 @@ func mapToJSON(tmpMap interface{}) string {
 	return string(jsonString)
 }
 
-// SetCookieToken : set cookie
+// SetCookieToken : set cookie with security flags
 func SetCookieToken(w http.ResponseWriter, token string) http.ResponseWriter {
 	expiration := time.Now().Add(time.Minute * time.Duration(tokenValidity))
-	cookie := http.Cookie{Name: "Token", Value: token, Expires: expiration}
+	cookie := http.Cookie{
+		Name:     "Token",
+		Value:    token,
+		Expires:  expiration,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
 	http.SetCookie(w, &cookie)
 	return w
 }

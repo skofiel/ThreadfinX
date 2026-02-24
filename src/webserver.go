@@ -21,6 +21,22 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// safePath validates that the resolved file path stays within the allowed base directory.
+// Prevents path traversal attacks by ensuring the final path is a child of baseDir.
+func safePath(baseDir, userPath string) (string, error) {
+	filename := filepath.Base(userPath)
+	if filename == "." || filename == ".." || filename == "" || filename == string(os.PathSeparator) {
+		return "", fmt.Errorf("invalid filename: %s", filename)
+	}
+	fullPath := filepath.Join(baseDir, filename)
+	fullPath = filepath.Clean(fullPath)
+	baseDir = filepath.Clean(baseDir)
+	if !strings.HasPrefix(fullPath, baseDir) {
+		return "", fmt.Errorf("path traversal detected: %s", userPath)
+	}
+	return fullPath, nil
+}
+
 // safeContentDisposition returns a safe Content-Disposition header value
 func safeContentDisposition(filename string) string {
 	filename = filepath.Base(filename)
@@ -244,7 +260,7 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 // Auto : HDHR routing (wird derzeit nicht benutzt)
 func Auto(w http.ResponseWriter, r *http.Request) {
 	var channelID = strings.Replace(r.RequestURI, "/auto/v", "", 1)
-	fmt.Println(channelID)
+	showDebug(fmt.Sprintf("Auto channel ID: %s", channelID), 1)
 	return
 }
 
@@ -277,8 +293,14 @@ func Threadfin(w http.ResponseWriter, r *http.Request) {
 		}
 
 		systemMutex.Lock()
-		file = System.Folder.Data + getFilenameFromPath(path)
+		dataFolder := System.Folder.Data
 		systemMutex.Unlock()
+
+		file, err = safePath(dataFolder, path)
+		if err != nil {
+			httpStatusError(w, r, 400)
+			return
+		}
 
 		content, err = readStringFromFile(file)
 		if err != nil {
@@ -354,8 +376,14 @@ func Images(w http.ResponseWriter, r *http.Request) {
 
 	var path = strings.TrimPrefix(r.URL.Path, "/")
 	systemMutex.Lock()
-	filePath := System.Folder.ImagesCache + getFilenameFromPath(path)
+	cacheFolder := System.Folder.ImagesCache
 	systemMutex.Unlock()
+
+	filePath, err := safePath(cacheFolder, path)
+	if err != nil {
+		httpStatusError(w, r, 400)
+		return
+	}
 
 	content, err := readByteFromFile(filePath)
 	if err != nil {
@@ -376,8 +404,14 @@ func DataImages(w http.ResponseWriter, r *http.Request) {
 
 	var path = strings.TrimPrefix(r.URL.Path, "/")
 	systemMutex.Lock()
-	filePath := System.Folder.ImagesUpload + getFilenameFromPath(path)
+	uploadFolder := System.Folder.ImagesUpload
 	systemMutex.Unlock()
+
+	filePath, err := safePath(uploadFolder, path)
+	if err != nil {
+		httpStatusError(w, r, 400)
+		return
+	}
 
 	content, err := readByteFromFile(filePath)
 	if err != nil {
@@ -463,12 +497,14 @@ func WS(w http.ResponseWriter, r *http.Request) {
 			case true:
 
 				var token string
-				tokens, ok := r.URL.Query()["Token"]
 
-				if !ok || len(tokens[0]) < 1 {
-					token = "-"
-				} else {
+				// Read token from cookie (preferred) or fall back to query param
+				if cookie, cookieErr := r.Cookie("Token"); cookieErr == nil && len(cookie.Value) > 0 {
+					token = cookie.Value
+				} else if tokens, ok := r.URL.Query()["Token"]; ok && len(tokens[0]) > 0 {
 					token = tokens[0]
+				} else {
+					token = "-"
 				}
 
 				newToken, err = tokenAuthentication(token)
@@ -663,7 +699,7 @@ func WS(w http.ResponseWriter, r *http.Request) {
 			response.ProbeInfo = ProbeInfoStruct{Resolution: resolution, FrameRate: frameRate, AudioChannel: audioChannels}
 
 		default:
-			fmt.Println("+ + + + + + + + + + +", request.Cmd)
+			showDebug(fmt.Sprintf("Unknown WebSocket command: %s", request.Cmd), 1)
 		}
 
 		if err != nil {
@@ -1089,8 +1125,12 @@ func API(w http.ResponseWriter, r *http.Request) {
 func Download(w http.ResponseWriter, r *http.Request) {
 
 	var path = r.URL.Path
-	var file = System.Folder.Temp + getFilenameFromPath(path)
-	w.Header().Set("Content-Disposition", safeContentDisposition(getFilenameFromPath(file)))
+	file, err := safePath(System.Folder.Temp, path)
+	if err != nil {
+		httpStatusError(w, r, 400)
+		return
+	}
+	w.Header().Set("Content-Disposition", safeContentDisposition(filepath.Base(file)))
 
 	content, err := readStringFromFile(file)
 	if err != nil {
@@ -1098,7 +1138,7 @@ func Download(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	os.RemoveAll(System.Folder.Temp + getFilenameFromPath(path))
+	os.RemoveAll(file)
 	w.Write([]byte(content))
 	return
 }
@@ -1115,7 +1155,7 @@ func setDefaultResponseData(response ResponseStruct, data bool) (defaults Respon
 			// Assert that value is a map[string]interface{}
 			nestedMap, ok := value.(map[string]interface{})
 			if !ok {
-				fmt.Printf("Error asserting nested value as map: %v\n", value)
+				showDebug(fmt.Sprintf("Error asserting nested value as map: %v", value), 1)
 				continue
 			}
 

@@ -16,14 +16,26 @@ func makeInteraceFromHDHR(content []byte, playlistName, id string) (channels []i
 
 		for _, d := range hdhrData {
 
+			data, ok := d.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
 			var channel = make(map[string]string)
-			var data = d.(map[string]interface{})
 
 			channel["group-title"] = playlistName
-			channel["name"] = data["GuideName"].(string)
-			channel["tvg-id"] = data["GuideName"].(string)
-			channel["url"] = data["URL"].(string)
-			channel["ID-"+id] = data["GuideNumber"].(string)
+
+			if name, ok := data["GuideName"].(string); ok {
+				channel["name"] = name
+				channel["tvg-id"] = name
+			}
+			if u, ok := data["URL"].(string); ok {
+				channel["url"] = u
+			}
+			if num, ok := data["GuideNumber"].(string); ok {
+				channel["ID-"+id] = num
+			}
+
 			channel["_uuid.key"] = "ID-" + id
 			channel["_values"] = playlistName + " " + channel["name"]
 

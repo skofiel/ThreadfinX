@@ -146,7 +146,7 @@ function getOwnObjProps(object) {
     return object ? Object.getOwnPropertyNames(object) : [];
 }
 function clearSortIndicators(table, table_name) {
-    var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+    var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
     if (!headerRow) return;
     var tds = headerRow.getElementsByTagName("TD");
     for (var i = 0; i < tds.length; i++) {
@@ -161,14 +161,14 @@ function clearSortIndicators(table, table_name) {
 function sortTable(column, table_name = "content_table") {
     var table = document.getElementById(table_name);
     if (!table) return;
-    var currentSortCol = (table_name == "content_table") ? COLUMN_TO_SORT : INACTIVE_COLUMN_TO_SORT;
+    var currentSortCol = (table_name === "content_table") ? COLUMN_TO_SORT : INACTIVE_COLUMN_TO_SORT;
     var currentDir = SORT_DIRECTION[table_name];
     var newDir;
     // Determine new sort direction: asc -> desc -> default (reset)
-    if (column == currentSortCol) {
-        if (currentDir == "asc") {
+    if (column === currentSortCol) {
+        if (currentDir === "asc") {
             newDir = "desc";
-        } else if (currentDir == "desc") {
+        } else if (currentDir === "desc") {
             newDir = null; // reset to default
         } else {
             newDir = "asc";
@@ -179,13 +179,13 @@ function sortTable(column, table_name = "content_table") {
     // Clear all sort indicators
     clearSortIndicators(table, table_name);
     // If resetting to default order
-    if (newDir == null) {
+    if (newDir === null) {
         SORT_DIRECTION[table_name] = null;
-        if (table_name == "content_table") { COLUMN_TO_SORT = null; }
+        if (table_name === "content_table") { COLUMN_TO_SORT = null; }
         else { INACTIVE_COLUMN_TO_SORT = null; }
         // Restore original row order if saved
         if (ORIGINAL_ROW_ORDER[table_name]) {
-            var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+            var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
             var filterRow = table.querySelector(".column-filter-row");
             while (table.firstChild) { table.removeChild(table.firstChild); }
             if (headerRow) table.appendChild(headerRow);
@@ -210,17 +210,17 @@ function sortTable(column, table_name = "content_table") {
     }
     // Set sort state
     SORT_DIRECTION[table_name] = newDir;
-    if (table_name == "content_table") { COLUMN_TO_SORT = column; }
+    if (table_name === "content_table") { COLUMN_TO_SORT = column; }
     else { INACTIVE_COLUMN_TO_SORT = column; }
     // Add sort indicator to active column
-    var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+    var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
     if (headerRow) {
         var tds = headerRow.getElementsByTagName("TD");
         if (tds[column]) {
             tds[column].className = "sortThis";
             var arrow = document.createElement("SPAN");
             arrow.className = "sort-arrow";
-            arrow.innerText = (newDir == "asc") ? " \u25B2" : " \u25BC";
+            arrow.innerText = (newDir === "asc") ? " \u25B2" : " \u25BC";
             // Append inside the <p> child if it exists, otherwise to the TD
             var pChild = tds[column].querySelector("p, P");
             if (pChild) {
@@ -250,7 +250,7 @@ function sortTable(column, table_name = "content_table") {
     var firstCell = dataRows[0].getElementsByTagName("TD")[column];
     if (firstCell && firstCell.childNodes[0]) {
         var tag = firstCell.childNodes[0].tagName ? firstCell.childNodes[0].tagName.toLowerCase() : "";
-        if (tag == "input") {
+        if (tag === "input") {
             var testVal = firstCell.getElementsByTagName("INPUT")[0].value;
             if (isNaN(testVal) || testVal === "") sortByString = true;
         } else {
@@ -263,14 +263,14 @@ function sortTable(column, table_name = "content_table") {
         var valA = "", valB = "";
         if (cellA && cellA.childNodes[0]) {
             var tagA = cellA.childNodes[0].tagName ? cellA.childNodes[0].tagName.toLowerCase() : "";
-            if (tagA == "input") valA = cellA.getElementsByTagName("INPUT")[0].value.toLowerCase();
-            else if (tagA == "p") valA = cellA.getElementsByTagName("P")[0].innerText.toLowerCase();
+            if (tagA === "input") valA = cellA.getElementsByTagName("INPUT")[0].value.toLowerCase();
+            else if (tagA === "p") valA = cellA.getElementsByTagName("P")[0].innerText.toLowerCase();
             else valA = cellA.innerText.toLowerCase();
         }
         if (cellB && cellB.childNodes[0]) {
             var tagB = cellB.childNodes[0].tagName ? cellB.childNodes[0].tagName.toLowerCase() : "";
-            if (tagB == "input") valB = cellB.getElementsByTagName("INPUT")[0].value.toLowerCase();
-            else if (tagB == "p") valB = cellB.getElementsByTagName("P")[0].innerText.toLowerCase();
+            if (tagB === "input") valB = cellB.getElementsByTagName("INPUT")[0].value.toLowerCase();
+            else if (tagB === "p") valB = cellB.getElementsByTagName("P")[0].innerText.toLowerCase();
             else valB = cellB.innerText.toLowerCase();
         }
         var result;
@@ -280,7 +280,7 @@ function sortTable(column, table_name = "content_table") {
             var collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
             result = collator.compare(valA, valB);
         }
-        return (newDir == "desc") ? -result : result;
+        return (newDir === "desc") ? -result : result;
     });
     // Rebuild table: header, filter row, then sorted data rows
     while (table.firstChild) { table.removeChild(table.firstChild); }
@@ -295,7 +295,7 @@ function createSearchObj() {
     var channelKeys = ["x-active", "x-channelID", "x-name", "_file.m3u.name", "x-group-title", "x-xmltv-file"];
     channels.forEach(id => {
         channelKeys.forEach(key => {
-            if (key == "x-active") {
+            if (key === "x-active") {
                 switch (data[id][key]) {
                     case true:
                         SEARCH_MAPPING[id] = "online ";
@@ -306,9 +306,9 @@ function createSearchObj() {
                 }
             }
             else {
-                if (key == "x-xmltv-file") {
+                if (key === "x-xmltv-file") {
                     var xmltvFile = getValueFromProviderFile(data[id][key], "xmltv", "name");
-                    if (xmltvFile != undefined) {
+                    if (xmltvFile !== undefined) {
                         SEARCH_MAPPING[id] = SEARCH_MAPPING[id] + xmltvFile + " ";
                     }
                 }
@@ -333,11 +333,11 @@ function changeChannelNumbers(elements) {
         data[element]["x-channelID"] = starting_number.toString();
         starting_number++;
     });
-    if (COLUMN_TO_SORT == 0) {
+    if (COLUMN_TO_SORT === 0) {
         COLUMN_TO_SORT = -1;
         sortTable(0);
     }
-    if (INACTIVE_COLUMN_TO_SORT == 0) {
+    if (INACTIVE_COLUMN_TO_SORT === 0) {
         INACTIVE_COLUMN_TO_SORT = -1;
         sortTable(0, "inactive_content_page");
     }
@@ -357,10 +357,10 @@ function changeChannelNumber(element) {
         channelNumbers.push(channelNumber);
     });
     for (var i = 0; i < channelNumbers.length; i++) {
-        if (channelNumbers.indexOf(newNumber) == -1) {
+        if (channelNumbers.indexOf(newNumber) === -1) {
             break;
         }
-        if (Math.floor(newNumber) == newNumber) {
+        if (Math.floor(newNumber) === newNumber) {
             newNumber = newNumber + 1;
         }
         else {
@@ -371,11 +371,11 @@ function changeChannelNumber(element) {
     }
     data[dbID]["x-channelID"] = newNumber.toString();
     element.value = newNumber;
-    if (COLUMN_TO_SORT == 0) {
+    if (COLUMN_TO_SORT === 0) {
         COLUMN_TO_SORT = -1;
         sortTable(0);
     }
-    if (INACTIVE_COLUMN_TO_SORT == 0) {
+    if (INACTIVE_COLUMN_TO_SORT === 0) {
         INACTIVE_COLUMN_TO_SORT = -1;
         sortTable(0, "inactive_content_page");
     }
@@ -397,13 +397,13 @@ function toggleChannelStatus(id) {
     }
     var channel = SERVER["xepg"]["epgMapping"][id];
     channel["x-active"] = status;
-    if (channel["x-active"] == true) {
-        if (channel["x-xmltv-file"] == "-" || channel["x-mapping"] == "-") {
+    if (channel["x-active"] === true) {
+        if (channel["x-xmltv-file"] === "-" || channel["x-mapping"] === "-") {
             checkbox.checked = true;
             channel["x-active"] = true;
         }
     }
-    if (channel["x-active"] == false) {
+    if (channel["x-active"] === false) {
         document.getElementById(id).className = "notActiveEPG";
     }
     else {
@@ -521,7 +521,7 @@ function sortSelect(elem) {
     var newSelectedIndex = 0;
     for (var i = 0; i < tmpAry.length; i++) {
         elem.options[i] = tmpAry[i];
-        if (elem.options[i].value == selectedValue)
+        if (elem.options[i].value === selectedValue)
             newSelectedIndex = i;
     }
     elem.selectedIndex = newSelectedIndex; // Set new selected index after sorting

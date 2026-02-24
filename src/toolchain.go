@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/fs"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
@@ -18,9 +19,21 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/avfs/avfs"
 )
+
+// Shared HTTP client with connection pooling for reuse across the application.
+// This avoids creating a new http.Client (and underlying transport) for each request.
+var SharedHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        20,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
 
 // --- System Tools ---
 
