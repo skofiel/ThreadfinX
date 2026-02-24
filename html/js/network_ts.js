@@ -57,7 +57,7 @@ class Server {
             if (response.hasOwnProperty("probeInfo")) {
                 if (document.getElementById("probeDetails")) {
                     if (response["probeInfo"]["resolution"] !== undefined) {
-                        document.getElementById("probeDetails").innerHTML = "<p>{{.status.resolution}}: <span class='text-primary'>" + response["probeInfo"]["resolution"] + "</span></p><p>{{.status.frameRate}}: <span class='text-primary'>" + response["probeInfo"]["frameRate"] + " FPS</span></p><p>{{.status.audio}}: <span class='text-primary'>" + response["probeInfo"]["audioChannel"] + "</span></p>";
+                        document.getElementById("probeDetails").innerHTML = "<p>{{.status.resolution}}: <span class='text-accent'>" + response["probeInfo"]["resolution"] + "</span></p><p>{{.status.frameRate}}: <span class='text-accent'>" + response["probeInfo"]["frameRate"] + " FPS</span></p><p>{{.status.audio}}: <span class='text-accent'>" + response["probeInfo"]["audioChannel"] + "</span></p>";
                     }
                 }
             }
@@ -74,7 +74,7 @@ class Server {
                         showLogs(false);
                     }
                     if (document.getElementById("playlist-connection-information")) {
-                        let activeClass = "text-primary";
+                        let activeClass = "text-accent";
                         if (response["clientInfo"]["activePlaylist"] / response["clientInfo"]["totalPlaylist"] >= 0.6 && response["clientInfo"]["activePlaylist"] / response["clientInfo"]["totalPlaylist"] < 0.8) {
                             activeClass = "text-warning";
                         }
@@ -84,7 +84,7 @@ class Server {
                         document.getElementById("playlist-connection-information").innerHTML = "{{.status.playlistConnections}}: <span class='" + activeClass + "'>" + response["clientInfo"]["activePlaylist"] + " / " + response["clientInfo"]["totalPlaylist"] + "</span>";
                     }
                     if (document.getElementById("client-connection-information")) {
-                        let activeClass = "text-primary";
+                        let activeClass = "text-accent";
                         if (response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] >= 0.6 && response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] < 0.8) {
                             activeClass = "text-warning";
                         }
@@ -95,6 +95,20 @@ class Server {
                     }
                     return;
                     break;
+                case "saveSettings":
+                    // Update local data without re-rendering the page
+                    SERVER["settings"] = response["settings"];
+                    if (response["clientInfo"]) SERVER["clientInfo"] = response["clientInfo"];
+                    applyAccentColor();
+                    // Clear changed indicators
+                    var changed = document.getElementsByClassName("changed");
+                    while (changed.length > 0) {
+                        changed[0].classList.remove("changed");
+                    }
+                    if (response.hasOwnProperty("reload")) {
+                        location.reload();
+                    }
+                    return;
                 default:
                     SERVER = new Object();
                     SERVER = response;

@@ -174,7 +174,6 @@ nav p {
 /* --- Content Area --- */
 #content {
   display: block;
-  overflow: auto;
   padding: var(--space-md);
 }
 
@@ -280,7 +279,7 @@ caption {
 #box-wrapper {
   display: inline-block;
   width: 100%;
-  overflow-y: scroll;
+  overflow-y: visible;
 }
 
 /* --- Content Tables --- */
@@ -1012,7 +1011,7 @@ tbody {
 }
 
 #content_settings h5:first-of-type {
-  margin-top: var(--space-lg);
+  margin-top: var(--space-md);
 }
 
 /* Settings table layout */
@@ -1036,9 +1035,8 @@ tbody {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  white-space: normal;
+  word-wrap: break-word;
 }
 
 #content_settings table tr td:last-child {
@@ -1087,16 +1085,18 @@ tbody {
   line-height: var(--line-height-normal);
   margin: 0;
   padding: 2px 0 var(--space-sm) 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-/* Settings action buttons - fixed bottom bar */
+/* Settings action buttons - sticky bar */
 #content-interaction {
   position: sticky;
   top: 56px;
   z-index: 100;
   background-color: var(--bg-deepest);
   border-bottom: 1px solid var(--border);
-  padding: var(--space-sm) var(--space-lg);
+  padding: var(--space-xs) var(--space-lg);
   display: flex;
   align-items: center;
   justify-content: flex-end;

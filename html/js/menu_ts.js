@@ -665,8 +665,6 @@ class ShowContent extends Content {
         else {
             popup_header.appendChild(h);
         }
-        var hr = this.createHR();
-        doc.appendChild(hr);
         // Interaktion
         var div = this.createInteraction();
         doc.appendChild(div);
@@ -907,7 +905,7 @@ function createLayout() {
         }
     }
     if (document.getElementById("playlist-connection-information")) {
-        let activeClass = "text-primary";
+        let activeClass = "text-accent";
         if (SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] >= 0.6 && SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] < 0.8) {
             activeClass = "text-warning";
         }
@@ -917,7 +915,7 @@ function createLayout() {
         document.getElementById("playlist-connection-information").innerHTML = "{{.status.playlistConnections}}: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
     }
     if (document.getElementById("client-connection-information")) {
-        let activeClass = "text-primary";
+        let activeClass = "text-accent";
         if (SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] >= 0.6 && SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] < 0.8) {
             activeClass = "text-warning";
         }
@@ -949,7 +947,7 @@ function createLayout() {
                 break;
         }
     }
-    // Smart default page: if no menu is currently open, auto-open one
+    // Smart default page: only auto-open on first load
     if (!window._menuOpened) {
         window._menuOpened = true;
         var defaultMenuKey = "playlist";

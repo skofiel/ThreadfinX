@@ -364,7 +364,7 @@ class SettingsCategory {
                 colorWrapper.appendChild(colorInput);
                 var hexInput = content.createInput("text", "accentColor", data.toString());
                 hexInput.setAttribute("placeholder", "{{.settings.accentColor.placeholder}}");
-                hexInput.setAttribute("onchange", "javascript: this.className = 'changed'; var picker=document.getElementsByName('accentColor_picker')[0]; if(this.value.match(/^#[0-9a-fA-F]{6}$/)){picker.value=this.value; document.documentElement.style.setProperty('--accent', this.value);}");
+                hexInput.setAttribute("oninput", "javascript: this.className = 'hex-input changed'; var picker=document.getElementsByName('accentColor_picker')[0]; if(this.value.match(/^#[0-9a-fA-F]{6}$/)){picker.value=this.value; document.documentElement.style.setProperty('--accent', this.value);}");
                 hexInput.className = "hex-input";
                 colorWrapper.appendChild(hexInput);
                 tdRight.appendChild(colorWrapper);
@@ -705,7 +705,6 @@ function saveSettings() {
     var div = document.getElementById("content_settings");
     var settings = div.getElementsByClassName("changed");
     var newSettings = new Object();
-    var languageChanged = false;
     for (let i = 0; i < settings.length; i++) {
         var name;
         var value;
@@ -739,11 +738,7 @@ function saveSettings() {
             case "SELECT":
                 name = settings[i].name;
                 value = settings[i].value;
-                if (name == "language") {
-                    languageChanged = true;
-                    newSettings[name] = value;
-                }
-                else if (isNaN(value)) {
+                if (isNaN(value)) {
                     newSettings[name] = value;
                 }
                 else {
@@ -761,10 +756,6 @@ function saveSettings() {
     server.request(data);
     // Show success toast
     showSaveConfirmation();
-    // If language changed, reload the page after a short delay
-    if (languageChanged) {
-        setTimeout(function() { location.reload(); }, 1500);
-    }
 }
 function showSaveConfirmation() {
     var existing = document.getElementById("save-toast");

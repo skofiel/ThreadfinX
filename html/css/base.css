@@ -142,7 +142,7 @@ body {
   background-color: var(--bg-deepest);
   margin: 0;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-normal);
@@ -426,6 +426,10 @@ input[type=button].center {
 }
 
 /* --- Utility Classes --- */
+.text-accent {
+  color: var(--accent) !important;
+}
+
 .pointer {
   cursor: pointer;
 }
