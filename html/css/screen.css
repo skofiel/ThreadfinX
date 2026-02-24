@@ -540,6 +540,14 @@ caption {
   user-select: none;
 }
 
+/* Header cell content - keep inline for sort arrows */
+#content_table .content_table_header td p,
+#inactive_content_table .inactive_content_table_header td p {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
 /* Sortable column header */
 #content_table .content_table_header td.pointer,
 #inactive_content_table .inactive_content_table_header td.pointer {
@@ -558,10 +566,12 @@ caption {
 
 /* Sort direction arrow indicator */
 .sort-arrow {
+  display: inline;
   font-size: var(--font-size-2xs);
   color: var(--accent);
-  margin-left: 2px;
-  vertical-align: middle;
+  margin-left: 3px;
+  vertical-align: baseline;
+  white-space: nowrap;
 }
 
 /* Per-column filter row */
@@ -574,6 +584,8 @@ caption {
   padding: 3px 4px;
 }
 
+#content_table .column-filter-row td input[type="text"],
+#inactive_content_table .column-filter-row td input[type="text"],
 .column-filter-row td input[type="text"] {
   width: 100%;
   min-width: 0;

@@ -2538,9 +2538,9 @@ function donePopupData(dataType, idsStr) {
     var div = document.getElementById("popup-custom");
     var inputs = div.getElementsByClassName("changed");
     ids.forEach(id => {
-        var input = new Object();
-        input = SERVER["xepg"]["epgMapping"][id];
-        console.log("INPUT: " + input);
+        var input = SERVER["xepg"]["epgMapping"][id];
+        if (!input) { console.log("donePopupData: no mapping for id " + id); return; }
+        // Apply changed values to the SERVER data object
         for (let i = 0; i < inputs.length; i++) {
             var name;
             var value;
@@ -2565,67 +2565,46 @@ function donePopupData(dataType, idsStr) {
                     input[name] = value;
                     break;
             }
-            switch (name) {
-                case "tvg-logo":
-                    //(document.getElementById(id).childNodes[2].firstChild as HTMLElement).setAttribute("src", value)
-                    break;
-                case "x-channel-start":
-                    document.getElementById(id).childNodes[3].firstChild.innerHTML = value;
-                    break;
-                case "x-name":
-                    document.getElementById(id).childNodes[3].firstChild.innerHTML = value;
-                    break;
-                case "x-category":
+            if (name == "x-xmltv-file" && value == "-") { input["x-active"] = false; }
+            if (name == "x-mapping" && value == "-") { input["x-active"] = false; }
+        }
+        // Update the visible table row (wrapped in try-catch so UI errors don't block save)
+        try {
+            var row = document.getElementById(id);
+            if (row) {
+                var tds = row.getElementsByTagName("TD");
+                // td[0]=BULK, td[1]=ChNo, td[2]=Logo, td[3]=Name, td[4]=Playlist, td[5]=Group, td[6]=XMLTV File, td[7]=XMLTV ID
+                if (input["x-name"] && tds[3]) tds[3].firstChild.innerHTML = input["x-name"];
+                if (input["x-group-title"] && tds[5]) tds[5].firstChild.innerHTML = input["x-group-title"];
+                if (input["x-xmltv-file"] && tds[6]) {
+                    var displayVal = input["x-xmltv-file"];
+                    if (displayVal != "Threadfin Dummy" && displayVal != "-") {
+                        displayVal = getValueFromProviderFile(displayVal, "xmltv", "name");
+                    }
+                    tds[6].firstChild.innerHTML = displayVal;
+                }
+                if (input["x-mapping"] && tds[7]) tds[7].firstChild.innerHTML = input["x-mapping"];
+                if (input["tvg-logo"] && tds[2] && tds[2].firstChild && tds[2].firstChild.firstChild) {
+                    tds[2].firstChild.firstChild.setAttribute("src", input["tvg-logo"]);
+                }
+                if (input["x-category"]) {
                     var color = "white";
                     var catColorSettings = SERVER["settings"]["epgCategoriesColors"];
                     var colors_split = catColorSettings.split("|");
                     for (var ii = 0; ii < colors_split.length; ii++) {
                         var catsColor_split = colors_split[ii].split(":");
-                        if (catsColor_split[0] == value) {
-                            color = catsColor_split[1];
-                        }
+                        if (catsColor_split[0] == input["x-category"]) { color = catsColor_split[1]; }
                     }
-                    document.getElementById(id).childNodes[3].firstChild.style.borderColor = color;
-                    break;
-                case "x-group-title":
-                    document.getElementById(id).childNodes[5].firstChild.innerHTML = value;
-                    break;
-                case "x-xmltv-file":
-                    if (value != "Threadfin Dummy" && value != "-") {
-                        value = getValueFromProviderFile(value, "xmltv", "name");
-                    }
-                    if (value == "-") {
-                        input["x-active"] = false;
-                    }
-                    document.getElementById(id).childNodes[6].firstChild.innerHTML = value;
-                    break;
-                case "x-mapping":
-                    if (value == "-") {
-                        input["x-active"] = false;
-                    }
-                    document.getElementById(id).childNodes[7].firstChild.innerHTML = value;
-                    break;
-                case "x-backup-channel":
-                    document.getElementById(id).childNodes[7].firstChild.innerHTML = value;
-                    break;
-                case "x-hide-channel":
-                    document.getElementById(id).childNodes[7].firstChild.innerHTML = value;
-                    break;
-                default:
+                    if (tds[3] && tds[3].firstChild) tds[3].firstChild.style.borderColor = color;
+                }
+                row.className = (input["x-active"] == false) ? "notActiveEPG" : "activeEPG";
             }
-            createSearchObj();
+        } catch(e) {
+            console.log("donePopupData UI update error: ", e);
         }
-        if (input["x-active"] == false) {
-            document.getElementById(id).className = "notActiveEPG";
-        }
-        else {
-            document.getElementById(id).className = "activeEPG";
-        }
-        console.log(input["tvg-logo"]);
-        document.getElementById(id).childNodes[2].firstChild.firstChild.setAttribute("src", input["tvg-logo"]);
     });
+    createSearchObj();
     showElement("popup", false);
-    return;
 }
 function showPreview(element) {
     var div = document.getElementById("myStreamsBox");
