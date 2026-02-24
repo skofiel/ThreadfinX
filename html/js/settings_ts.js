@@ -364,7 +364,7 @@ class SettingsCategory {
                 colorWrapper.appendChild(colorInput);
                 var hexInput = content.createInput("text", "accentColor", data.toString());
                 hexInput.setAttribute("placeholder", "{{.settings.accentColor.placeholder}}");
-                hexInput.setAttribute("onchange", "javascript: this.className = 'changed'; var picker=document.getElementsByName('accentColor_picker')[0]; if(this.value.match(/^#[0-9a-fA-F]{6}$/)){picker.value=this.value; document.documentElement.style.setProperty('--accent', this.value);}");
+                hexInput.setAttribute("oninput", "javascript: this.className = 'hex-input changed'; var picker=document.getElementsByName('accentColor_picker')[0]; if(this.value.match(/^#[0-9a-fA-F]{6}$/)){picker.value=this.value; document.documentElement.style.setProperty('--accent', this.value);}");
                 hexInput.className = "hex-input";
                 colorWrapper.appendChild(hexInput);
                 tdRight.appendChild(colorWrapper);
@@ -752,8 +752,6 @@ function saveSettings() {
     }
     var data = new Object();
     data["settings"] = newSettings;
-    // Remember we are on settings page so we stay here after save
-    window._currentMenuKey = "settings";
     var server = new Server(cmd);
     server.request(data);
     // Show success toast

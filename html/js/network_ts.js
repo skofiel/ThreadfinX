@@ -95,6 +95,20 @@ class Server {
                     }
                     return;
                     break;
+                case "saveSettings":
+                    // Update local data without re-rendering the page
+                    SERVER["settings"] = response["settings"];
+                    if (response["clientInfo"]) SERVER["clientInfo"] = response["clientInfo"];
+                    applyAccentColor();
+                    // Clear changed indicators
+                    var changed = document.getElementsByClassName("changed");
+                    while (changed.length > 0) {
+                        changed[0].classList.remove("changed");
+                    }
+                    if (response.hasOwnProperty("reload")) {
+                        location.reload();
+                    }
+                    return;
                 default:
                     SERVER = new Object();
                     SERVER = response;

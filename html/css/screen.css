@@ -174,7 +174,6 @@ nav p {
 /* --- Content Area --- */
 #content {
   display: block;
-  overflow-x: auto;
   padding: var(--space-md);
 }
 
@@ -1090,15 +1089,14 @@ tbody {
   word-wrap: break-word;
 }
 
-/* Settings action buttons - fixed bottom bar */
+/* Settings action buttons - sticky bar */
 #content-interaction {
   position: sticky;
   top: 56px;
   z-index: 100;
   background-color: var(--bg-deepest);
   border-bottom: 1px solid var(--border);
-  padding: var(--space-sm) var(--space-lg);
-  margin-bottom: var(--space-md);
+  padding: var(--space-xs) var(--space-lg);
   display: flex;
   align-items: center;
   justify-content: flex-end;

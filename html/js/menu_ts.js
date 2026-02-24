@@ -665,8 +665,6 @@ class ShowContent extends Content {
         else {
             popup_header.appendChild(h);
         }
-        var hr = this.createHR();
-        doc.appendChild(hr);
         // Interaktion
         var div = this.createInteraction();
         doc.appendChild(div);
@@ -949,25 +947,20 @@ function createLayout() {
                 break;
         }
     }
-    // Determine which menu to open
-    var targetMenuKey = null;
-    if (window._currentMenuKey) {
-        // Stay on the current page (e.g. after saving settings)
-        targetMenuKey = window._currentMenuKey;
-    } else if (!window._menuOpened) {
-        // First load: smart default
-        targetMenuKey = "playlist";
+    // Smart default page: only auto-open on first load
+    if (!window._menuOpened) {
+        window._menuOpened = true;
+        var defaultMenuKey = "playlist";
+        // Check if there are mapped channels (xepg data exists)
         if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
             var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
             if (mappedKeys.length > 0) {
-                targetMenuKey = "mapping";
+                defaultMenuKey = "mapping";
             }
         }
-    }
-    if (targetMenuKey) {
-        window._menuOpened = true;
+        // Find the menu item and click it
         for (let i = 0; i < menuItems.length; i++) {
-            if (menuItems[i].menuKey == targetMenuKey) {
+            if (menuItems[i].menuKey == defaultMenuKey) {
                 var menuElement = document.getElementById(menuItems[i].id);
                 if (menuElement) {
                     menuElement.click();
@@ -980,8 +973,6 @@ function createLayout() {
 }
 function openThisMenu(element) {
     var id = element.id;
-    // Track the currently open menu
-    window._currentMenuKey = menuItems[id] ? menuItems[id].menuKey : null;
     var content = new ShowContent(id);
     content.show();
     enableGroupSelection(".bulk");
