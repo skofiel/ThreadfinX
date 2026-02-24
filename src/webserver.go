@@ -676,12 +676,20 @@ func Web(w http.ResponseWriter, r *http.Request) {
 			ShowError(err, 000)
 		}
 	} else {
+		settingsLanguage := Settings.Language
 		systemMutex.Unlock()
-		var languageFile = "html/lang/en.json"
+		var languageFile = fmt.Sprintf("html/lang/%s.json", settingsLanguage)
 
 		if value, ok := webUI[languageFile].(string); ok {
 			content = GetHTMLString(value)
 			lang = jsonToMap(content)
+		} else {
+			// Fallback to English if the selected language file is not found
+			var fallbackFile = "html/lang/en.json"
+			if value, ok := webUI[fallbackFile].(string); ok {
+				content = GetHTMLString(value)
+				lang = jsonToMap(content)
+			}
 		}
 	}
 

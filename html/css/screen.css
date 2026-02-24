@@ -987,3 +987,196 @@ tbody {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* ============================================
+   Settings Page Redesign
+   ============================================ */
+
+/* Settings container */
+#content_settings {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-xl);
+}
+
+/* Category section headers */
+#content_settings h5 {
+  margin: var(--space-2xl) 0 var(--space-md) 0;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+#content_settings h5:first-of-type {
+  margin-top: var(--space-lg);
+}
+
+/* Settings table layout */
+#content_settings table {
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Settings rows - label and control */
+#content_settings table tr {
+  border: none;
+}
+
+#content_settings table tr td:first-child {
+  width: 240px;
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  vertical-align: middle;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+#content_settings table tr td:last-child {
+  padding: var(--space-sm) 0;
+  vertical-align: middle;
+}
+
+/* Unified control sizing */
+#content_settings input[type=text],
+#content_settings input[type=password] {
+  width: 100%;
+  max-width: 100%;
+  padding: 8px 12px;
+  font-size: var(--font-size-base);
+  border: 1px solid var(--border);
+  background-color: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+#content_settings input[type=text]:focus,
+#content_settings input[type=password]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+#content_settings select {
+  width: 100%;
+  max-width: 100%;
+  padding: 8px 12px;
+  padding-right: 32px;
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+#content_settings input[type="checkbox"] {
+  margin: 0;
+}
+
+/* Description rows */
+#content_settings table tr td[colspan] pre,
+#content_settings table tr td pre {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+  padding: 2px 0 var(--space-sm) 0;
+}
+
+/* Settings action buttons - fixed bottom bar */
+#content-interaction {
+  position: sticky;
+  top: 56px;
+  z-index: 100;
+  background-color: var(--bg-deepest);
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-sm) var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+#content-interaction input[type=button] {
+  margin: var(--space-xs);
+}
+
+/* HR separator in settings */
+#content_settings hr {
+  margin: var(--space-sm) 0;
+  opacity: 0.3;
+}
+
+/* ============================================
+   Accent Color Picker
+   ============================================ */
+.accent-color-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.accent-color-picker .color-wheel {
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  appearance: auto;
+  width: 44px;
+  height: 38px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-elevated);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.accent-color-picker .color-wheel::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.accent-color-picker .color-wheel::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.accent-color-picker .color-wheel::-moz-color-swatch {
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.accent-color-picker .hex-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ============================================
+   Save Toast Notification
+   ============================================ */
+.save-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: var(--success);
+  color: #fff;
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-lg);
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+  pointer-events: none;
+}
+
+.save-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}

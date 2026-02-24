@@ -914,7 +914,7 @@ function createLayout() {
         else if (SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] >= 0.8) {
             activeClass = "text-danger";
         }
-        document.getElementById("playlist-connection-information").innerHTML = "Playlist Connections: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
+        document.getElementById("playlist-connection-information").innerHTML = "{{.status.playlistConnections}}: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
     }
     if (document.getElementById("client-connection-information")) {
         let activeClass = "text-primary";
@@ -924,7 +924,7 @@ function createLayout() {
         else if (SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] >= 0.8) {
             activeClass = "text-danger";
         }
-        document.getElementById("client-connection-information").innerHTML = "Client Connections: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activeClients"] + " / " + SERVER["clientInfo"]["totalClients"] + "</span>";
+        document.getElementById("client-connection-information").innerHTML = "{{.status.clientConnections}}: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activeClients"] + " / " + SERVER["clientInfo"]["totalClients"] + "</span>";
     }
     if (!document.getElementById("main-menu")) {
         return;
@@ -947,6 +947,28 @@ function createLayout() {
             default:
                 menuItems[i].createItem();
                 break;
+        }
+    }
+    // Smart default page: if no menu is currently open, auto-open one
+    if (!window._menuOpened) {
+        window._menuOpened = true;
+        var defaultMenuKey = "playlist";
+        // Check if there are mapped channels (xepg data exists)
+        if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
+            var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
+            if (mappedKeys.length > 0) {
+                defaultMenuKey = "mapping";
+            }
+        }
+        // Find the menu item and click it
+        for (let i = 0; i < menuItems.length; i++) {
+            if (menuItems[i].menuKey == defaultMenuKey) {
+                var menuElement = document.getElementById(menuItems[i].id);
+                if (menuElement) {
+                    menuElement.click();
+                }
+                break;
+            }
         }
     }
     return;

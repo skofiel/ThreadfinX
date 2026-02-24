@@ -337,14 +337,37 @@ class SettingsCategory {
                 setting.appendChild(tdLeft);
                 setting.appendChild(tdRight);
                 break;
+            case "language":
+                var tdLeft = document.createElement("TD");
+                tdLeft.innerHTML = "{{.settings.language.title}}" + ":";
+                var tdRight = document.createElement("TD");
+                var text = ["English", "Español"];
+                var values = ["en", "es"];
+                var select = content.createSelect(text, values, data, settingsKey);
+                select.setAttribute("onchange", "javascript: this.className = 'changed'");
+                tdRight.appendChild(select);
+                setting.appendChild(tdLeft);
+                setting.appendChild(tdRight);
+                break;
             case "accentColor":
                 var tdLeft = document.createElement("TD");
                 tdLeft.innerHTML = "{{.settings.accentColor.title}}" + ":";
                 var tdRight = document.createElement("TD");
-                var input = content.createInput("text", "accentColor", data.toString());
-                input.setAttribute("placeholder", "{{.settings.accentColor.placeholder}}");
-                input.setAttribute("onchange", "javascript: this.className = 'changed'");
-                tdRight.appendChild(input);
+                var colorWrapper = document.createElement("DIV");
+                colorWrapper.className = "accent-color-picker";
+                var colorInput = document.createElement("INPUT");
+                colorInput.setAttribute("type", "color");
+                colorInput.setAttribute("name", "accentColor_picker");
+                colorInput.setAttribute("value", data.toString() || "#d46c4a");
+                colorInput.className = "color-wheel";
+                colorInput.setAttribute("oninput", "javascript: var hex=document.getElementsByName('accentColor')[0]; hex.value=this.value; hex.className='changed'; this.className='color-wheel changed'; document.documentElement.style.setProperty('--accent', this.value);");
+                colorWrapper.appendChild(colorInput);
+                var hexInput = content.createInput("text", "accentColor", data.toString());
+                hexInput.setAttribute("placeholder", "{{.settings.accentColor.placeholder}}");
+                hexInput.setAttribute("onchange", "javascript: this.className = 'changed'; var picker=document.getElementsByName('accentColor_picker')[0]; if(this.value.match(/^#[0-9a-fA-F]{6}$/)){picker.value=this.value; document.documentElement.style.setProperty('--accent', this.value);}");
+                hexInput.className = "hex-input";
+                colorWrapper.appendChild(hexInput);
+                tdRight.appendChild(colorWrapper);
                 setting.appendChild(tdLeft);
                 setting.appendChild(tdRight);
                 break;
@@ -566,6 +589,9 @@ class SettingsCategory {
             case "accentColor":
                 text = "{{.settings.accentColor.description}}";
                 break;
+            case "language":
+                text = "{{.settings.language.description}}";
+                break;
             case "buffer.timeout":
                 text = "{{.settings.bufferTimeout.description}}";
                 break;
@@ -679,6 +705,7 @@ function saveSettings() {
     var div = document.getElementById("content_settings");
     var settings = div.getElementsByClassName("changed");
     var newSettings = new Object();
+    var languageChanged = false;
     for (let i = 0; i < settings.length; i++) {
         var name;
         var value;
@@ -700,16 +727,23 @@ function saveSettings() {
                                 break;
                             case "buffer.timeout":
                                 value = parseFloat(value);
+                                break;
                         }
                         newSettings[name] = value;
+                        break;
+                    case "color":
+                        // Skip color picker inputs (we use the text hex input)
                         break;
                 }
                 break;
             case "SELECT":
                 name = settings[i].name;
                 value = settings[i].value;
-                // Wenn der Wert eine Zahl ist, wird dieser als Zahl gespeichert
-                if (isNaN(value)) {
+                if (name == "language") {
+                    languageChanged = true;
+                    newSettings[name] = value;
+                }
+                else if (isNaN(value)) {
                     newSettings[name] = value;
                 }
                 else {
@@ -718,8 +752,32 @@ function saveSettings() {
                 break;
         }
     }
+    if (Object.keys(newSettings).length === 0) {
+        return;
+    }
     var data = new Object();
     data["settings"] = newSettings;
     var server = new Server(cmd);
     server.request(data);
+    // Show success toast
+    showSaveConfirmation();
+    // If language changed, reload the page after a short delay
+    if (languageChanged) {
+        setTimeout(function() { location.reload(); }, 1500);
+    }
+}
+function showSaveConfirmation() {
+    var existing = document.getElementById("save-toast");
+    if (existing) existing.remove();
+    var toast = document.createElement("DIV");
+    toast.id = "save-toast";
+    toast.className = "save-toast";
+    toast.innerHTML = "{{.settings.savedSuccess}}";
+    document.body.appendChild(toast);
+    // Trigger animation
+    setTimeout(function() { toast.classList.add("show"); }, 10);
+    setTimeout(function() {
+        toast.classList.remove("show");
+        setTimeout(function() { toast.remove(); }, 300);
+    }, 3000);
 }
