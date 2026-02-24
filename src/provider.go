@@ -360,8 +360,6 @@ func downloadFileFromServer(providerURL string, proxyUrl string) (filename strin
 	}
 	defer resp.Body.Close()
 
-	resp.Header.Set("User-Agent", Settings.UserAgent)
-
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("%d: %s %s", resp.StatusCode, providerURL, http.StatusText(resp.StatusCode))
 		return
@@ -373,10 +371,12 @@ func downloadFileFromServer(providerURL string, proxyUrl string) (filename strin
 	if index > -1 {
 		var headerFilename = resp.Header.Get("Content-Disposition")[index:]
 		var value = strings.Split(headerFilename, `=`)
-		var f = strings.Replace(value[1], `"`, "", -1)
-		f = strings.Replace(f, `;`, "", -1)
-		filename = f
-		showInfo("Header filename:" + filename)
+		if len(value) >= 2 {
+			var f = strings.Replace(value[1], `"`, "", -1)
+			f = strings.Replace(f, `;`, "", -1)
+			filename = f
+			showInfo("Header filename:" + filename)
+		}
 	} else {
 		var cleanFilename = strings.SplitN(getFilenameFromPath(providerURL), "?", 2)
 		filename = cleanFilename[0]

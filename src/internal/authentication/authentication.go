@@ -185,7 +185,7 @@ func CreateNewUser(username, password string) (userID string, err error) {
 		var salt = userData["_salt"].(string)
 		var loginUsername = userData["_username"].(string)
 
-		if SHA256(username, salt) == loginUsername {
+		if SHA256(username, salt) == loginUsername || sha256Legacy(username, salt) == loginUsername {
 			err = createError(020)
 		}
 
@@ -224,10 +224,20 @@ func UserAuthentication(username, password string) (token string, err error) {
 		var loginUsername = loginData["_username"].(string)
 		var loginPassword = loginData["_password"].(string)
 
-		if SHA256(username, salt) == loginUsername {
-			if SHA256(password, salt) == loginPassword {
-				err = nil
-			}
+		// Try new (correct) hash first
+		if SHA256(username, salt) == loginUsername && SHA256(password, salt) == loginPassword {
+			err = nil
+			return
+		}
+
+		// Fall back to legacy hash for existing users and migrate their credentials
+		if sha256Legacy(username, salt) == loginUsername && sha256Legacy(password, salt) == loginPassword {
+			// Migrate to new hash format
+			loginData["_username"] = SHA256(username, salt)
+			loginData["_password"] = SHA256(password, salt)
+			saveDatabase(data)
+			err = nil
+			return
 		}
 
 		return
@@ -488,6 +498,15 @@ func loadDatabase() (err error) {
 
 // SHA256 : password + salt = sha256 string
 func SHA256(secret, salt string) string {
+	key := []byte(salt)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(secret))
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
+// sha256Legacy : old broken hash for backwards compatibility during migration
+// The original implementation ignored the salt parameter entirely
+func sha256Legacy(secret, salt string) string {
 	key := []byte(secret)
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte("_remote_db"))
@@ -559,10 +578,11 @@ func defaultsForNewUser(username, password string) map[string]interface{} {
 func setToken(id, oldToken string) (newToken string) {
 	delete(tokens, oldToken)
 
-loopToken:
-	newToken = randomString(tokenLength)
-	if _, ok := tokens[newToken]; ok {
-		goto loopToken
+	for {
+		newToken = randomString(tokenLength)
+		if _, ok := tokens[newToken]; !ok {
+			break
+		}
 	}
 
 	var tmp = make(map[string]interface{})

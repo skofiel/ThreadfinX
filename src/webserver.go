@@ -6,17 +6,36 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"threadfin/src/internal/authentication"
 
 	"github.com/gorilla/websocket"
 )
+
+// safeContentDisposition returns a safe Content-Disposition header value
+func safeContentDisposition(filename string) string {
+	filename = filepath.Base(filename)
+	return mime.FormatMediaType("attachment", map[string]string{"filename": filename})
+}
+
+// securityHeaders wraps a handler to add standard security headers to all responses
+func securityHeaders(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		next(w, r)
+	}
+}
 
 // StartWebserver : Startet den Webserver
 func StartWebserver() (err error) {
@@ -28,19 +47,19 @@ func StartWebserver() (err error) {
 	}
 	systemMutex.Unlock()
 
-	http.HandleFunc("/", Index)
-	http.HandleFunc("/stream/", Stream)
-	http.HandleFunc("/xmltv/", Threadfin)
-	http.HandleFunc("/m3u/", Threadfin)
-	http.HandleFunc("/data/", WS)
-	http.HandleFunc("/web/", Web)
-	http.HandleFunc("/download/", Download)
-	http.HandleFunc("/api/", API)
-	http.HandleFunc("/images/", Images)
-	http.HandleFunc("/data_images/", DataImages)
-	http.HandleFunc("/ppv/enable", enablePPV)
-	http.HandleFunc("/ppv/disable", disablePPV)
-	http.HandleFunc("/auto/", Auto)
+	http.HandleFunc("/", securityHeaders(Index))
+	http.HandleFunc("/stream/", securityHeaders(Stream))
+	http.HandleFunc("/xmltv/", securityHeaders(Threadfin))
+	http.HandleFunc("/m3u/", securityHeaders(Threadfin))
+	http.HandleFunc("/data/", securityHeaders(WS))
+	http.HandleFunc("/web/", securityHeaders(Web))
+	http.HandleFunc("/download/", securityHeaders(Download))
+	http.HandleFunc("/api/", securityHeaders(API))
+	http.HandleFunc("/images/", securityHeaders(Images))
+	http.HandleFunc("/data_images/", securityHeaders(DataImages))
+	http.HandleFunc("/ppv/enable", securityHeaders(enablePPV))
+	http.HandleFunc("/ppv/disable", securityHeaders(disablePPV))
+	http.HandleFunc("/auto/", securityHeaders(Auto))
 
 	systemMutex.Lock()
 	ips := len(System.IPAddressesV4) + len(System.IPAddressesV6) - 1
@@ -151,7 +170,7 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "HEAD" {
-		client := &http.Client{}
+		client := &http.Client{Timeout: 30 * time.Second}
 		req, err := http.NewRequest("HEAD", streamInfo.URL, nil)
 		if err != nil {
 			ShowError(err, 1501)
@@ -303,7 +322,7 @@ func Threadfin(w http.ResponseWriter, r *http.Request) {
 		if !System.Dev {
 			// false: Dateiname wird im Header gesetzt
 			// true: M3U wird direkt im Browser angezeigt
-			w.Header().Set("Content-Disposition", "attachment; filename="+getFilenameFromPath(path))
+			w.Header().Set("Content-Disposition", safeContentDisposition(getFilenameFromPath(path)))
 		}
 		systemMutex.Unlock()
 
@@ -387,8 +406,28 @@ func WS(w http.ResponseWriter, r *http.Request) {
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			// Implement any custom origin validation logic here, if needed.
-			return true
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				return true
+			}
+			u, err := url.Parse(origin)
+			if err != nil {
+				return false
+			}
+			host := r.Host
+			if strings.Contains(host, ":") {
+				host = strings.Split(host, ":")[0]
+			}
+			originHost := u.Hostname()
+			// Allow same-host, localhost, and local IPs
+			if originHost == host || originHost == "localhost" || originHost == "127.0.0.1" || originHost == "::1" {
+				return true
+			}
+			// Allow configured domain
+			if Settings.HttpThreadfinDomain != "" && originHost == Settings.HttpThreadfinDomain {
+				return true
+			}
+			return false
 		},
 	}
 
@@ -464,9 +503,6 @@ func WS(w http.ResponseWriter, r *http.Request) {
 			response = setDefaultResponseData(response, false)
 			if err = conn.WriteJSON(response); err != nil {
 				ShowError(err, 1022)
-			} else {
-				return
-				break
 			}
 			return
 
@@ -804,7 +840,7 @@ func Web(w http.ResponseWriter, r *http.Request) {
 			content = GetHTMLString(value.(string))
 
 			if contentType == "text/plain" {
-				w.Header().Set("Content-Disposition", "attachment; filename="+getFilenameFromPath(requestFile))
+				w.Header().Set("Content-Disposition", safeContentDisposition(getFilenameFromPath(requestFile)))
 			}
 
 		} else {
@@ -820,7 +856,7 @@ func Web(w http.ResponseWriter, r *http.Request) {
 		contentType = getContentType(requestFile)
 
 		if contentType == "text/plain" {
-			w.Header().Set("Content-Disposition", "attachment; filename="+getFilenameFromPath(requestFile))
+			w.Header().Set("Content-Disposition", safeContentDisposition(getFilenameFromPath(requestFile)))
 		}
 
 	} else {
@@ -966,7 +1002,6 @@ func API(w http.ResponseWriter, r *http.Request) {
 
 		default:
 			token, err = tokenAuthentication(request.Token)
-			fmt.Println(err)
 			if err != nil {
 				responseAPIError(err)
 				return
@@ -1055,7 +1090,7 @@ func Download(w http.ResponseWriter, r *http.Request) {
 
 	var path = r.URL.Path
 	var file = System.Folder.Temp + getFilenameFromPath(path)
-	w.Header().Set("Content-Disposition", "attachment; filename="+getFilenameFromPath(file))
+	w.Header().Set("Content-Disposition", safeContentDisposition(getFilenameFromPath(file)))
 
 	content, err := readStringFromFile(file)
 	if err != nil {

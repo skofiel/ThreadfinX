@@ -384,10 +384,23 @@ func buildM3U(groups []string) (m3u string, err error) {
 
 func probeChannel(request RequestStruct) (string, string, string, error) {
 
+	// Validate probe URL to prevent option injection
+	if request.ProbeURL == "" {
+		return "", "", "", fmt.Errorf("probe URL is empty")
+	}
+	parsedURL, err := url.Parse(request.ProbeURL)
+	if err != nil || parsedURL.Scheme == "" {
+		return "", "", "", fmt.Errorf("invalid probe URL: must be a valid URL with scheme")
+	}
+	allowedSchemes := map[string]bool{"http": true, "https": true, "rtsp": true, "rtp": true, "udp": true}
+	if !allowedSchemes[strings.ToLower(parsedURL.Scheme)] {
+		return "", "", "", fmt.Errorf("unsupported probe URL scheme: %s", parsedURL.Scheme)
+	}
+
 	ffmpegPath := Settings.FFmpegPath
 	ffprobePath := strings.Replace(ffmpegPath, "ffmpeg", "ffprobe", 1)
 
-	cmd := exec.Command(ffprobePath, "-v", "error", "-show_streams", "-of", "json", request.ProbeURL)
+	cmd := exec.Command(ffprobePath, "-v", "error", "-show_streams", "-of", "json", parsedURL.String())
 	output, err := cmd.Output()
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to execute ffprobe: %v", err)

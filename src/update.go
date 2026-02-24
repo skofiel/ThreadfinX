@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	up2date "threadfin/src/internal/up2date/client"
 
@@ -47,13 +48,19 @@ func BinaryUpdate() (err error) {
 
 		var git []*GithubReleaseInfo
 
-		resp, err := http.Get(releaseInfo)
+		httpClient := &http.Client{Timeout: 30 * time.Second}
+		resp, err := httpClient.Get(releaseInfo)
 		if err != nil {
 			ShowError(err, 6003)
 			return nil
 		}
+		defer resp.Body.Close()
 
-		body, _ = io.ReadAll(resp.Body)
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			ShowError(err, 6003)
+			return nil
+		}
 
 		err = json.Unmarshal(body, &git)
 		if err != nil {
