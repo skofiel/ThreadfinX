@@ -57,7 +57,7 @@ class Server {
             if (response.hasOwnProperty("probeInfo")) {
                 if (document.getElementById("probeDetails")) {
                     if (response["probeInfo"]["resolution"] !== undefined) {
-                        document.getElementById("probeDetails").innerHTML = "<p>Resolution: <span class='text-primary'>" + response["probeInfo"]["resolution"] + "</span></p><p>Frame Rate: <span class='text-primary'>" + response["probeInfo"]["frameRate"] + " FPS</span></p><p>Audio: <span class='text-primary'>" + response["probeInfo"]["audioChannel"] + "</span></p>";
+                        document.getElementById("probeDetails").innerHTML = "<p>{{.status.resolution}}: <span class='text-primary'>" + response["probeInfo"]["resolution"] + "</span></p><p>{{.status.frameRate}}: <span class='text-primary'>" + response["probeInfo"]["frameRate"] + " FPS</span></p><p>{{.status.audio}}: <span class='text-primary'>" + response["probeInfo"]["audioChannel"] + "</span></p>";
                     }
                 }
             }
@@ -81,7 +81,7 @@ class Server {
                         else if (response["clientInfo"]["activePlaylist"] / response["clientInfo"]["totalPlaylist"] >= 0.8) {
                             activeClass = "text-danger";
                         }
-                        document.getElementById("playlist-connection-information").innerHTML = "Playlist Connections: <span class='" + activeClass + "'>" + response["clientInfo"]["activePlaylist"] + " / " + response["clientInfo"]["totalPlaylist"] + "</span>";
+                        document.getElementById("playlist-connection-information").innerHTML = "{{.status.playlistConnections}}: <span class='" + activeClass + "'>" + response["clientInfo"]["activePlaylist"] + " / " + response["clientInfo"]["totalPlaylist"] + "</span>";
                     }
                     if (document.getElementById("client-connection-information")) {
                         let activeClass = "text-primary";
@@ -91,7 +91,7 @@ class Server {
                         else if (response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] >= 0.8) {
                             activeClass = "text-danger";
                         }
-                        document.getElementById("client-connection-information").innerHTML = "Client Connections: <span class='" + activeClass + "'>" + response["clientInfo"]["activeClients"] + " / " + response["clientInfo"]["totalClients"] + "</span>";
+                        document.getElementById("client-connection-information").innerHTML = "{{.status.clientConnections}}: <span class='" + activeClass + "'>" + response["clientInfo"]["activeClients"] + " / " + response["clientInfo"]["totalClients"] + "</span>";
                     }
                     return;
                     break;

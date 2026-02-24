@@ -1,0 +1,653 @@
+{
+  "mainMenu": {
+    "item": {
+      "playlist": "Lista de reproducción",
+      "pmsID": "PMS ID",
+      "filter": "Filtro",
+      "xmltv": "XMLTV",
+      "mapping": "Asignación",
+      "users": "Usuarios",
+      "settings": "Ajustes",
+      "log": "Registro",
+      "logout": "Cerrar sesión"
+    },
+    "headline": {
+      "playlist": "Listas de reproducción locales o remotas",
+      "filter": "Filtrar lista de reproducción",
+      "xmltv": "Archivos XMLTV locales o remotos",
+      "mapping": "Asignar canales de la lista a canales EPG",
+      "users": "Gestión de usuarios",
+      "settings": "Ajustes",
+      "log": "Registro",
+      "logout": "Cerrar sesión"
+    }
+  },
+  "confirm": {
+    "restore": "Todos los datos serán reemplazados con los de la copia de seguridad. ¿Desea restaurar los archivos?"
+  },
+  "alert": {
+    "fileLoadingError": "No se pudo cargar el archivo",
+    "invalidChannelNumber": "Número de canal no válido",
+    "missingInput": "Falta información"
+  },
+  "status": {
+    "probingChannel": "Obteniendo detalles del canal...",
+    "resolution": "Resolución",
+    "frameRate": "Tasa de fotogramas",
+    "audio": "Audio",
+    "playlistConnections": "Conexiones de lista",
+    "clientConnections": "Conexiones de clientes",
+    "serverInformation": "Información del servidor",
+    "streamInformation": "Información del stream",
+    "filteredChannels": "Canales filtrados",
+    "mappedChannels": "Canales asignados"
+  },
+  "button": {
+    "back": "Atrás",
+    "backup": "Copia de seguridad",
+    "bulkEdit": "Edición masiva",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "done": "Hecho",
+    "login": "Iniciar sesión",
+    "new": "Nuevo",
+    "next": "Siguiente",
+    "restore": "Restaurar",
+    "save": "Guardar",
+    "search": "Buscar",
+    "update": "Actualizar",
+    "craeteAccount": "Crear cuenta",
+    "resetLogs": "Borrar registros",
+    "uploadLogo": "Subir logotipo",
+    "probeChannel": "Analizar canal",
+    "sortChannelsAlpha": "Ordenar canales alfabéticamente",
+    "sortChannelNumbers": "Ordenar canales"
+  },
+  "filter": {
+    "table": {
+      "startingNumber": "Canal ini.",
+      "name": "Nombre del filtro",
+      "type": "Tipo de filtro",
+      "filter": "Filtro"
+    },
+    "custom": "Personalizado",
+    "group": "Grupo",
+    "name": {
+      "title": "Nombre del filtro",
+      "placeholder": "Nombre del filtro",
+      "description": ""
+    },
+    "startingnumber": {
+      "title": "Número de canal inicial del filtro",
+      "placeholder": "Número de canal inicial del filtro",
+      "description": "Número de canal inicial a usar para este filtro de grupo (por defecto es 1000)"
+    },
+    "category": {
+      "title": "Categoría del filtro",
+      "placeholder": "Categoría del filtro",
+      "description": "La categoría del filtro asigna todos los canales del filtro a una categoría específica (noticias, deportes, etc.)"
+    },
+    "description": {
+      "title": "Descripción",
+      "placeholder": "Descripción",
+      "description": ""
+    },
+    "type": {
+      "title": "Tipo",
+      "groupTitle": "Título de grupo",
+      "customFilter": "Filtro personalizado"
+    },
+    "liveEvent": {
+      "title": "Grupo de eventos en vivo",
+      "placeholder": "",
+      "description": ""
+    },
+    "caseSensitive": {
+      "title": "Distinguir mayúsculas",
+      "placeholder": "",
+      "description": ""
+    },
+    "filterRule": {
+      "title": "Regla de filtro",
+      "placeholder": "Deporte {HD} !{ES,IT}",
+      "description": ""
+    },
+    "filterGroup": {
+      "title": "Título de grupo",
+      "placeholder": "",
+      "description": "Seleccione un grupo M3U. (Contador)<br>Cambiar el título del grupo en el M3U invalida el filtro."
+    },
+    "include": {
+      "title": "Incluir",
+      "placeholder": "FHD,UHD",
+      "description": "El nombre del canal debe incluir.<br>(Separado por comas) La coma significa 'o'"
+    },
+    "exclude": {
+      "title": "Excluir",
+      "placeholder": "ES,IT",
+      "description": "El nombre del canal no debe contener.<br>(Separado por comas) La coma significa 'o'"
+    }
+  },
+  "playlist": {
+    "table": {
+      "playlist": "Lista de reproducción",
+      "buffer": "Buffer",
+      "tuner": "Sintonizador",
+      "lastUpdate": "Última actualización",
+      "availability": "Disponibilidad",
+      "type": "Tipo",
+      "streams": "Streams",
+      "groupTitle": "group-title",
+      "tvgID": "tvg-id",
+      "uniqueID": "ID único"
+    },
+    "playlistType": {
+      "title": "Tipo de lista de reproducción",
+      "placeholder": "",
+      "description": ""
+    },
+    "type": {
+      "title": "Tipo",
+      "placeholder": "",
+      "description": ""
+    },
+    "name": {
+      "title": "Nombre",
+      "placeholder": "Nombre de la lista",
+      "description": ""
+    },
+    "description": {
+      "title": "Descripción",
+      "placeholder": "Descripción",
+      "description": ""
+    },
+    "fileM3U": {
+      "title": "Archivo M3U",
+      "placeholder": "Ruta del archivo o URL del M3U",
+      "description": ""
+    },
+    "fileHDHR": {
+      "title": "IP de HDHomeRun",
+      "placeholder": "Dirección IP y puerto (192.168.1.10:5004)",
+      "description": ""
+    },
+    "buffer": {
+      "title": "Buffer",
+      "placeholder": "",
+      "description": "Buffer para los streams. <br>Solo disponible con sintonizador activado."
+    },
+    "tuner": {
+      "title": "Sintonizador / Streams",
+      "placeholder": "",
+      "description": "Número de conexiones paralelas que se pueden establecer con el proveedor. <br>Solo disponible con buffer activado.<br>Los nuevos ajustes solo se aplicarán después de cerrar todos los streams."
+    },
+    "http_proxy_ip": {
+      "title": "IP del Proxy HTTP",
+      "placeholder": "192.168.0.2",
+      "description": "Dirección IP a usar por el Proxy HTTP"
+    },
+    "http_proxy_port": {
+      "title": "Puerto del Proxy HTTP",
+      "placeholder": "8888",
+      "description": "Puerto a usar por el Proxy HTTP"
+    },
+    "http_user_origin": {
+      "title": "Cabecera Origin del usuario",
+      "description": "Cabecera Origin para solicitudes HTTP. Para cada conexión HTTP, este valor se usa como cabecera origin. Solo debe cambiarse si Threadfin está bloqueado.",
+      "placeholder": "HTTP Origin"
+    },
+    "http_user_referer": {
+      "title": "Cabecera Referer del usuario",
+      "description": "Cabecera Referer para solicitudes HTTP. Para cada conexión HTTP, este valor se usa como cabecera referer. Solo debe cambiarse si Threadfin está bloqueado.",
+      "placeholder": "HTTP Referer"
+    }
+  },
+  "xmltv": {
+    "table": {
+      "guide": "Guía",
+      "lastUpdate": "Última actualización",
+      "availability": "Disponibilidad",
+      "channels": "Canales",
+      "programs": "Programas"
+    },
+    "name": {
+      "title": "Nombre",
+      "placeholder": "Nombre de la guía",
+      "description": ""
+    },
+    "description": {
+      "title": "Descripción",
+      "placeholder": "Descripción",
+      "description": ""
+    },
+    "fileXMLTV": {
+      "title": "Archivo XMLTV",
+      "placeholder": "Ruta del archivo o URL del XMLTV",
+      "description": ""
+    },
+    "http_proxy_ip": {
+      "title": "IP del Proxy HTTP",
+      "placeholder": "192.168.0.2",
+      "description": "Dirección IP a usar por el Proxy HTTP"
+    },
+    "http_proxy_port": {
+      "title": "Puerto del Proxy HTTP",
+      "placeholder": "8888",
+      "description": "Puerto a usar por el Proxy HTTP"
+    }
+  },
+  "mapping": {
+    "table": {
+      "chNo": "Nº Canal",
+      "logo": "Logo",
+      "channelName": "Nombre del canal",
+      "playlist": "Lista de reproducción",
+      "groupTitle": "Título de grupo",
+      "xmltvFile": "Archivo XMLTV",
+      "xmltvID": "ID XMLTV"
+    },
+    "active": {
+      "title": "Activo",
+      "placeholder": "",
+      "description": ""
+    },
+    "channelName": {
+      "title": "Nombre del canal",
+      "placeholder": "",
+      "description": ""
+    },
+    "channelGroupStart": {
+      "title": "Inicio de grupo de canales",
+      "placeholder": "",
+      "description": ""
+    },
+    "sortChannelsAlpha": {
+      "title": "Ordenar alfabéticamente",
+      "placeholder": "",
+      "description": ""
+    },
+    "sortChannels": {
+      "title": "Ordenar canales",
+      "placeholder": "",
+      "description": ""
+    },
+    "description": {
+      "title": "Descripción del canal",
+      "placeholder": "Usado por el Dummy como descripción XML",
+      "description": ""
+    },
+    "updateChannelName": {
+      "title": "Actualizar nombre del canal",
+      "placeholder": "",
+      "description": ""
+    },
+    "channelLogo": {
+      "title": "URL del logotipo",
+      "placeholder": "",
+      "description": ""
+    },
+    "updateChannelLogo": {
+      "title": "Actualizar logotipo del canal",
+      "placeholder": "",
+      "description": ""
+    },
+    "epgCategory": {
+      "title": "Categoría EPG",
+      "placeholder": "",
+      "description": ""
+    },
+    "m3uGroupTitle": {
+      "title": "Título de grupo (threadfin.m3u)",
+      "placeholder": "",
+      "description": ""
+    },
+    "xmltvFile": {
+      "title": "Archivo XMLTV",
+      "placeholder": "",
+      "description": ""
+    },
+    "xmltvChannel": {
+      "title": "Canal XMLTV",
+      "placeholder": "",
+      "description": ""
+    },
+    "ppvextra": {
+      "title": "Título extra PPV",
+      "placeholder": "",
+      "description": "Esto añadirá texto personalizado a los datos del programa"
+    },
+    "backupChannel1": {
+      "title": "Canal de respaldo 1",
+      "placeholder": "",
+      "description": ""
+    },
+    "backupChannel2": {
+      "title": "Canal de respaldo 2",
+      "placeholder": "",
+      "description": ""
+    },
+    "backupChannel3": {
+      "title": "Canal de respaldo 3",
+      "placeholder": "",
+      "description": ""
+    },
+    "hideChannel": {
+      "title": "Ocultar canal de respaldo",
+      "placeholder": "",
+      "description": ""
+    },
+    "probeDetails": {
+      "title": "Detalles del análisis",
+      "placeholder": "",
+      "description": ""
+    }
+  },
+  "users": {
+    "table": {
+      "username": "Usuario",
+      "password": "Contraseña",
+      "web": "WEB",
+      "pms": "PMS",
+      "m3u": "M3U",
+      "xml": "XML",
+      "api": "API"
+    },
+    "username": {
+      "title": "Usuario",
+      "placeholder": "Usuario",
+      "description": ""
+    },
+    "password": {
+      "title": "Contraseña",
+      "placeholder": "Contraseña",
+      "description": ""
+    },
+    "confirm": {
+      "title": "Confirmar",
+      "placeholder": "Confirmar contraseña",
+      "description": ""
+    },
+    "web": {
+      "title": "Acceso Web",
+      "placeholder": "",
+      "description": ""
+    },
+    "pms": {
+      "title": "Acceso PMS",
+      "placeholder": "",
+      "description": ""
+    },
+    "m3u": {
+      "title": "Acceso M3U",
+      "placeholder": "",
+      "description": ""
+    },
+    "xml": {
+      "title": "Acceso XML",
+      "placeholder": "",
+      "description": ""
+    },
+    "api": {
+      "title": "Acceso API",
+      "placeholder": "",
+      "description": ""
+    }
+  },
+  "settings": {
+    "category": {
+      "general": "General",
+      "files": "Archivos",
+      "streaming": "Streaming",
+      "backup": "Copia de seguridad",
+      "authentication": "Autenticación",
+      "appearance": "Apariencia"
+    },
+    "savedSuccess": "Ajustes guardados correctamente",
+    "update": {
+      "title": "Programación de actualización (Lista, XMLTV, Copia de seguridad)",
+      "placeholder": "0000,1000,2000",
+      "description": "Hora en formato 24 horas (0800 = 8:00). Se pueden introducir varias horas separadas por comas. Deje este campo vacío si no desea realizar actualizaciones."
+    },
+    "api": {
+      "title": "Interfaz API",
+      "description": "A través de la interfaz API es posible enviar comandos a Threadfin. La documentación de la API está <a href='https://github.com/Threadfin/Threadfin-Documentation/blob/master/en/configuration.md#api'>aquí</a>"
+    },
+    "ssdp": {
+      "title": "SSDP",
+      "description": "SSDP es un protocolo de red para descubrimiento de servicios. Se usa para la detección automática de Threadfin en la red."
+    },
+    "dummy": {
+      "title": "Habilitar datos Dummy por defecto",
+      "description": "Cuando está habilitado, asignará automáticamente los canales inactivos al canal de datos dummy. Úselo para mantener activos los canales de eventos en vivo."
+    },
+    "dummyChannel": {
+      "title": "Canal de datos Dummy",
+      "description": "Seleccione el canal por defecto a usar al asignar canales inactivos a los datos dummy."
+    },
+    "ignoreFilters": {
+      "title": "Ignorar filtros",
+      "description": "Si está marcado, el filtrado se ignora completamente."
+    },
+    "epgSource": {
+      "title": "Fuente EPG",
+      "description": "PMS:<br>- Usar datos EPG de Plex, Emby o Jellyfin <br><br>XEPG:<br>- Uso de uno o más archivos XMLTV<br>- Gestión de canales<br>- Exportación M3U / XMLTV (enlace HTTP para apps IPTV)"
+    },
+    "tuner": {
+      "title": "Número de sintonizadores",
+      "description": "Número de conexiones paralelas que se pueden establecer con el proveedor.<br>Disponible para: Plex, Emby, Jellyfin, M3U (con buffer activo).<br>Después de un cambio, Threadfin debe eliminarse en los ajustes DVR de Plex / Emby / Jellyfin y configurarse de nuevo."
+    },
+    "filesUpdate": {
+      "title": "Actualizar todos los archivos al inicio",
+      "description": "Actualiza todas las listas de reproducción, sintonizadores y archivos XMLTV al inicio."
+    },
+    "cacheImages": {
+      "title": "Caché de imágenes",
+      "description": "Todas las imágenes del archivo XMLTV se almacenan en caché, permitiendo una renderización más rápida de la guía en el cliente.<br>La descarga de las imágenes puede tardar un poco y se realizará en segundo plano."
+    },
+    "replaceEmptyImages": {
+      "title": "Reemplazar imágenes de programas faltantes",
+      "description": "Si falta el póster en el programa XMLTV, se usará el logotipo del canal."
+    },
+    "replaceChannelTitle": {
+      "title": "Reemplazar título/descripción de canales PPV",
+      "description": "Úselo si su proveedor asigna el nombre del evento PPV al nombre del canal"
+    },
+    "ThreadfinAutoUpdate": {
+      "title": "Actualización automática de Threadfin",
+      "description": "Si hay una nueva versión de Threadfin disponible, se instalará automáticamente. Las actualizaciones se descargan desde GitHub."
+    },
+    "streamBuffering": {
+      "title": "Buffer de stream",
+      "description": "Funciones del buffer:<br>- El stream se pasa de FFmpeg o VLC a Plex, Emby, Jellyfin o reproductor M3U<br>- Se pueden compensar pequeños cortes en los streams<br>- Soporte HLS / M3U8<br>- Soporte RTP / RTPS<br>- Re-streaming<br>- Límite de sintonizador separado para cada lista",
+      "info_false": "Sin buffer (El cliente se conecta directamente al servidor de streaming)",
+      "info_ffmpeg": "FFmpeg se conecta al servidor de streaming",
+      "info_vlc": "VLC se conecta al servidor de streaming"
+    },
+    "udpxy": {
+      "title": "Dirección UDPxy",
+      "description": "La dirección de su servidor UDPxy. Si está configurada y las URLs de los canales en el m3u son multicast, Threadfin las reescribirá para que se accedan a través del servicio UDPxy.",
+      "placeholder": "host:puerto"
+    },
+    "ffmpegPath": {
+      "title": "Ruta del binario FFmpeg",
+      "description": "Ruta al binario de FFmpeg.",
+      "placeholder": "/ruta/a/ffmpeg"
+    },
+    "ffmpegOptions": {
+      "title": "Opciones de FFmpeg",
+      "description": "Opciones de FFmpeg.<br>Solo cambie si sabe lo que está haciendo.<br>Deje en blanco para usar los ajustes por defecto.",
+      "placeholder": "Deje en blanco para ajustes por defecto"
+    },
+    "ffmpegForceHttp": {
+      "title": "Forzar HTTP para FFmpeg",
+      "description": "Si está marcado, reescribirá el m3u para usar http en lugar de https. Úselo para enlaces https en ffmpeg"
+    },
+    "vlcPath": {
+      "title": "Ruta del binario VLC / CVLC",
+      "description": "Ruta al binario de VLC / CVLC.",
+      "placeholder": "/ruta/a/cvlc"
+    },
+    "vlcOptions": {
+      "title": "Opciones de VLC / CVLC",
+      "description": "Opciones de VLC / CVLC.<br>Solo cambie si sabe lo que está haciendo.<br>Deje en blanco para usar los ajustes por defecto.",
+      "placeholder": "Deje en blanco para ajustes por defecto"
+    },
+    "bufferSize": {
+      "title": "Tamaño del buffer",
+      "description": "Tamaño del buffer en MB.<br>M3U8: Si el segmento TS es menor que el tamaño del buffer, se usa el tamaño del archivo del segmento."
+    },
+    "storeBufferInRAM":
+    {
+      "title": "Almacenar buffer en RAM",
+      "description": "Si está marcado, escribe el buffer en RAM en lugar de escribir en disco"
+    },
+    "forceHttps":
+    {
+      "title": "Forzar HTTPS",
+      "description": "Con la caché de imágenes habilitada, si está marcado, reescribirá las URLs de M3U y EPG para incluir el protocolo https así como el puerto https (por defecto es 443)"
+    },
+    "excludeStreamHttps":
+    {
+      "title": "Excluir streams de HTTPS",
+      "description": "No reescribirá las URLs de stream M3U para incluir el protocolo https"
+    },
+    "httpsPort":
+    {
+      "title": "Puerto HTTPS",
+      "description": "Con la caché de imágenes habilitada, puerto a usar para forzar https. Por defecto es 443"
+    },
+    "httpsThreadfinDomain":
+    {
+      "title": "Dominio HTTPS de Threadfin",
+      "description": "Con la caché de imágenes habilitada, reescribe la dirección IP de Threadfin en el m3u para usar un dominio en modo HTTPS. NO incluya https (ej: midominio.com)"
+    },
+    "bindIpAddress":
+    {
+      "title": "Dirección IP de enlace para WebUI/API",
+      "description": "Esto establecerá explícitamente la dirección IP de enlace en lugar de intentar asumirla. Útil para sistemas con múltiples interfaces de red."
+    },
+    "httpThreadfinDomain":
+    {
+      "title": "Dominio HTTP de Threadfin",
+      "description": "Con la caché de imágenes habilitada, reescribe la dirección IP de Threadfin en el m3u para usar un dominio en modo HTTP. NO incluya http (ej: midominio.com)"
+    },
+    "enableNonAscii":
+    {
+      "title": "Habilitar caracteres no ASCII",
+      "description": "Si está marcado, permitirá caracteres especiales no ASCII en el M3U y EPG. Por defecto está deshabilitado"
+    },
+    "epgCategories":
+    {
+      "title": "Categorías EPG",
+      "description": "Personalice las categorías EPG. El formato es clave:valor|clave:valor, por ejemplo Noticias:news|Deportes:sports|Películas:movies"
+    },
+    "epgCategoriesColors":
+    {
+      "title": "Colores de categorías EPG",
+      "description": "Personalice los colores de las categorías EPG. El formato es valor:color|valor:color, por ejemplo news:tomato|sports:yellowgreen|movies:royalblue"
+    },
+    "accentColor":
+    {
+      "title": "Color de acento",
+      "description": "Establezca el color de acento de la interfaz usando el selector de color o introduciendo un valor hexadecimal.",
+      "placeholder": "#d46c4a"
+    },
+    "language":
+    {
+      "title": "Idioma",
+      "description": "Seleccione el idioma de la interfaz. Los cambios requieren recargar la página."
+    },
+    "bufferTimeout": {
+      "title": "Tiempo de espera para nuevas conexiones",
+      "description": "El buffer de Threadfin espera hasta que se establezcan nuevas conexiones de clientes. Útil para cambio rápido de canales. Valor en milisegundos.",
+      "placeholder": "100"
+    },
+    "userAgent": {
+      "title": "User Agent",
+      "description": "User Agent para solicitudes HTTP. Para cada conexión HTTP, este valor se usa como user agent. Solo debe cambiarse si Threadfin está bloqueado.",
+      "placeholder": "Threadfin"
+    },
+    "backupPath": {
+      "title": "Ubicación para copias de seguridad automáticas",
+      "placeholder": "/mnt/data/backup/threadfin/",
+      "description": "Antes de cualquier actualización de los datos del proveedor según la programación, Threadfin crea una copia de seguridad. La ruta se puede cambiar. Threadfin necesita permisos de escritura en esta carpeta."
+    },
+    "tempPath": {
+      "title": "Ubicación para archivos temporales",
+      "placeholder": "/tmp/threadfin/",
+      "description": "Ubicación para los archivos de buffer."
+    },
+    "backupKeep": {
+      "title": "Número de copias de seguridad a mantener",
+      "description": "Número de copias de seguridad a mantener. Las copias más antiguas se eliminan automáticamente."
+    },
+    "authenticationWEB": {
+      "title": "Autenticación WEB",
+      "description": "El acceso a la interfaz web solo es posible con credenciales."
+    },
+    "authenticationPMS": {
+      "title": "Autenticación PMS",
+      "description": "Las solicitudes de Plex solo son posibles con autenticación. <br><b>¡Advertencia!</b> Después de activar esta función, Threadfin debe eliminarse en los ajustes DVR de PMS y configurarse de nuevo."
+    },
+    "authenticationM3U": {
+      "title": "Autenticación M3U",
+      "description": "La descarga del archivo threadfin.m3u mediante una solicitud HTTP solo es posible con autenticación."
+    },
+    "authenticationXML": {
+      "title": "Autenticación XML",
+      "description": "La descarga del archivo threadfin.xml mediante una solicitud HTTP solo es posible con autenticación"
+    },
+    "authenticationAPI": {
+      "title": "Autenticación API",
+      "description": "El acceso a la interfaz API solo es posible con autenticación."
+    }
+  },
+  "wizard": {
+    "epgSource": {
+      "title": "Fuente EPG",
+      "description": "PMS:<br>- Usar datos EPG de Plex, Emby o Jellyfin <br><br>XEPG:<br>- Uso de uno o más archivos XMLTV<br>- Gestión de canales<br>- Exportación M3U / XMLTV (enlace HTTP para apps IPTV)"
+    },
+    "tuner": {
+      "title": "Número de sintonizadores",
+      "description": "Número de conexiones paralelas que se pueden establecer con el proveedor.<br>Disponible para: Plex, Emby, Jellyfin, M3U (con buffer activo).<br>Después de un cambio, Threadfin debe eliminarse en los ajustes DVR de Plex / Emby / Jellyfin y configurarse de nuevo."
+    },
+    "m3u": {
+      "title": "Lista de reproducción M3U",
+      "placeholder": "Ruta del archivo o URL del M3U",
+      "description": "Listas de reproducción locales o remotas"
+    },
+    "xmltv": {
+      "title": "Archivo XMLTV",
+      "placeholder": "Ruta del archivo o URL del XMLTV",
+      "description": "Archivo XMLTV local o remoto"
+    }
+  },
+  "login": {
+    "failed": "Autenticación de usuario fallida",
+    "headline": "Iniciar sesión",
+    "username": {
+      "title": "Usuario",
+      "placeholder": "Usuario"
+    },
+    "password": {
+      "title": "Contraseña",
+      "placeholder": "Contraseña"
+    }
+  },
+  "account": {
+    "failed": "Las contraseñas no coinciden",
+    "headline": "Crear cuenta de usuario",
+    "username": {
+      "title": "Usuario",
+      "placeholder": "Usuario"
+    },
+    "password": {
+      "title": "Contraseña",
+      "placeholder": "Contraseña"
+    },
+    "confirm": {
+      "title": "Confirmar",
+      "placeholder": "Confirmar"
+    }
+  }
+}

@@ -30,6 +30,18 @@
     "invalidChannelNumber": "Invalid channel number",
     "missingInput": "Missing input"
   },
+  "status": {
+    "probingChannel": "Probing Channel Details...",
+    "resolution": "Resolution",
+    "frameRate": "Frame Rate",
+    "audio": "Audio",
+    "playlistConnections": "Playlist Connections",
+    "clientConnections": "Client Connections",
+    "serverInformation": "Server Information",
+    "streamInformation": "Stream Information",
+    "filteredChannels": "Filtered Channels",
+    "mappedChannels": "Mapped Channels"
+  },
   "button": {
     "back": "Back",
     "backup": "Backup",
@@ -387,8 +399,10 @@
       "files": "Files",
       "streaming": "Streaming",
       "backup": "Backup",
-      "authentication": "Authentication"
+      "authentication": "Authentication",
+      "appearance": "Appearance"
     },
+    "savedSuccess": "Settings saved successfully",
     "update": {
       "title": "Schedule for updating (Playlist, XMLTV, Backup)",
       "placeholder": "0000,1000,2000",
@@ -535,8 +549,13 @@
     "accentColor":
     {
       "title": "Accent Color",
-      "description": "Set the UI accent color in hex format (e.g. #d46c4a). Changes apply after page reload.",
+      "description": "Set the UI accent color using the color picker or entering a hex value.",
       "placeholder": "#d46c4a"
+    },
+    "language":
+    {
+      "title": "Language",
+      "description": "Select the interface language. Changes require a page reload."
     },
     "bufferTimeout": {
       "title": "Timeout for new client connections",
