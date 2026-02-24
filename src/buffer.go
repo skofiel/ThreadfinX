@@ -38,19 +38,19 @@ func getActiveClientCount() (count int) {
 	BufferInformation.Range(func(key, value interface{}) bool {
 		playlist, ok := value.(Playlist)
 		if !ok {
-			fmt.Printf("Invalid type assertion for playlist: %v\n", value)
+			showDebug(fmt.Sprintf("Invalid type assertion for playlist: %v", value), 2)
 			return true
 		}
 
 		for clientID, client := range playlist.Clients {
 			if client.Connection < 0 {
-				fmt.Printf("Client ID %d has negative connections: %d. Resetting to 0.\n", clientID, client.Connection)
+				showDebug(fmt.Sprintf("Client ID %d has negative connections: %d. Resetting to 0.", clientID, client.Connection), 2)
 				client.Connection = 0
 				playlist.Clients[clientID] = client
 				BufferInformation.Store(key, playlist)
 			}
 			if client.Connection > 1 {
-				fmt.Printf("Client ID %d has suspiciously high connections: %d. Resetting to 1.\n", clientID, client.Connection)
+				showDebug(fmt.Sprintf("Client ID %d has suspiciously high connections: %d. Resetting to 1.", clientID, client.Connection), 2)
 				client.Connection = 1
 				playlist.Clients[clientID] = client
 				BufferInformation.Store(key, playlist)
@@ -58,7 +58,7 @@ func getActiveClientCount() (count int) {
 			count += client.Connection
 		}
 
-		fmt.Printf("Playlist %s has %d active clients\n", playlist.PlaylistID, len(playlist.Clients))
+		showDebug(fmt.Sprintf("Playlist %s has %d active clients", playlist.PlaylistID, len(playlist.Clients)), 3)
 		return true
 	})
 
@@ -78,13 +78,13 @@ func cleanUpStaleClients() {
 	BufferInformation.Range(func(key, value interface{}) bool {
 		playlist, ok := value.(Playlist)
 		if !ok {
-			fmt.Printf("Invalid type assertion for playlist: %v\n", value)
+			showDebug(fmt.Sprintf("Invalid type assertion for playlist: %v", value), 2)
 			return true
 		}
 
 		for clientID, client := range playlist.Clients {
 			if client.Connection <= 0 {
-				fmt.Printf("Removing stale client ID %d from playlist %s\n", clientID, playlist.PlaylistID)
+				showDebug(fmt.Sprintf("Removing stale client ID %d from playlist %s", clientID, playlist.PlaylistID), 2)
 				delete(playlist.Clients, clientID)
 			}
 		}

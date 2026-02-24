@@ -1,16 +1,16 @@
 class Log {
     createLog(entry) {
         var element = document.createElement("PRE");
-        if (entry.indexOf("WARNING") != -1) {
+        if (entry.indexOf("WARNING") !== -1) {
             element.className = "warningMsg";
         }
-        if (entry.indexOf("ERROR") != -1) {
+        if (entry.indexOf("ERROR") !== -1) {
             element.className = "errorMsg";
         }
-        if (entry.indexOf("DEBUG") != -1) {
+        if (entry.indexOf("DEBUG") !== -1) {
             element.className = "debugMsg";
         }
-        element.innerHTML = entry;
+        element.textContent = entry;
         return element;
     }
 }
@@ -18,16 +18,21 @@ function showLogs(bottom) {
     var log = new Log();
     var logs = SERVER["log"]["log"];
     var div = document.getElementById("content_log");
-    div.innerHTML = "";
+    div.textContent = "";
     var keys = getObjKeys(logs);
-    keys.forEach(logID => {
+    // Use DocumentFragment for batch DOM insertion (avoids multiple reflows)
+    var fragment = document.createDocumentFragment();
+    keys.forEach(function (logID) {
         var entry = log.createLog(logs[logID]);
-        div.append(entry);
+        fragment.appendChild(entry);
     });
+    div.appendChild(fragment);
     setTimeout(function () {
-        if (bottom == true) {
+        if (bottom === true) {
             var wrapper = document.getElementById("box-wrapper");
-            wrapper.scrollTop = wrapper.scrollHeight;
+            if (wrapper) {
+                wrapper.scrollTop = wrapper.scrollHeight;
+            }
         }
     }, 10);
 }
