@@ -41,6 +41,8 @@
     "streamInformation": "Información del stream",
     "filteredChannels": "Canales filtrados",
     "mappedChannels": "Canales asignados",
+    "activeStreams": "Streams activos",
+    "inactiveStreams": "Streams inactivos",
     "websocketError": "No se pudo establecer conexión WebSocket con Threadfin. Compruebe su configuración de red."
   },
   "button": {

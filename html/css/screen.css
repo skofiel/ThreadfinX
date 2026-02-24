@@ -208,6 +208,81 @@ nav p {
   font-size: 2em;
 }
 
+/* --- Filter Streams Grid Redesign --- */
+#myStreamsBox.visible {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border-bottom: none;
+}
+
+#myStreamsBox .stream-panel {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+#myStreamsBox .stream-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-lg);
+  background-color: var(--bg-dark);
+  border-bottom: 1px solid var(--border);
+}
+
+#myStreamsBox .stream-panel-header h4 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+#myStreamsBox .stream-panel-header .stream-count {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  font-family: var(--font-family-mono);
+}
+
+#myStreamsBox .stream-panel-header.active-header h4 {
+  color: var(--success);
+}
+
+#myStreamsBox .stream-panel-header.inactive-header h4 {
+  color: var(--danger);
+}
+
+#myStreamsBox .stream-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1px;
+  background-color: var(--border);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#myStreamsBox .stream-item {
+  background-color: var(--bg-card);
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color var(--transition-fast);
+}
+
+#myStreamsBox .stream-item:hover {
+  background-color: var(--bg-elevated);
+}
+
+@media only screen and (max-width: 768px) {
+  #myStreamsBox.visible {
+    grid-template-columns: 1fr;
+  }
+}
+
 #openStreams {
   width: 20px;
   height: 200px;
@@ -524,7 +599,7 @@ tbody {
 
 #popup-custom table td.left {
   width: 38%;
-  padding: var(--space-xs) var(--space-sm) var(--space-xs) 0;
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
   vertical-align: middle;
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
@@ -534,7 +609,7 @@ tbody {
 }
 
 #popup-custom table td:not(.left) {
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) 0;
   vertical-align: middle;
 }
 
@@ -589,6 +664,7 @@ tbody {
   margin-top: var(--space-xl);
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-sm);
   width: 100%;
 }
@@ -1174,8 +1250,9 @@ tbody {
 
 /* Settings action buttons - sticky bar below navbar */
 #content-interaction {
+  position: -webkit-sticky;
   position: sticky;
-  top: 56px;
+  top: var(--navbar-height, 56px);
   z-index: 100;
   background-color: var(--bg-deepest);
   border-bottom: 1px solid var(--border);
@@ -1184,8 +1261,14 @@ tbody {
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-sm);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Ensure ancestors don't break sticky positioning */
+.container-flex,
+.container-flex > .row,
+.container-flex > .row > [class*="col"],
+#content {
+  overflow: visible !important;
 }
 
 #content-interaction input[type=button] {

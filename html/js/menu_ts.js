@@ -2320,40 +2320,40 @@ function showPreview(element) {
             return;
             break;
     }
+    div.innerHTML = "";
+    var streamLabels = {
+        "activeStreams": "{{.status.activeStreams}}",
+        "inactiveStreams": "{{.status.inactiveStreams}}"
+    };
     var streams = ["activeStreams", "inactiveStreams"];
     streams.forEach(preview => {
-        var table = document.getElementById(preview);
-        table.innerHTML = "";
         var obj = SERVER["data"]["StreamPreviewUI"][preview];
-        var caption = document.createElement("CAPTION");
-        var result = preview.replace(/([A-Z])/g, " $1");
-        var finalResult = result.charAt(0).toUpperCase() + result.slice(1);
-        caption.innerHTML = finalResult;
-        table.appendChild(caption);
-        var tbody = document.createElement("TBODY");
-        table.appendChild(tbody);
+        var panel = document.createElement("DIV");
+        panel.className = "stream-panel";
+        // Header
+        var header = document.createElement("DIV");
+        header.className = "stream-panel-header " + (preview === "activeStreams" ? "active-header" : "inactive-header");
+        var title = document.createElement("H4");
+        title.innerText = streamLabels[preview];
+        header.appendChild(title);
+        var count = document.createElement("SPAN");
+        count.className = "stream-count";
+        count.innerText = obj.length;
+        header.appendChild(count);
+        panel.appendChild(header);
+        // Grid of channels
+        var grid = document.createElement("DIV");
+        grid.className = "stream-grid";
         obj.slice(0, 1000).forEach(channel => {
-            var tr = document.createElement("TR");
-            var tdKey = document.createElement("TD");
-            var tdVal = document.createElement("TD");
-            tdKey.className = "tdKey";
-            tdVal.className = "tdVal";
-            switch (preview) {
-                case "activeStreams":
-                    tdKey.innerText = "Channel: (+)";
-                    break;
-                case "inactiveStreams":
-                    tdKey.innerText = "Channel: (-)";
-                    break;
-            }
-            tdVal.innerText = channel;
-            tr.appendChild(tdKey);
-            tr.appendChild(tdVal);
-            tbody.appendChild(tr);
-            table.appendChild(tr);
+            var item = document.createElement("DIV");
+            item.className = "stream-item";
+            item.innerText = channel;
+            item.setAttribute("title", channel);
+            grid.appendChild(item);
         });
+        panel.appendChild(grid);
+        div.appendChild(panel);
     });
-    // showElement("loading", false)
     div.className = "visible";
     return;
 }

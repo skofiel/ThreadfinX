@@ -683,26 +683,18 @@ nav .material-symbols-outlined,
    Standardized Popup Button Bar (UI/UX)
    Button order: [Delete] ... spacer ... [Secondary actions] [Cancel] [Primary action]
    ============================================ */
-.interaction,
 #popup-interaction {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-sm);
   padding: var(--space-md) 0;
   flex-wrap: wrap;
+  width: 100%;
 }
 
-/* Push non-delete buttons to the right */
-.interaction input[type=button].delete,
-.interaction input[type=button][name="delete"],
+/* Push delete button to the left, rest stays right */
 #popup-interaction input[type=button].delete,
 #popup-interaction input[type=button][name="delete"] {
   margin-right: auto;
-}
-
-/* Modal footer button ordering */
-.modal-footer .interaction,
-.modal-footer #popup-interaction {
-  width: 100%;
-  justify-content: flex-end;
 }

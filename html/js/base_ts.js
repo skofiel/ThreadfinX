@@ -1,3 +1,19 @@
+// Set navbar height CSS variable for sticky toolbar positioning
+(function() {
+    function updateNavbarHeight() {
+        var nav = document.querySelector('nav.navbar');
+        if (nav) {
+            document.documentElement.style.setProperty('--navbar-height', nav.offsetHeight + 'px');
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateNavbarHeight);
+    } else {
+        updateNavbarHeight();
+    }
+    window.addEventListener('resize', updateNavbarHeight);
+})();
+
 var SERVER = new Object();
 var BULK_EDIT = false;
 var COLUMN_TO_SORT;
