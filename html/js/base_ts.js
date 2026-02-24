@@ -32,7 +32,7 @@ clipboard.on('success', function (e) {
     tooltip.setContent({ '.tooltip-inner': 'Copied!' });
 });
 clipboard.on('error', function (e) {
-    console.log(e);
+    // clipboard error handled silently
 });
 var popupModal = new bootstrap.Modal(document.getElementById("popup"), {
     keyboard: true,
@@ -63,13 +63,10 @@ settingsCategory.push(new SettingsCategoryItem("{{.settings.category.backup}}", 
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.authentication}}", "authentication.web,authentication.pms,authentication.m3u,authentication.xml,authentication.api"));
 function showPopUpElement(elm) {
     showElement(elm, true);
-    // setTimeout(function () {
-    //   showElement("popup", true);
-    // }, 10);
     return;
 }
 function showElement(elmID, type) {
-    if (elmID == "popup-custom" || elmID == "popup") {
+    if (elmID === "popup-custom" || elmID === "popup") {
         switch (type) {
             case true:
                 popupModal.show();
@@ -79,7 +76,7 @@ function showElement(elmID, type) {
                 break;
         }
     }
-    if (elmID == "loading") {
+    if (elmID === "loading") {
         switch (type) {
             case true:
                 loadingModal.show();
@@ -106,7 +103,7 @@ function getLocalData(dataType, id) {
         case "filter":
         case "custom-filter":
         case "group-title":
-            if (id == -1) {
+            if (id === -1) {
                 data["active"] = true;
                 data["liveEvent"] = false;
                 data["caseSensitive"] = false;
@@ -386,10 +383,7 @@ function changeChannelNumber(element) {
 }
 function backup() {
     var data = new Object();
-    console.log("Backup data");
     var cmd = "ThreadfinBackup";
-    console.log("SEND TO SERVER");
-    console.log(data);
     var server = new Server(cmd);
     server.request(data);
     return;
@@ -428,15 +422,15 @@ function restore() {
     document.body.appendChild(restore);
     restore.click();
     restore.onchange = function () {
+        if (!restore.files || !restore.files[0]) return;
         var filename = restore.files[0].name;
         var check = confirm("File: " + filename + "\n{{.confirm.restore}}");
-        if (check == true) {
+        if (check === true) {
             var reader = new FileReader();
-            var file = document.querySelector('input[type=file]').files[0];
+            var file = restore.files[0];
             if (file) {
                 reader.readAsDataURL(file);
                 reader.onload = function () {
-                    console.log(reader.result);
                     var data = new Object();
                     var cmd = "ThreadfinRestore";
                     data["base64"] = reader.result;
@@ -464,17 +458,14 @@ function uploadLogo() {
     upload.id = "upload";
     document.body.appendChild(upload);
     upload.click();
-    upload.onblur = function () {
-        alert();
-    };
     upload.onchange = function () {
+        if (!upload.files || !upload.files[0]) return;
         var filename = upload.files[0].name;
         var reader = new FileReader();
-        var file = document.querySelector('input[type=file]').files[0];
+        var file = upload.files[0];
         if (file) {
             reader.readAsDataURL(file);
             reader.onload = function () {
-                console.log(reader.result);
                 var data = new Object();
                 var cmd = "uploadLogo";
                 data["base64"] = reader.result;
@@ -495,7 +486,7 @@ function uploadLogo() {
 }
 function probeChannel(url) {
     if (document.getElementById("probeDetails")) {
-        document.getElementById("probeDetails").innerHTML = "{{.status.probingChannel}}";
+        document.getElementById("probeDetails").textContent = "{{.status.probingChannel}}";
     }
     var data = new Object();
     var cmd = "probeChannel";
@@ -537,7 +528,6 @@ function sortSelect(elem) {
     return;
 }
 function updateLog() {
-    console.log("TOKEN");
     var server = new Server("updateLog");
     server.request(new Object());
 }
