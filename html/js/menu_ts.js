@@ -891,6 +891,9 @@ function applyAccentColor() {
     var hoverColor = "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0");
     document.documentElement.style.setProperty('--accent-hover', hoverColor);
     document.documentElement.style.setProperty('--accent-subtle', accent + "26");
+    // Apply font size
+    var fontSize = (SERVER["settings"] && SERVER["settings"]["fontSize"]) ? SERVER["settings"]["fontSize"] : "14px";
+    document.documentElement.style.setProperty('--font-size-base', fontSize);
 }
 function createLayout() {
     // Apply accent color from settings
@@ -947,15 +950,20 @@ function createLayout() {
                 break;
         }
     }
-    // Smart default page: only auto-open on first load
+    // Auto-open menu on first load
     if (!window._menuOpened) {
         window._menuOpened = true;
-        var defaultMenuKey = "playlist";
-        // Check if there are mapped channels (xepg data exists)
-        if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
-            var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
-            if (mappedKeys.length > 0) {
-                defaultMenuKey = "mapping";
+        // Check if there's a saved menu from a reload (e.g. language change)
+        var savedMenu = sessionStorage.getItem("threadfin_menu");
+        sessionStorage.removeItem("threadfin_menu");
+        var defaultMenuKey = savedMenu || "playlist";
+        if (!savedMenu) {
+            // Smart default: if mapped channels exist, open mapping
+            if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
+                var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
+                if (mappedKeys.length > 0) {
+                    defaultMenuKey = "mapping";
+                }
             }
         }
         // Find the menu item and click it
@@ -973,6 +981,10 @@ function createLayout() {
 }
 function openThisMenu(element) {
     var id = element.id;
+    // Track current menu for potential reload
+    if (menuItems[id]) {
+        sessionStorage.setItem("threadfin_menu", menuItems[id].menuKey);
+    }
     var content = new ShowContent(id);
     content.show();
     enableGroupSelection(".bulk");

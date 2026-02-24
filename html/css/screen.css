@@ -280,6 +280,7 @@ caption {
   display: inline-block;
   width: 100%;
   overflow-y: visible;
+  padding-top: 48px;
 }
 
 /* --- Content Tables --- */
@@ -489,7 +490,7 @@ tbody {
 
 #mapping-detail-table td,
 #user-detail-table td {
-  padding: var(--space-md) 0;
+  padding: var(--space-xs) 0;
   vertical-align: middle;
 }
 
@@ -499,6 +500,75 @@ tbody {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+}
+
+/* --- Popup Form Tables --- */
+#popup-custom table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#popup-custom table td.left {
+  width: 38%;
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) 0;
+  vertical-align: middle;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+#popup-custom table td:not(.left) {
+  padding: var(--space-xs) 0;
+  vertical-align: middle;
+}
+
+#popup-custom input[type=text],
+#popup-custom input[type=password] {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: var(--font-size-base);
+  border: 1px solid var(--border);
+  background-color: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+#popup-custom input[type=text]:focus,
+#popup-custom input[type=password]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+#popup-custom select {
+  width: 100%;
+  padding: 6px 10px;
+  padding-right: 32px;
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+#popup-custom table pre {
+  color: var(--text-tertiary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  margin: 0;
+  padding: 0 0 var(--space-xs) 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+#popup-custom h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-md);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 /* --- Interaction Buttons --- */
@@ -1000,8 +1070,8 @@ tbody {
 
 /* Category section headers */
 #content_settings h5 {
-  margin: var(--space-2xl) 0 var(--space-md) 0;
-  padding-bottom: var(--space-sm);
+  margin: var(--space-xl) 0 var(--space-sm) 0;
+  padding-bottom: var(--space-xs);
   border-bottom: 1px solid var(--border);
   color: var(--accent);
   font-size: var(--font-size-md);
@@ -1011,7 +1081,7 @@ tbody {
 }
 
 #content_settings h5:first-of-type {
-  margin-top: var(--space-md);
+  margin-top: var(--space-sm);
 }
 
 /* Settings table layout */
@@ -1030,7 +1100,7 @@ tbody {
 
 #content_settings table tr td:first-child {
   width: 240px;
-  padding: var(--space-sm) var(--space-md) var(--space-sm) 0;
+  padding: var(--space-xs) var(--space-md) var(--space-xs) 0;
   vertical-align: middle;
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
@@ -1040,7 +1110,7 @@ tbody {
 }
 
 #content_settings table tr td:last-child {
-  padding: var(--space-sm) 0;
+  padding: var(--space-xs) 0;
   vertical-align: middle;
 }
 
@@ -1049,7 +1119,7 @@ tbody {
 #content_settings input[type=password] {
   width: 100%;
   max-width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-size: var(--font-size-base);
   border: 1px solid var(--border);
   background-color: var(--bg-elevated);
@@ -1067,7 +1137,7 @@ tbody {
 #content_settings select {
   width: 100%;
   max-width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   padding-right: 32px;
   font-size: var(--font-size-base);
   margin: 0;
@@ -1084,15 +1154,17 @@ tbody {
   font-size: var(--font-size-xs);
   line-height: var(--line-height-normal);
   margin: 0;
-  padding: 2px 0 var(--space-sm) 0;
+  padding: 0 0 var(--space-xs) 0;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
 
-/* Settings action buttons - sticky bar */
+/* Settings action buttons - fixed bar below navbar */
 #content-interaction {
-  position: sticky;
+  position: fixed;
   top: 56px;
+  left: 0;
+  right: 0;
   z-index: 100;
   background-color: var(--bg-deepest);
   border-bottom: 1px solid var(--border);
@@ -1109,8 +1181,8 @@ tbody {
 
 /* HR separator in settings */
 #content_settings hr {
-  margin: var(--space-sm) 0;
-  opacity: 0.3;
+  margin: var(--space-xs) 0;
+  opacity: 0.2;
 }
 
 /* ============================================
@@ -1179,4 +1251,8 @@ tbody {
 .save-toast.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+.save-toast.save-toast-info {
+  background-color: var(--text-tertiary);
 }

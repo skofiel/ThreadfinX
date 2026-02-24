@@ -404,6 +404,7 @@
       "appearance": "Apariencia"
     },
     "savedSuccess": "Ajustes guardados correctamente",
+    "noChanges": "No hay cambios que guardar",
     "update": {
       "title": "Programación de actualización (Lista, XMLTV, Copia de seguridad)",
       "placeholder": "0000,1000,2000",
@@ -552,6 +553,11 @@
       "title": "Color de acento",
       "description": "Establezca el color de acento de la interfaz usando el selector de color o introduciendo un valor hexadecimal.",
       "placeholder": "#d46c4a"
+    },
+    "fontSize":
+    {
+      "title": "Tamaño de fuente",
+      "description": "Tamaño de fuente base para la interfaz. Por defecto es 14px."
     },
     "language":
     {

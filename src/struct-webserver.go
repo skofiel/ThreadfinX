@@ -58,6 +58,7 @@ type RequestStruct struct {
 		EpgCategories            *string   `json:"epgCategories,omitempty"`
 		EpgCategoriesColors      *string   `json:"epgCategoriesColors,omitempty"`
 		AccentColor              *string   `json:"accentColor,omitempty"`
+		FontSize                 *string   `json:"fontSize,omitempty"`
 		Language                 *string   `json:"language,omitempty"`
 		Dummy                    *bool     `json:"dummy,omitempty"`
 		DummyChannel             *string   `json:"dummyChannel,omitempty"`

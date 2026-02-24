@@ -404,6 +404,7 @@
       "appearance": "Appearance"
     },
     "savedSuccess": "Settings saved successfully",
+    "noChanges": "No changes to save",
     "update": {
       "title": "Schedule for updating (Playlist, XMLTV, Backup)",
       "placeholder": "0000,1000,2000",
@@ -552,6 +553,11 @@
       "title": "Accent Color",
       "description": "Set the UI accent color using the color picker or entering a hex value.",
       "placeholder": "#d46c4a"
+    },
+    "fontSize":
+    {
+      "title": "Font Size",
+      "description": "Base font size for the interface. Default is 14px."
     },
     "language":
     {

@@ -371,6 +371,18 @@ class SettingsCategory {
                 setting.appendChild(tdLeft);
                 setting.appendChild(tdRight);
                 break;
+            case "fontSize":
+                var tdLeft = document.createElement("TD");
+                tdLeft.innerHTML = "{{.settings.fontSize.title}}" + ":";
+                var tdRight = document.createElement("TD");
+                var text = ["12px", "13px", "14px", "15px", "16px", "17px", "18px"];
+                var values = ["12px", "13px", "14px", "15px", "16px", "17px", "18px"];
+                var select = content.createSelect(text, values, data || "14px", settingsKey);
+                select.setAttribute("onchange", "javascript: this.className = 'changed'; document.documentElement.style.setProperty('--font-size-base', this.value);");
+                tdRight.appendChild(select);
+                setting.appendChild(tdLeft);
+                setting.appendChild(tdRight);
+                break;
             case "ThreadfinAutoUpdate":
                 var tdLeft = document.createElement("TD");
                 tdLeft.innerHTML = "{{.settings.ThreadfinAutoUpdate.title}}" + ":";
@@ -589,6 +601,9 @@ class SettingsCategory {
             case "accentColor":
                 text = "{{.settings.accentColor.description}}";
                 break;
+            case "fontSize":
+                text = "{{.settings.fontSize.description}}";
+                break;
             case "language":
                 text = "{{.settings.language.description}}";
                 break;
@@ -748,6 +763,7 @@ function saveSettings() {
         }
     }
     if (Object.keys(newSettings).length === 0) {
+        showSaveConfirmation("{{.settings.noChanges}}");
         return;
     }
     var data = new Object();
@@ -757,13 +773,13 @@ function saveSettings() {
     // Show success toast
     showSaveConfirmation();
 }
-function showSaveConfirmation() {
+function showSaveConfirmation(message) {
     var existing = document.getElementById("save-toast");
     if (existing) existing.remove();
     var toast = document.createElement("DIV");
     toast.id = "save-toast";
-    toast.className = "save-toast";
-    toast.innerHTML = "{{.settings.savedSuccess}}";
+    toast.className = message ? "save-toast save-toast-info" : "save-toast";
+    toast.innerHTML = message || "{{.settings.savedSuccess}}";
     document.body.appendChild(toast);
     // Trigger animation
     setTimeout(function() { toast.classList.add("show"); }, 10);
