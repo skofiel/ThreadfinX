@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
@@ -19,13 +19,13 @@
 
 </head>
 
-<body onload="javascript: PageReady();">
+<body>
 
-  <div id="loading" class="modal fade">
+  <div id="loading" class="modal fade" role="status" aria-label="Loading">
     <div class="modal-dialog loader"></div>
   </div>
 
-  <div id="popup" class="modal fade">
+  <div id="popup" class="modal fade" role="dialog" aria-label="Details">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header" id="popup_header"></div>
@@ -41,7 +41,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="server_information">
+  <div class="modal fade" id="server_information" role="dialog" aria-label="Server Information">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
@@ -91,7 +91,7 @@
       </div>
     </div>
   </div>
-  <nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-black">
+  <nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-black" role="navigation" aria-label="Main navigation">
     <div class="container-fluid">
       <a class="navbar-brand" href="/web">
         <span id="logo"></span>
@@ -100,7 +100,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mx-auto mb-2 mb-lg-0" id="main-menu">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0" id="main-menu" aria-label="Main menu">
         </ul>
         <div class="col-md-2 col-sm-2">
           <p id="playlist-connection-information">
@@ -117,19 +117,19 @@
   <div class="container-flex">
     <div class="row">
       <div class="col-md-12 col-sm-12">
-        <div id="content"></div>
+        <div id="content" role="main"></div>
       </div>
     </div>
     <div id="myStreamsBox" class="notVisible"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
-  <script language="javascript" type="text/javascript" src="js/network_ts.js"></script>
-  <script language="javascript" type="text/javascript" src="js/menu_ts.js"></script>
-  <script language="javascript" type="text/javascript" src="js/settings_ts.js"></script>
-  <script language="javascript" type="text/javascript" src="js/logs_ts.js"></script>
-  <script language="javascript" type="text/javascript" src="js/base_ts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js" defer></script>
+  <script type="text/javascript" src="js/network_ts.js" defer></script>
+  <script type="text/javascript" src="js/menu_ts.js" defer></script>
+  <script type="text/javascript" src="js/settings_ts.js" defer></script>
+  <script type="text/javascript" src="js/logs_ts.js" defer></script>
+  <script type="text/javascript" src="js/base_ts.js" defer></script>
 </body>
 
 </html>

@@ -33,7 +33,7 @@ clipboard.on('success', function (e) {
     tooltip.setContent({ '.tooltip-inner': 'Copied!' });
 });
 clipboard.on('error', function (e) {
-    console.log(e);
+    // clipboard error handled silently
 });
 var popupModal = new bootstrap.Modal(document.getElementById("popup"), {
     keyboard: true,
@@ -64,13 +64,10 @@ settingsCategory.push(new SettingsCategoryItem("{{.settings.category.backup}}", 
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.authentication}}", "authentication.web,authentication.pms,authentication.m3u,authentication.xml,authentication.api"));
 function showPopUpElement(elm) {
     showElement(elm, true);
-    // setTimeout(function () {
-    //   showElement("popup", true);
-    // }, 10);
     return;
 }
 function showElement(elmID, type) {
-    if (elmID == "popup-custom" || elmID == "popup") {
+    if (elmID === "popup-custom" || elmID === "popup") {
         switch (type) {
             case true:
                 popupModal.show();
@@ -80,7 +77,7 @@ function showElement(elmID, type) {
                 break;
         }
     }
-    if (elmID == "loading") {
+    if (elmID === "loading") {
         switch (type) {
             case true:
                 loadingModal.show();
@@ -107,7 +104,7 @@ function getLocalData(dataType, id) {
         case "filter":
         case "custom-filter":
         case "group-title":
-            if (id == -1) {
+            if (id === -1) {
                 data["active"] = true;
                 data["liveEvent"] = false;
                 data["caseSensitive"] = false;
@@ -151,21 +148,21 @@ function getOwnObjProps(object) {
 }
 function getAllSelectedChannels() {
     var channels = new Array();
-    if (BULK_EDIT == false) {
+    if (BULK_EDIT === false) {
         return channels;
     }
     var trs = document.getElementById("content_table").getElementsByTagName("TR");
     for (var i = 1; i < trs.length; i++) {
-        if (trs[i].style.display != "none") {
-            if (trs[i].firstChild.firstChild.checked == true) {
+        if (trs[i].style.display !== "none") {
+            if (trs[i].firstChild.firstChild.checked === true) {
                 channels.push(trs[i].id);
             }
         }
     }
     var trs_inactive = document.getElementById("inactive_content_table").getElementsByTagName("TR");
     for (var i = 1; i < trs_inactive.length; i++) {
-        if (trs_inactive[i].style.display != "none") {
-            if (trs_inactive[i].firstChild.firstChild.checked == true) {
+        if (trs_inactive[i].style.display !== "none") {
+            if (trs_inactive[i].firstChild.firstChild.checked === true) {
                 channels.push(trs_inactive[i].id);
             }
         }
@@ -175,11 +172,11 @@ function getAllSelectedChannels() {
 function selectAllChannels(table_name = "content_table") {
     var bulk = false;
     var trs = document.getElementById(table_name).getElementsByTagName("TR");
-    if (trs[0].firstChild.firstChild.checked == true) {
+    if (trs[0].firstChild.firstChild.checked === true) {
         bulk = true;
     }
     for (var i = 1; i < trs.length; i++) {
-        if (trs[i].style.display != "none") {
+        if (trs[i].style.display !== "none") {
             switch (bulk) {
                 case true:
                     trs[i].firstChild.firstChild.checked = true;
@@ -194,7 +191,7 @@ function selectAllChannels(table_name = "content_table") {
 }
 // bulkEdit() moved to toggleBulkEdit() in menu_ts.js
 function clearSortIndicators(table, table_name) {
-    var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+    var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
     if (!headerRow) return;
     var tds = headerRow.getElementsByTagName("TD");
     for (var i = 0; i < tds.length; i++) {
@@ -209,14 +206,14 @@ function clearSortIndicators(table, table_name) {
 function sortTable(column, table_name = "content_table") {
     var table = document.getElementById(table_name);
     if (!table) return;
-    var currentSortCol = (table_name == "content_table") ? COLUMN_TO_SORT : INACTIVE_COLUMN_TO_SORT;
+    var currentSortCol = (table_name === "content_table") ? COLUMN_TO_SORT : INACTIVE_COLUMN_TO_SORT;
     var currentDir = SORT_DIRECTION[table_name];
     var newDir;
     // Determine new sort direction: asc -> desc -> default (reset)
-    if (column == currentSortCol) {
-        if (currentDir == "asc") {
+    if (column === currentSortCol) {
+        if (currentDir === "asc") {
             newDir = "desc";
-        } else if (currentDir == "desc") {
+        } else if (currentDir === "desc") {
             newDir = null; // reset to default
         } else {
             newDir = "asc";
@@ -227,13 +224,13 @@ function sortTable(column, table_name = "content_table") {
     // Clear all sort indicators
     clearSortIndicators(table, table_name);
     // If resetting to default order
-    if (newDir == null) {
+    if (newDir === null) {
         SORT_DIRECTION[table_name] = null;
-        if (table_name == "content_table") { COLUMN_TO_SORT = null; }
+        if (table_name === "content_table") { COLUMN_TO_SORT = null; }
         else { INACTIVE_COLUMN_TO_SORT = null; }
         // Restore original row order if saved
         if (ORIGINAL_ROW_ORDER[table_name]) {
-            var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+            var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
             var filterRow = table.querySelector(".column-filter-row");
             while (table.firstChild) { table.removeChild(table.firstChild); }
             if (headerRow) table.appendChild(headerRow);
@@ -258,17 +255,17 @@ function sortTable(column, table_name = "content_table") {
     }
     // Set sort state
     SORT_DIRECTION[table_name] = newDir;
-    if (table_name == "content_table") { COLUMN_TO_SORT = column; }
+    if (table_name === "content_table") { COLUMN_TO_SORT = column; }
     else { INACTIVE_COLUMN_TO_SORT = column; }
     // Add sort indicator to active column
-    var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+    var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
     if (headerRow) {
         var tds = headerRow.getElementsByTagName("TD");
         if (tds[column]) {
             tds[column].className = "sortThis";
             var arrow = document.createElement("SPAN");
             arrow.className = "sort-arrow";
-            arrow.innerText = (newDir == "asc") ? " \u25B2" : " \u25BC";
+            arrow.innerText = (newDir === "asc") ? " \u25B2" : " \u25BC";
             // Append inside the <p> child if it exists, otherwise to the TD
             var pChild = tds[column].querySelector("p, P");
             if (pChild) {
@@ -298,7 +295,7 @@ function sortTable(column, table_name = "content_table") {
     var firstCell = dataRows[0].getElementsByTagName("TD")[column];
     if (firstCell && firstCell.childNodes[0]) {
         var tag = firstCell.childNodes[0].tagName ? firstCell.childNodes[0].tagName.toLowerCase() : "";
-        if (tag == "input") {
+        if (tag === "input") {
             var testVal = firstCell.getElementsByTagName("INPUT")[0].value;
             if (isNaN(testVal) || testVal === "") sortByString = true;
         } else {
@@ -311,14 +308,14 @@ function sortTable(column, table_name = "content_table") {
         var valA = "", valB = "";
         if (cellA && cellA.childNodes[0]) {
             var tagA = cellA.childNodes[0].tagName ? cellA.childNodes[0].tagName.toLowerCase() : "";
-            if (tagA == "input") valA = cellA.getElementsByTagName("INPUT")[0].value.toLowerCase();
-            else if (tagA == "p") valA = cellA.getElementsByTagName("P")[0].innerText.toLowerCase();
+            if (tagA === "input") valA = cellA.getElementsByTagName("INPUT")[0].value.toLowerCase();
+            else if (tagA === "p") valA = cellA.getElementsByTagName("P")[0].innerText.toLowerCase();
             else valA = cellA.innerText.toLowerCase();
         }
         if (cellB && cellB.childNodes[0]) {
             var tagB = cellB.childNodes[0].tagName ? cellB.childNodes[0].tagName.toLowerCase() : "";
-            if (tagB == "input") valB = cellB.getElementsByTagName("INPUT")[0].value.toLowerCase();
-            else if (tagB == "p") valB = cellB.getElementsByTagName("P")[0].innerText.toLowerCase();
+            if (tagB === "input") valB = cellB.getElementsByTagName("INPUT")[0].value.toLowerCase();
+            else if (tagB === "p") valB = cellB.getElementsByTagName("P")[0].innerText.toLowerCase();
             else valB = cellB.innerText.toLowerCase();
         }
         var result;
@@ -328,7 +325,7 @@ function sortTable(column, table_name = "content_table") {
             var collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
             result = collator.compare(valA, valB);
         }
-        return (newDir == "desc") ? -result : result;
+        return (newDir === "desc") ? -result : result;
     });
     // Rebuild table: header, filter row, then sorted data rows
     while (table.firstChild) { table.removeChild(table.firstChild); }
@@ -343,7 +340,7 @@ function createSearchObj() {
     var channelKeys = ["x-active", "x-channelID", "x-name", "_file.m3u.name", "x-group-title", "x-xmltv-file"];
     channels.forEach(id => {
         channelKeys.forEach(key => {
-            if (key == "x-active") {
+            if (key === "x-active") {
                 switch (data[id][key]) {
                     case true:
                         SEARCH_MAPPING[id] = "online ";
@@ -354,9 +351,9 @@ function createSearchObj() {
                 }
             }
             else {
-                if (key == "x-xmltv-file") {
+                if (key === "x-xmltv-file") {
                     var xmltvFile = getValueFromProviderFile(data[id][key], "xmltv", "name");
-                    if (xmltvFile != undefined) {
+                    if (xmltvFile !== undefined) {
                         SEARCH_MAPPING[id] = SEARCH_MAPPING[id] + xmltvFile + " ";
                     }
                 }
@@ -402,11 +399,11 @@ function changeChannelNumbers(elements) {
         data[element]["x-channelID"] = starting_number.toString();
         starting_number++;
     });
-    if (COLUMN_TO_SORT == 1) {
+    if (COLUMN_TO_SORT === 1) {
         COLUMN_TO_SORT = -1;
         sortTable(1);
     }
-    if (INACTIVE_COLUMN_TO_SORT == 1) {
+    if (INACTIVE_COLUMN_TO_SORT === 1) {
         INACTIVE_COLUMN_TO_SORT = -1;
         sortTable(1, "inactive_content_page");
     }
@@ -426,10 +423,10 @@ function changeChannelNumber(element) {
         channelNumbers.push(channelNumber);
     });
     for (var i = 0; i < channelNumbers.length; i++) {
-        if (channelNumbers.indexOf(newNumber) == -1) {
+        if (channelNumbers.indexOf(newNumber) === -1) {
             break;
         }
-        if (Math.floor(newNumber) == newNumber) {
+        if (Math.floor(newNumber) === newNumber) {
             newNumber = newNumber + 1;
         }
         else {
@@ -440,11 +437,11 @@ function changeChannelNumber(element) {
     }
     data[dbID]["x-channelID"] = newNumber.toString();
     element.value = newNumber;
-    if (COLUMN_TO_SORT == 1) {
+    if (COLUMN_TO_SORT === 1) {
         COLUMN_TO_SORT = -1;
         sortTable(1);
     }
-    if (INACTIVE_COLUMN_TO_SORT == 1) {
+    if (INACTIVE_COLUMN_TO_SORT === 1) {
         INACTIVE_COLUMN_TO_SORT = -1;
         sortTable(1, "inactive_content_page");
     }
@@ -452,10 +449,7 @@ function changeChannelNumber(element) {
 }
 function backup() {
     var data = new Object();
-    console.log("Backup data");
     var cmd = "ThreadfinBackup";
-    console.log("SEND TO SERVER");
-    console.log(data);
     var server = new Server(cmd);
     server.request(data);
     return;
@@ -468,7 +462,7 @@ function toggleChannelStatus(id) {
         status = (checkbox).checked;
     }
     var ids = getAllSelectedChannels();
-    if (ids.length == 0) {
+    if (ids.length === 0) {
         ids.push(id);
     }
     ids.forEach(id => {
@@ -476,8 +470,8 @@ function toggleChannelStatus(id) {
         channel["x-active"] = status;
         switch (channel["x-active"]) {
             case true:
-                if (channel["x-xmltv-file"] == "-" || channel["x-mapping"] == "-") {
-                    if (BULK_EDIT == false) {
+                if (channel["x-xmltv-file"] === "-" || channel["x-mapping"] === "-") {
+                    if (BULK_EDIT === false) {
                         // alert(channel["x-name"] + ": Missing XMLTV file / channel")
                         checkbox.checked = true;
                     }
@@ -488,7 +482,7 @@ function toggleChannelStatus(id) {
                 // code...
                 break;
         }
-        if (channel["x-active"] == false) {
+        if (channel["x-active"] === false) {
             document.getElementById(id).className = "notActiveEPG";
         }
         else {
@@ -508,15 +502,15 @@ function restore() {
     document.body.appendChild(restore);
     restore.click();
     restore.onchange = function () {
+        if (!restore.files || !restore.files[0]) return;
         var filename = restore.files[0].name;
         var check = confirm("File: " + filename + "\n{{.confirm.restore}}");
-        if (check == true) {
+        if (check === true) {
             var reader = new FileReader();
-            var file = document.querySelector('input[type=file]').files[0];
+            var file = restore.files[0];
             if (file) {
                 reader.readAsDataURL(file);
                 reader.onload = function () {
-                    console.log(reader.result);
                     var data = new Object();
                     var cmd = "ThreadfinRestore";
                     data["base64"] = reader.result;
@@ -544,17 +538,14 @@ function uploadLogo() {
     upload.id = "upload";
     document.body.appendChild(upload);
     upload.click();
-    upload.onblur = function () {
-        alert();
-    };
     upload.onchange = function () {
+        if (!upload.files || !upload.files[0]) return;
         var filename = upload.files[0].name;
         var reader = new FileReader();
-        var file = document.querySelector('input[type=file]').files[0];
+        var file = upload.files[0];
         if (file) {
             reader.readAsDataURL(file);
             reader.onload = function () {
-                console.log(reader.result);
                 var data = new Object();
                 var cmd = "uploadLogo";
                 data["base64"] = reader.result;
@@ -575,7 +566,7 @@ function uploadLogo() {
 }
 function probeChannel(url) {
     if (document.getElementById("probeDetails")) {
-        document.getElementById("probeDetails").innerHTML = "{{.status.probingChannel}}";
+        document.getElementById("probeDetails").textContent = "{{.status.probingChannel}}";
     }
     var data = new Object();
     var cmd = "probeChannel";
@@ -610,14 +601,13 @@ function sortSelect(elem) {
     var newSelectedIndex = 0;
     for (var i = 0; i < tmpAry.length; i++) {
         elem.options[i] = tmpAry[i];
-        if (elem.options[i].value == selectedValue)
+        if (elem.options[i].value === selectedValue)
             newSelectedIndex = i;
     }
     elem.selectedIndex = newSelectedIndex; // Set new selected index after sorting
     return;
 }
 function updateLog() {
-    console.log("TOKEN");
     var server = new Server("updateLog");
     server.request(new Object());
 }

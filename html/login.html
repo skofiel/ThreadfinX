@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
@@ -16,7 +16,7 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-black">
+  <nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-black" role="navigation">
     <div class="container-fluid">
       <a class="navbar-brand" href="/web">
         <span id="logo"></span>
@@ -31,13 +31,13 @@
             <h3>{{.login.headline}}</h3>
           </div>
           <div class="card-body">
-            <p id="err" class="errorMsg center">{{.authenticationErr}}</p>
+            <p id="err" class="errorMsg center" role="alert">{{.authenticationErr}}</p>
             <form id="authentication" method="post">
-              <h5>{{.login.username.title}}:</h5>
-              <input id="username" type="text" name="username" placeholder="Username" value="">
-              <h5>{{.login.password.title}}:</h5>
-              <input id="password" type="password" name="password" placeholder="Password" value="">
-              <input id="submit" class="" type="submit" onsubmit="javascript:login();" value="{{.button.login}}">
+              <label for="username"><h5>{{.login.username.title}}:</h5></label>
+              <input id="username" type="text" name="username" placeholder="Username" value="" required autocomplete="username">
+              <label for="password"><h5>{{.login.password.title}}:</h5></label>
+              <input id="password" type="password" name="password" placeholder="Password" value="" required autocomplete="current-password">
+              <input id="submit" class="" type="submit" value="{{.button.login}}">
             </form>
           </div>
         </div>
@@ -46,9 +46,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
-  <script language="javascript" type="text/javascript" src="js/network_ts.js"></script>
-  <script language="javascript" type="text/javascript" src="js/authentication_ts.js"></script>
+  <script type="text/javascript" src="js/authentication_ts.js" defer></script>
 </body>
 
 </html>

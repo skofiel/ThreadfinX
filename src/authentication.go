@@ -28,20 +28,23 @@ func activatedSystemAuthentication() (err error) {
 
 func createFirstUserForAuthentication(username, password string) (token string, err error) {
 
-	var authenticationErr = func(err error) {
-		if err != nil {
-			return
-		}
+	err = authentication.CreateDefaultUser(username, password)
+	if err != nil {
+		ShowError(err, 0)
+		return
 	}
 
-	err = authentication.CreateDefaultUser(username, password)
-	authenticationErr(err)
-
 	token, err = authentication.UserAuthentication(username, password)
-	authenticationErr(err)
+	if err != nil {
+		ShowError(err, 0)
+		return
+	}
 
 	token, err = authentication.CheckTheValidityOfTheToken(token)
-	authenticationErr(err)
+	if err != nil {
+		ShowError(err, 0)
+		return
+	}
 
 	var userData = make(map[string]interface{})
 	userData["username"] = username
@@ -53,17 +56,23 @@ func createFirstUserForAuthentication(username, password string) (token string, 
 	userData["defaultUser"] = true
 
 	userID, err := authentication.GetUserID(token)
-	authenticationErr(err)
+	if err != nil {
+		ShowError(err, 0)
+		return
+	}
 
 	err = authentication.WriteUserData(userID, userData)
-	authenticationErr(err)
+	if err != nil {
+		ShowError(err, 0)
+		return
+	}
 
 	return
 }
 
 func tokenAuthentication(token string) (newToken string, err error) {
 
-	if System.ConfigurationWizard == true {
+	if System.ConfigurationWizard {
 		return
 	}
 
@@ -105,17 +114,35 @@ func basicAuth(r *http.Request, level string) (username string, err error) {
 	return
 }
 
+// urlAuth supports both URL query parameters and HTTP Basic Authentication.
+// Basic Auth is preferred when available.
 func urlAuth(r *http.Request, requestType string) (err error) {
 	var level, token string
+	var username, password string
 
-	var username = r.URL.Query().Get("username")
-	var password = r.URL.Query().Get("password")
+	// Prefer Basic Auth header over query parameters
+	if authHeader := r.Header.Get("Authorization"); authHeader != "" {
+		if parts := strings.SplitN(authHeader, " ", 2); len(parts) == 2 && parts[0] == "Basic" {
+			if payload, decErr := base64.StdEncoding.DecodeString(parts[1]); decErr == nil {
+				if pair := strings.SplitN(string(payload), ":", 2); len(pair) == 2 {
+					username = pair[0]
+					password = pair[1]
+				}
+			}
+		}
+	}
+
+	// Fall back to query parameters for backwards compatibility
+	if username == "" {
+		username = r.URL.Query().Get("username")
+		password = r.URL.Query().Get("password")
+	}
 
 	switch requestType {
 
 	case "m3u":
 		level = "authentication.m3u"
-		if Settings.AuthenticationM3U == true {
+		if Settings.AuthenticationM3U {
 			token, err = authentication.UserAuthentication(username, password)
 			if err != nil {
 				return
@@ -125,7 +152,7 @@ func urlAuth(r *http.Request, requestType string) (err error) {
 
 	case "xml":
 		level = "authentication.xml"
-		if Settings.AuthenticationXML == true {
+		if Settings.AuthenticationXML {
 			token, err = authentication.UserAuthentication(username, password)
 			if err != nil {
 				return
@@ -140,34 +167,36 @@ func urlAuth(r *http.Request, requestType string) (err error) {
 
 func checkAuthorizationLevel(token, level string) (err error) {
 
-	var authenticationErr = func(err error) {
-		if err != nil {
-			return
-		}
+	userID, err := authentication.GetUserID(token)
+	if err != nil {
+		return
 	}
 
-	userID, err := authentication.GetUserID(token)
-	authenticationErr(err)
-
 	userData, err := authentication.ReadUserData(userID)
-	authenticationErr(err)
+	if err != nil {
+		return
+	}
 
 	if len(userData) > 0 {
 
 		if v, ok := userData[level].(bool); ok {
 
-			if v == false {
+			if !v {
 				err = errors.New("No authorization")
 			}
 
 		} else {
 			userData[level] = false
-			err = authentication.WriteUserData(userID, userData)
+			if writeErr := authentication.WriteUserData(userID, userData); writeErr != nil {
+				ShowError(writeErr, 0)
+			}
 			err = errors.New("No authorization")
 		}
 
 	} else {
-		err = authentication.WriteUserData(userID, userData)
+		if writeErr := authentication.WriteUserData(userID, userData); writeErr != nil {
+			ShowError(writeErr, 0)
+		}
 		err = errors.New("No authorization")
 	}
 

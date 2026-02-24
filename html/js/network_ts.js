@@ -1,53 +1,63 @@
 class Server {
     constructor(cmd) {
         this.cmd = cmd;
+        this.retryCount = 0;
+        this.maxRetries = 3;
+        this.baseDelay = 1000;
     }
     request(data) {
-        if (SERVER_CONNECTION == true) {
+        if (SERVER_CONNECTION === true) {
             return;
         }
         SERVER_CONNECTION = true;
-        console.log(data);
-        if (this.cmd != "updateLog") {
-            // showElement("loading", true)
+        if (this.cmd !== "updateLog") {
             UNDO = new Object();
         }
+        var protocol;
         switch (window.location.protocol) {
             case "http:":
-                this.protocol = "ws://";
+                protocol = "ws://";
                 break;
             case "https:":
-                this.protocol = "wss://";
+                protocol = "wss://";
                 break;
         }
-        var url = this.protocol + window.location.hostname + ":" + window.location.port + "/data/" + "?Token=" + getCookie("Token");
+        // Connect without token in URL - server reads token from HttpOnly cookie
+        var url = protocol + window.location.hostname + ":" + window.location.port + "/data/";
         data["cmd"] = this.cmd;
+        var self = this;
         var ws = new WebSocket(url);
         ws.onopen = function () {
             WS_AVAILABLE = true;
-            console.log("REQUEST (JS):");
-            console.log(data);
-            console.log("REQUEST: (JSON)");
-            console.log(JSON.stringify(data));
+            self.retryCount = 0;
             this.send(JSON.stringify(data));
         };
         ws.onerror = function (e) {
-            console.log("{{.status.websocketError}}");
             SERVER_CONNECTION = false;
-            if (WS_AVAILABLE == false) {
+            if (WS_AVAILABLE === false) {
                 alert("{{.status.websocketError}}");
+            }
+            // Retry with exponential backoff
+            if (self.retryCount < self.maxRetries) {
+                self.retryCount++;
+                var delay = self.baseDelay * Math.pow(2, self.retryCount - 1);
+                setTimeout(function () {
+                    SERVER_CONNECTION = false;
+                    self.request(data);
+                }, delay);
             }
         };
         ws.onmessage = function (e) {
             SERVER_CONNECTION = false;
             showElement("loading", false);
-            console.log("RESPONSE:");
-            var response = JSON.parse(e.data);
-            console.log(response);
-            if (response.hasOwnProperty("token")) {
-                document.cookie = "Token=" + response["token"];
+            var response;
+            try {
+                response = JSON.parse(e.data);
+            } catch (parseErr) {
+                return;
             }
-            if (response["status"] == false) {
+            // Token is now managed via HttpOnly cookie set by the server
+            if (response["status"] === false) {
                 alert(response["err"]);
                 if (response.hasOwnProperty("reload")) {
                     location.reload();
@@ -55,9 +65,25 @@ class Server {
                 return;
             }
             if (response.hasOwnProperty("probeInfo")) {
-                if (document.getElementById("probeDetails")) {
+                var probeEl = document.getElementById("probeDetails");
+                if (probeEl) {
                     if (response["probeInfo"]["resolution"] !== undefined) {
-                        document.getElementById("probeDetails").innerHTML = "<p>{{.status.resolution}}: <span class='text-accent'>" + response["probeInfo"]["resolution"] + "</span></p><p>{{.status.frameRate}}: <span class='text-accent'>" + response["probeInfo"]["frameRate"] + " FPS</span></p><p>{{.status.audio}}: <span class='text-accent'>" + response["probeInfo"]["audioChannel"] + "</span></p>";
+                        // Build probe info safely using DOM methods
+                        probeEl.textContent = "";
+                        var info = [
+                            { label: "{{.status.resolution}}", value: response["probeInfo"]["resolution"] },
+                            { label: "{{.status.frameRate}}", value: response["probeInfo"]["frameRate"] + " FPS" },
+                            { label: "{{.status.audio}}", value: response["probeInfo"]["audioChannel"] }
+                        ];
+                        info.forEach(function (item) {
+                            var p = document.createElement("P");
+                            p.textContent = item.label + ": ";
+                            var span = document.createElement("SPAN");
+                            span.className = "text-accent";
+                            span.textContent = item.value;
+                            p.appendChild(span);
+                            probeEl.appendChild(p);
+                        });
                     }
                 }
             }
@@ -74,27 +100,40 @@ class Server {
                         showLogs(false);
                     }
                     if (document.getElementById("playlist-connection-information")) {
-                        let activeClass = "text-accent";
-                        if (response["clientInfo"]["activePlaylist"] / response["clientInfo"]["totalPlaylist"] >= 0.6 && response["clientInfo"]["activePlaylist"] / response["clientInfo"]["totalPlaylist"] < 0.8) {
-                            activeClass = "text-warning";
+                        var playlistEl = document.getElementById("playlist-connection-information");
+                        var activePlaylist = response["clientInfo"]["activePlaylist"];
+                        var totalPlaylist = response["clientInfo"]["totalPlaylist"];
+                        var playlistClass = "text-accent";
+                        if (activePlaylist / totalPlaylist >= 0.8) {
+                            playlistClass = "text-danger";
+                        } else if (activePlaylist / totalPlaylist >= 0.6) {
+                            playlistClass = "text-warning";
                         }
-                        else if (response["clientInfo"]["activePlaylist"] / response["clientInfo"]["totalPlaylist"] >= 0.8) {
-                            activeClass = "text-danger";
-                        }
-                        document.getElementById("playlist-connection-information").innerHTML = "{{.status.playlistConnections}}: <span class='" + activeClass + "'>" + response["clientInfo"]["activePlaylist"] + " / " + response["clientInfo"]["totalPlaylist"] + "</span>";
+                        playlistEl.textContent = "";
+                        playlistEl.appendChild(document.createTextNode("{{.status.playlistConnections}}: "));
+                        var span = document.createElement("SPAN");
+                        span.className = playlistClass;
+                        span.textContent = activePlaylist + " / " + totalPlaylist;
+                        playlistEl.appendChild(span);
                     }
                     if (document.getElementById("client-connection-information")) {
-                        let activeClass = "text-accent";
-                        if (response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] >= 0.6 && response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] < 0.8) {
-                            activeClass = "text-warning";
+                        var clientEl = document.getElementById("client-connection-information");
+                        var activeClients = response["clientInfo"]["activeClients"];
+                        var totalClients = response["clientInfo"]["totalClients"];
+                        var clientClass = "text-accent";
+                        if (activeClients / totalClients >= 0.8) {
+                            clientClass = "text-danger";
+                        } else if (activeClients / totalClients >= 0.6) {
+                            clientClass = "text-warning";
                         }
-                        else if (response["clientInfo"]["activeClients"] / response["clientInfo"]["totalClients"] >= 0.8) {
-                            activeClass = "text-danger";
-                        }
-                        document.getElementById("client-connection-information").innerHTML = "{{.status.clientConnections}}: <span class='" + activeClass + "'>" + response["clientInfo"]["activeClients"] + " / " + response["clientInfo"]["totalClients"] + "</span>";
+                        clientEl.textContent = "";
+                        clientEl.appendChild(document.createTextNode("{{.status.clientConnections}}: "));
+                        var cspan = document.createElement("SPAN");
+                        cspan.className = clientClass;
+                        cspan.textContent = activeClients + " / " + totalClients;
+                        clientEl.appendChild(cspan);
                     }
                     return;
-                    break;
                 case "saveSettings":
                     // Update local data without re-rendering the page
                     SERVER["settings"] = response["settings"];
@@ -140,6 +179,6 @@ class Server {
 function getCookie(name) {
     var value = "; " + document.cookie;
     var parts = value.split("; " + name + "=");
-    if (parts.length == 2)
+    if (parts.length === 2)
         return parts.pop().split(";").shift();
 }
