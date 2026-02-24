@@ -48,7 +48,6 @@
   "button": {
     "back": "Atrás",
     "backup": "Copia de seguridad",
-    "bulkEdit": "Edición masiva",
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "done": "Hecho",
@@ -72,7 +71,6 @@
   "grid": {
     "activeChannels": "Canales activos",
     "inactiveChannels": "Canales inactivos",
-    "bulkEditHint": "Seleccione canales con las casillas, luego haga clic en un canal para editar todos los seleccionados a la vez.",
     "noResults": "Ningún resultado coincide con los filtros actuales.",
     "of": "de",
     "channels": "canales",

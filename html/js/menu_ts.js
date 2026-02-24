@@ -65,7 +65,7 @@ class MainMenuItem extends MainMenu {
                 this.tableHeader = ["{{.users.table.username}}", "{{.users.table.password}}", "{{.users.table.web}}", "{{.users.table.pms}}", "{{.users.table.m3u}}", "{{.users.table.xml}}", "{{.users.table.api}}"];
                 break;
             case "mapping":
-                this.tableHeader = ["BULK", "{{.mapping.table.chNo}}", "{{.mapping.table.logo}}", "{{.mapping.table.channelName}}", "{{.mapping.table.playlist}}", "{{.mapping.table.groupTitle}}", "{{.mapping.table.xmltvFile}}", "{{.mapping.table.xmltvID}}"];
+                this.tableHeader = ["{{.mapping.table.chNo}}", "{{.mapping.table.logo}}", "{{.mapping.table.channelName}}", "{{.mapping.table.playlist}}", "{{.mapping.table.groupTitle}}", "{{.mapping.table.xmltvFile}}", "{{.mapping.table.xmltvID}}"];
                 break;
         }
         //console.log(this.menuKey, this.tableHeader);
@@ -345,7 +345,6 @@ class Content {
                 });
                 break;
             case "mapping":
-                BULK_EDIT = false;
                 createSearchObj();
                 checkUndo("epgMapping");
                 console.log("MAPPING");
@@ -356,12 +355,6 @@ class Content {
                         var tr = document.createElement("TR");
                         tr.id = key;
                         tr.className = "activeEPG";
-                        // Bulk
-                        var cell = new Cell();
-                        cell.child = true;
-                        cell.childType = "BULK";
-                        cell.value = false;
-                        tr.appendChild(cell.createCell());
                         // Kanalnummer
                         var cell = new Cell();
                         cell.child = true;
@@ -463,7 +456,6 @@ class Content {
         var rows = new Array();
         switch (menuKey) {
             case "mapping":
-                BULK_EDIT = false;
                 createSearchObj();
                 checkUndo("epgMapping");
                 console.log("MAPPING");
@@ -474,12 +466,6 @@ class Content {
                         var tr = document.createElement("TR");
                         tr.id = key;
                         tr.className = "notActiveEPG";
-                        // Bulk
-                        var cell = new Cell();
-                        cell.child = true;
-                        cell.childType = "BULK";
-                        cell.value = false;
-                        tr.appendChild(cell.createCell());
                         // Kanalnummer
                         var cell = new Cell();
                         cell.child = true;
@@ -607,24 +593,6 @@ class Cell {
                     element.value = this.value;
                     element.type = "text";
                     break;
-                case "BULK":
-                    element = document.createElement("INPUT");
-                    element.checked = this.value;
-                    element.type = "checkbox";
-                    element.className = "bulk hideBulk";
-                    break;
-                case "BULK_HEAD":
-                    element = document.createElement("INPUT");
-                    element.checked = this.value;
-                    element.type = "checkbox";
-                    element.className = "bulk hideBulk";
-                    if (this.active) {
-                        element.setAttribute("onclick", "javascript: selectAllChannels()");
-                    }
-                    else {
-                        element.setAttribute("onclick", "javascript: selectAllChannels('inactive_content_table')");
-                    }
-                    break;
                 case "IMG":
                     var imgElement;
                     imgElement = document.createElement(this.childType);
@@ -726,10 +694,6 @@ class ShowContent extends Content {
                 var input = this.createInput("button", menuKey, "{{.button.save}}");
                 input.setAttribute("onclick", 'javascript: savePopupData("mapping", "", "")');
                 interaction.appendChild(input);
-                var input = this.createInput("button", menuKey, "{{.button.bulkEdit}}");
-                input.setAttribute("onclick", 'javascript: toggleBulkEdit()');
-                input.setAttribute("id", "bulkEditBtn");
-                interaction.appendChild(input);
                 break;
             case "settings":
                 var input = this.createInput("button", menuKey, "{{.button.backup}}");
@@ -783,12 +747,12 @@ class ShowContent extends Content {
             var sortableColumns = {};
             if (menuKey == "mapping") {
                 sortableColumns = {
-                    "{{.mapping.table.chNo}}": 1,
-                    "{{.mapping.table.channelName}}": 3,
-                    "{{.mapping.table.playlist}}": 4,
-                    "{{.mapping.table.groupTitle}}": 5,
-                    "{{.mapping.table.xmltvFile}}": 6,
-                    "{{.mapping.table.xmltvID}}": 7
+                    "{{.mapping.table.chNo}}": 0,
+                    "{{.mapping.table.channelName}}": 2,
+                    "{{.mapping.table.playlist}}": 3,
+                    "{{.mapping.table.groupTitle}}": 4,
+                    "{{.mapping.table.xmltvFile}}": 5,
+                    "{{.mapping.table.xmltvID}}": 6
                 };
             }
             // Panel title
@@ -806,11 +770,6 @@ class ShowContent extends Content {
                 cell.child = true;
                 cell.childType = "P";
                 cell.value = element;
-                if (element == "BULK") {
-                    cell.childType = "BULK_HEAD";
-                    cell.active = true;
-                    cell.value = false;
-                }
                 if (sortableColumns[element] !== undefined) {
                     cell.onclick = true;
                     cell.onclickFunktion = "javascript: sortTable(" + sortableColumns[element] + ");";
@@ -840,11 +799,6 @@ class ShowContent extends Content {
                     cell.child = true;
                     cell.childType = "P";
                     cell.value = element;
-                    if (element == "BULK") {
-                        cell.childType = "BULK_HEAD";
-                        cell.active = false;
-                        cell.value = false;
-                    }
                     if (sortableColumns[element] !== undefined) {
                         cell.onclick = true;
                         cell.onclickFunktion = "javascript: sortTable(" + sortableColumns[element] + ", 'inactive_content_table');";
@@ -864,12 +818,12 @@ class ShowContent extends Content {
         }
         switch (menuKey) {
             case "mapping":
-                sortTable(1);
-                sortTable(1, "inactive_content_table");
+                sortTable(0);
+                sortTable(0, "inactive_content_table");
                 break;
             case "filter":
                 showPreview(true);
-                sortTable(1);
+                sortTable(0);
                 break;
             default:
                 COLUMN_TO_SORT = -1;
@@ -913,10 +867,6 @@ function buildGridPanel(title, headerClass, tableId) {
     controls.appendChild(colBtnWrap);
     panelHeader.appendChild(controls);
     panel.appendChild(panelHeader);
-    var hint = document.createElement("DIV");
-    hint.className = "bulk-edit-hint";
-    hint.innerHTML = '<span class="material-symbols-outlined">info</span> {{.grid.bulkEditHint}}';
-    panel.appendChild(hint);
     var table = document.createElement("TABLE");
     table.id = tableId;
     table.className = "table";
@@ -938,6 +888,8 @@ function applyColumnWidths(tableId, tableHeader) {
     // Remove existing colgroup
     var existing = table.querySelector("colgroup");
     if (existing) existing.remove();
+    // Load user-set column widths
+    var userWidths = loadColumnWidths(tableId);
     // Determine which columns are visible
     var panel = table.closest(".grid-panel");
     var visibleCols = [];
@@ -950,20 +902,20 @@ function applyColumnWidths(tableId, tableHeader) {
         }
         visibleCols.push(isVisible);
     }
-    // Determine fixed widths: BULK=40px, ChNo=60px, Logo=70px, rest=auto-proportional
-    var fixedWidths = {};
+    // Determine default fixed widths: ChNo=60px, Logo=70px, rest=auto-proportional
+    var defaultFixedWidths = {};
     for (var i = 0; i < colCount; i++) {
         var hdr = tableHeader[i];
-        if (hdr == "BULK") fixedWidths[i] = 40;
-        else if (hdr == "{{.mapping.table.chNo}}" || hdr == "{{.filter.table.startingNumber}}") fixedWidths[i] = 60;
-        else if (hdr == "{{.mapping.table.logo}}") fixedWidths[i] = 70;
+        if (hdr == "{{.mapping.table.chNo}}" || hdr == "{{.filter.table.startingNumber}}") defaultFixedWidths[i] = 60;
+        else if (hdr == "{{.mapping.table.logo}}") defaultFixedWidths[i] = 70;
     }
-    // Calculate total fixed and count of flex columns (visible only)
+    // Calculate total fixed px (user-set + default fixed) and count of flex columns (visible only)
     var totalFixed = 0;
     var flexCount = 0;
     for (var i = 0; i < colCount; i++) {
         if (!visibleCols[i]) continue;
-        if (fixedWidths[i]) totalFixed += fixedWidths[i];
+        if (userWidths[i] !== undefined) totalFixed += userWidths[i];
+        else if (defaultFixedWidths[i]) totalFixed += defaultFixedWidths[i];
         else flexCount++;
     }
     // Build colgroup
@@ -973,22 +925,101 @@ function applyColumnWidths(tableId, tableHeader) {
         if (!visibleCols[i]) {
             col.style.width = "0px";
             col.style.display = "none";
-        } else if (fixedWidths[i]) {
-            col.style.width = fixedWidths[i] + "px";
+        } else if (userWidths[i] !== undefined) {
+            col.style.width = userWidths[i] + "px";
+        } else if (defaultFixedWidths[i]) {
+            col.style.width = defaultFixedWidths[i] + "px";
         } else {
             // Distribute remaining space equally among flex columns
-            col.style.width = "calc((100% - " + totalFixed + "px) / " + flexCount + ")";
+            if (flexCount > 0) {
+                col.style.width = "calc((100% - " + totalFixed + "px) / " + flexCount + ")";
+            }
         }
         colgroup.appendChild(col);
     }
     table.insertBefore(colgroup, table.firstChild);
+    // Add resize handles to header cells
+    addResizeHandles(tableId);
+}
+// --- Column Width Persistence ---
+function saveColumnWidths(tableId, widths) {
+    var key = "colWidths_" + tableId;
+    try { localStorage.setItem(key, JSON.stringify(widths)); } catch(e) {}
+}
+function loadColumnWidths(tableId) {
+    var key = "colWidths_" + tableId;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key));
+        return saved || {};
+    } catch(e) { return {}; }
+}
+// --- Column Resize Handles ---
+function addResizeHandles(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var headerRow = table.querySelector(".content_table_header") || table.querySelector(".inactive_content_table_header");
+    if (!headerRow) return;
+    var tds = headerRow.getElementsByTagName("TD");
+    for (var i = 0; i < tds.length; i++) {
+        // Skip hidden columns
+        if (tds[i].style.display == "none") continue;
+        // Remove existing handle if any
+        var existingHandle = tds[i].querySelector(".col-resize-handle");
+        if (existingHandle) existingHandle.remove();
+        var handle = document.createElement("DIV");
+        handle.className = "col-resize-handle";
+        handle.setAttribute("data-col-idx", i);
+        handle.setAttribute("data-table-id", tableId);
+        handle.addEventListener("mousedown", initColResize);
+        tds[i].appendChild(handle);
+    }
+}
+function initColResize(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var handle = e.target;
+    var colIdx = parseInt(handle.getAttribute("data-col-idx"));
+    var tableId = handle.getAttribute("data-table-id");
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var colgroup = table.querySelector("colgroup");
+    if (!colgroup) return;
+    var col = colgroup.children[colIdx];
+    if (!col) return;
+    // Get current rendered width of the column
+    var headerRow = table.querySelector(".content_table_header") || table.querySelector(".inactive_content_table_header");
+    var td = headerRow.getElementsByTagName("TD")[colIdx];
+    var startWidth = td.offsetWidth;
+    var startX = e.pageX;
+    handle.classList.add("resizing");
+    document.body.classList.add("col-resizing");
+    var userWidths = loadColumnWidths(tableId);
+    function onMouseMove(e) {
+        var diff = e.pageX - startX;
+        var newWidth = Math.max(30, startWidth + diff);
+        col.style.width = newWidth + "px";
+    }
+    function onMouseUp(e) {
+        var diff = e.pageX - startX;
+        var newWidth = Math.max(30, startWidth + diff);
+        userWidths[colIdx] = newWidth;
+        saveColumnWidths(tableId, userWidths);
+        handle.classList.remove("resizing");
+        document.body.classList.remove("col-resizing");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        // Re-apply widths to recalculate flex columns
+        applyColumnWidths(tableId);
+    }
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
 }
 function buildFilterRow(tableHeader, tableId) {
     var filterRow = document.createElement("TR");
     filterRow.className = "column-filter-row";
     tableHeader.forEach(function(element, idx) {
         var td = document.createElement("TD");
-        if (element == "BULK" || element == "{{.mapping.table.logo}}") {
+        if (element == "{{.mapping.table.logo}}") {
             td.innerHTML = "";
         } else {
             var inp = document.createElement("INPUT");
@@ -1018,7 +1049,6 @@ function buildColumnVisibility(panel, tableHeader, tableId) {
     var dropdown = panel.querySelector(".col-visibility-dropdown");
     if (!dropdown) return;
     tableHeader.forEach(function(element, idx) {
-        if (element == "BULK") return;
         var label = document.createElement("LABEL");
         var cb = document.createElement("INPUT");
         cb.type = "checkbox";
@@ -1037,8 +1067,21 @@ function toggleColumnDropdown(btn) {
     var dropdown = btn.parentNode.querySelector(".col-visibility-dropdown");
     if (dropdown) {
         dropdown.classList.toggle("show");
-        // Close on outside click
         if (dropdown.classList.contains("show")) {
+            // Reset position
+            dropdown.style.top = "";
+            dropdown.style.bottom = "";
+            // Check if dropdown would be clipped at bottom of viewport
+            setTimeout(function() {
+                var rect = dropdown.getBoundingClientRect();
+                var viewportHeight = window.innerHeight;
+                if (rect.bottom > viewportHeight) {
+                    // Not enough space below, open upward
+                    dropdown.style.top = "auto";
+                    dropdown.style.bottom = "100%";
+                }
+            }, 0);
+            // Close on outside click
             setTimeout(function() {
                 document.addEventListener("click", function closeDropdown(e) {
                     if (!btn.parentNode.contains(e.target)) {
@@ -1182,29 +1225,6 @@ function clearColumnFilters(tableId) {
         if (noResults) noResults.style.display = "none";
     }
 }
-function toggleBulkEdit() {
-    BULK_EDIT = !BULK_EDIT;
-    var className = BULK_EDIT ? "bulk showBulk" : "bulk hideBulk";
-    var rows = document.getElementsByClassName("bulk");
-    for (var i = 0; i < rows.length; i++) {
-        rows[i].className = className;
-        rows[i].checked = false;
-    }
-    // Toggle hint banners
-    var panels = document.querySelectorAll(".grid-panel");
-    panels.forEach(function(p) {
-        if (BULK_EDIT) {
-            p.classList.add("bulk-edit-active");
-        } else {
-            p.classList.remove("bulk-edit-active");
-        }
-    });
-    // Toggle button active state
-    var btn = document.getElementById("bulkEditBtn");
-    if (btn) {
-        btn.className = BULK_EDIT ? "active-bulk" : "";
-    }
-}
 function PageReady() {
     var server = new Server("getServerConfig");
     server.request(new Object());
@@ -1322,7 +1342,6 @@ function openThisMenu(element) {
     }
     var content = new ShowContent(id);
     content.show();
-    enableGroupSelection(".bulk");
     return;
 }
 class PopupWindow {
@@ -1899,18 +1918,6 @@ function openPopUp(dataType, element) {
             break;
         case "mapping":
             content.createHeadline("{{.mainMenu.item.mapping}}");
-            if (BULK_EDIT == true) {
-                var dbKey = "x-channels-start";
-                var input = content.createInput("text", dbKey, data[dbKey]);
-                // Set the value to the first selected channel
-                var channels = getAllSelectedChannels();
-                var channel = SERVER["xepg"]["epgMapping"][channels[0]];
-                if (typeof channel !== "undefined") {
-                    input.setAttribute("value", channel["x-channelID"]);
-                }
-                input.setAttribute("onchange", 'javascript: changeChannelNumbers("' + channels + '");');
-                content.appendRow("{{.mapping.channelGroupStart.title}}", input);
-            }
             // Aktiv 
             var dbKey = "x-active";
             var input = content.createCheckbox(dbKey);
@@ -1923,10 +1930,6 @@ function openPopUp(dataType, element) {
             var dbKey = "x-name";
             var input = content.createInput("text", dbKey, data[dbKey]);
             input.setAttribute("onchange", "javascript: this.className = 'changed'");
-            if (BULK_EDIT == true) {
-                input.style.border = "solid 1px red";
-                input.setAttribute("readonly", "true");
-            }
             content.appendRow("{{.mapping.channelName.title}}", input);
             content.description("<span class='text-danger'>" + data["tvg-id"] + "</span> <span class='text-primary'>(" + data["x-epg"] + ")</span>");
             // Beschreibung 
@@ -2068,11 +2071,7 @@ function openPopUp(dataType, element) {
             input.setAttribute("onclick", 'javascript: showElement("popup", false);');
             content.addInteraction(input);
             // Fertig
-            var ids = new Array();
-            ids = getAllSelectedChannels();
-            if (ids.length == 0) {
-                ids.push(id);
-            }
+            var ids = [id];
             var input = content.createInput("button", "save", "{{.button.done}}");
             input.setAttribute("onclick", 'javascript: donePopupData("' + dataType + '", "' + ids + '", "false");');
             content.addInteraction(input);
@@ -2378,7 +2377,7 @@ function changeChannelLogo(epgMapId) {
     const xmlTvFile = xmlTvFileSelect.options[xmlTvFileSelect.selectedIndex].value;
     const xmlTvIdInput = document.getElementById('xmltv-id-picker-input');
     const newXmlTvId = xmlTvIdInput.value;
-    const updateLogo = !BULK_EDIT || document.getElementById('update-icon').checked;
+    const updateLogo = document.getElementById('update-icon').checked;
     let logo;
     if (updateLogo == true && xmlTvFile != 'Threadfin Dummy') {
         if (SERVER['xepg']['xmltvMap'][xmlTvFile].hasOwnProperty(newXmlTvId)) {
@@ -2573,19 +2572,19 @@ function donePopupData(dataType, idsStr) {
             var row = document.getElementById(id);
             if (row) {
                 var tds = row.getElementsByTagName("TD");
-                // td[0]=BULK, td[1]=ChNo, td[2]=Logo, td[3]=Name, td[4]=Playlist, td[5]=Group, td[6]=XMLTV File, td[7]=XMLTV ID
-                if (input["x-name"] && tds[3]) tds[3].firstChild.innerHTML = input["x-name"];
-                if (input["x-group-title"] && tds[5]) tds[5].firstChild.innerHTML = input["x-group-title"];
-                if (input["x-xmltv-file"] && tds[6]) {
+                // td[0]=ChNo, td[1]=Logo, td[2]=Name, td[3]=Playlist, td[4]=Group, td[5]=XMLTV File, td[6]=XMLTV ID
+                if (input["x-name"] && tds[2]) tds[2].firstChild.innerHTML = input["x-name"];
+                if (input["x-group-title"] && tds[4]) tds[4].firstChild.innerHTML = input["x-group-title"];
+                if (input["x-xmltv-file"] && tds[5]) {
                     var displayVal = input["x-xmltv-file"];
                     if (displayVal != "Threadfin Dummy" && displayVal != "-") {
                         displayVal = getValueFromProviderFile(displayVal, "xmltv", "name");
                     }
-                    tds[6].firstChild.innerHTML = displayVal;
+                    tds[5].firstChild.innerHTML = displayVal;
                 }
-                if (input["x-mapping"] && tds[7]) tds[7].firstChild.innerHTML = input["x-mapping"];
-                if (input["tvg-logo"] && tds[2] && tds[2].firstChild && tds[2].firstChild.firstChild) {
-                    tds[2].firstChild.firstChild.setAttribute("src", input["tvg-logo"]);
+                if (input["x-mapping"] && tds[6]) tds[6].firstChild.innerHTML = input["x-mapping"];
+                if (input["tvg-logo"] && tds[1] && tds[1].firstChild && tds[1].firstChild.firstChild) {
+                    tds[1].firstChild.firstChild.setAttribute("src", input["tvg-logo"]);
                 }
                 if (input["x-category"]) {
                     var color = "white";
@@ -2595,7 +2594,7 @@ function donePopupData(dataType, idsStr) {
                         var catsColor_split = colors_split[ii].split(":");
                         if (catsColor_split[0] == input["x-category"]) { color = catsColor_split[1]; }
                     }
-                    if (tds[3] && tds[3].firstChild) tds[3].firstChild.style.borderColor = color;
+                    if (tds[2] && tds[2].firstChild) tds[2].firstChild.style.borderColor = color;
                 }
                 row.className = (input["x-active"] == false) ? "notActiveEPG" : "activeEPG";
             }

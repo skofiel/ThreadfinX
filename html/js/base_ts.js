@@ -15,7 +15,6 @@
 })();
 
 var SERVER = new Object();
-var BULK_EDIT = false;
 var COLUMN_TO_SORT;
 var INACTIVE_COLUMN_TO_SORT;
 var SORT_DIRECTION = {}; // tracks sort direction per table: { "content_table": "asc"|"desc", ... }
@@ -146,50 +145,6 @@ function getObjKeys(obj) {
 function getOwnObjProps(object) {
     return object ? Object.getOwnPropertyNames(object) : [];
 }
-function getAllSelectedChannels() {
-    var channels = new Array();
-    if (BULK_EDIT === false) {
-        return channels;
-    }
-    var trs = document.getElementById("content_table").getElementsByTagName("TR");
-    for (var i = 1; i < trs.length; i++) {
-        if (trs[i].style.display !== "none") {
-            if (trs[i].firstChild.firstChild.checked === true) {
-                channels.push(trs[i].id);
-            }
-        }
-    }
-    var trs_inactive = document.getElementById("inactive_content_table").getElementsByTagName("TR");
-    for (var i = 1; i < trs_inactive.length; i++) {
-        if (trs_inactive[i].style.display !== "none") {
-            if (trs_inactive[i].firstChild.firstChild.checked === true) {
-                channels.push(trs_inactive[i].id);
-            }
-        }
-    }
-    return channels;
-}
-function selectAllChannels(table_name = "content_table") {
-    var bulk = false;
-    var trs = document.getElementById(table_name).getElementsByTagName("TR");
-    if (trs[0].firstChild.firstChild.checked === true) {
-        bulk = true;
-    }
-    for (var i = 1; i < trs.length; i++) {
-        if (trs[i].style.display !== "none") {
-            switch (bulk) {
-                case true:
-                    trs[i].firstChild.firstChild.checked = true;
-                    break;
-                case false:
-                    trs[i].firstChild.firstChild.checked = false;
-                    break;
-            }
-        }
-    }
-    return;
-}
-// bulkEdit() moved to toggleBulkEdit() in menu_ts.js
 function clearSortIndicators(table, table_name) {
     var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
     if (!headerRow) return;
@@ -365,27 +320,6 @@ function createSearchObj() {
     });
     return;
 }
-function enableGroupSelection(selector) {
-    var lastcheck = null; // no checkboxes clicked yet
-    // get desired checkboxes
-    var checkboxes = document.querySelectorAll(selector);
-    // loop over checkboxes to add event listener
-    Array.prototype.forEach.call(checkboxes, function (cbx, idx) {
-        cbx.addEventListener('click', function (evt) {
-            // test for shift key, not first checkbox, and not same checkbox
-            if (evt.shiftKey && null !== lastcheck && idx !== lastcheck) {
-                // get range of checks between last-checkbox and shift-checkbox
-                // Math.min/max does our sorting for us
-                Array.prototype.slice.call(checkboxes, Math.min(lastcheck, idx), Math.max(lastcheck, idx))
-                    // and loop over each
-                    .forEach(function (ccbx) {
-                    ccbx.checked = true;
-                });
-            }
-            lastcheck = idx; // set this checkbox as last-checked for later
-        });
-    });
-}
 // searchInMapping() removed - replaced by per-column filters in menu_ts.js
 function changeChannelNumbers(elements) {
     var starting_number_element = document.getElementsByName("x-channels-start")[0];
@@ -394,18 +328,18 @@ function changeChannelNumbers(elements) {
     var data = SERVER["xepg"]["epgMapping"];
     elems.forEach(element => {
         var elem = document.getElementById(element);
-        var input = elem.childNodes[1].firstChild;
+        var input = elem.childNodes[0].firstChild;
         input.value = starting_number.toString();
         data[element]["x-channelID"] = starting_number.toString();
         starting_number++;
     });
-    if (COLUMN_TO_SORT === 1) {
+    if (COLUMN_TO_SORT === 0) {
         COLUMN_TO_SORT = -1;
-        sortTable(1);
+        sortTable(0);
     }
-    if (INACTIVE_COLUMN_TO_SORT === 1) {
+    if (INACTIVE_COLUMN_TO_SORT === 0) {
         INACTIVE_COLUMN_TO_SORT = -1;
-        sortTable(1, "inactive_content_page");
+        sortTable(0, "inactive_content_page");
     }
 }
 function changeChannelNumber(element) {
@@ -437,13 +371,13 @@ function changeChannelNumber(element) {
     }
     data[dbID]["x-channelID"] = newNumber.toString();
     element.value = newNumber;
-    if (COLUMN_TO_SORT === 1) {
+    if (COLUMN_TO_SORT === 0) {
         COLUMN_TO_SORT = -1;
-        sortTable(1);
+        sortTable(0);
     }
-    if (INACTIVE_COLUMN_TO_SORT === 1) {
+    if (INACTIVE_COLUMN_TO_SORT === 0) {
         INACTIVE_COLUMN_TO_SORT = -1;
-        sortTable(1, "inactive_content_page");
+        sortTable(0, "inactive_content_page");
     }
     return;
 }
@@ -461,34 +395,20 @@ function toggleChannelStatus(id) {
         var checkbox = document.getElementById("active");
         status = (checkbox).checked;
     }
-    var ids = getAllSelectedChannels();
-    if (ids.length === 0) {
-        ids.push(id);
+    var channel = SERVER["xepg"]["epgMapping"][id];
+    channel["x-active"] = status;
+    if (channel["x-active"] === true) {
+        if (channel["x-xmltv-file"] === "-" || channel["x-mapping"] === "-") {
+            checkbox.checked = true;
+            channel["x-active"] = true;
+        }
     }
-    ids.forEach(id => {
-        var channel = SERVER["xepg"]["epgMapping"][id];
-        channel["x-active"] = status;
-        switch (channel["x-active"]) {
-            case true:
-                if (channel["x-xmltv-file"] === "-" || channel["x-mapping"] === "-") {
-                    if (BULK_EDIT === false) {
-                        // alert(channel["x-name"] + ": Missing XMLTV file / channel")
-                        checkbox.checked = true;
-                    }
-                    channel["x-active"] = true;
-                }
-                break;
-            case false:
-                // code...
-                break;
-        }
-        if (channel["x-active"] === false) {
-            document.getElementById(id).className = "notActiveEPG";
-        }
-        else {
-            document.getElementById(id).className = "activeEPG";
-        }
-    });
+    if (channel["x-active"] === false) {
+        document.getElementById(id).className = "notActiveEPG";
+    }
+    else {
+        document.getElementById(id).className = "activeEPG";
+    }
 }
 function restore() {
     if (document.getElementById('upload')) {
