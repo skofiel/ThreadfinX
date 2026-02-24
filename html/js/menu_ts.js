@@ -666,6 +666,9 @@ class ShowContent extends Content {
     }
     show() {
         COLUMN_TO_SORT = -1;
+        INACTIVE_COLUMN_TO_SORT = -1;
+        SORT_DIRECTION = {};
+        ORIGINAL_ROW_ORDER = {};
         // Alten Inhalt löschen
         var doc = document.getElementById(this.DocumentID);
         doc.innerHTML = "";
@@ -823,6 +826,7 @@ class ShowContent extends Content {
             rows.forEach(function(tr) { table.appendChild(tr); });
             updateGridStatus(panel, rows.length);
             buildColumnVisibility(panel, tableHeader, "content_table");
+            restoreColumnVisibility("content_table");
             // Inactive table for mapping
             if (menuKey == "mapping") {
                 var inactivePanel = buildGridPanel("{{.grid.inactiveChannels}}", "inactive-panel", "inactive_content_table");
@@ -853,6 +857,7 @@ class ShowContent extends Content {
                 irows.forEach(function(tr) { inactivetable.appendChild(tr); });
                 updateGridStatus(inactivePanel, irows.length);
                 buildColumnVisibility(inactivePanel, tableHeader, "inactive_content_table");
+                restoreColumnVisibility("inactive_content_table");
             }
         }
         switch (menuKey) {
@@ -866,6 +871,7 @@ class ShowContent extends Content {
                 break;
             default:
                 COLUMN_TO_SORT = -1;
+                INACTIVE_COLUMN_TO_SORT = -1;
                 sortTable(0);
                 break;
         }
@@ -999,6 +1005,47 @@ function toggleColumnVisibility(cb) {
             cells[colIdx].style.display = display;
         }
     }
+    // Persist column visibility to localStorage
+    saveColumnVisibility(tableId);
+}
+function saveColumnVisibility(tableId) {
+    var panel = document.querySelector('.grid-panel[data-table-id="' + tableId + '"]');
+    if (!panel) return;
+    var checkboxes = panel.querySelectorAll('.col-visibility-dropdown input[type="checkbox"]');
+    var state = {};
+    checkboxes.forEach(function(cb) {
+        var idx = cb.getAttribute("data-col-idx");
+        state[idx] = cb.checked;
+    });
+    var key = "colVisibility_" + tableId;
+    try { localStorage.setItem(key, JSON.stringify(state)); } catch(e) {}
+}
+function restoreColumnVisibility(tableId) {
+    var key = "colVisibility_" + tableId;
+    var saved;
+    try { saved = JSON.parse(localStorage.getItem(key)); } catch(e) { return; }
+    if (!saved) return;
+    var panel = document.querySelector('.grid-panel[data-table-id="' + tableId + '"]');
+    if (!panel) return;
+    var checkboxes = panel.querySelectorAll('.col-visibility-dropdown input[type="checkbox"]');
+    checkboxes.forEach(function(cb) {
+        var idx = cb.getAttribute("data-col-idx");
+        if (saved.hasOwnProperty(idx)) {
+            cb.checked = saved[idx];
+            // Apply visibility
+            var table = document.getElementById(tableId);
+            if (table) {
+                var rows = table.getElementsByTagName("TR");
+                var display = saved[idx] ? "" : "none";
+                for (var i = 0; i < rows.length; i++) {
+                    var cells = rows[i].getElementsByTagName("TD");
+                    if (cells[parseInt(idx)]) {
+                        cells[parseInt(idx)].style.display = display;
+                    }
+                }
+            }
+        }
+    });
 }
 function filterColumn(inp) {
     var colIdx = parseInt(inp.getAttribute("data-col-idx"));

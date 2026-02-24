@@ -553,6 +553,14 @@ caption {
   color: var(--accent);
 }
 
+/* Sort direction arrow indicator */
+.sort-arrow {
+  font-size: var(--font-size-2xs);
+  color: var(--accent);
+  margin-left: 2px;
+  vertical-align: middle;
+}
+
 /* Per-column filter row */
 .column-filter-row {
   background-color: var(--bg-card);
@@ -560,12 +568,14 @@ caption {
 }
 
 .column-filter-row td {
-  padding: 3px 2px;
+  padding: 3px 4px;
 }
 
 .column-filter-row input[type="text"] {
-  width: 100%;
+  width: calc(100% - 2px);
+  box-sizing: border-box;
   padding: 3px 6px;
+  margin: 0 1px;
   font-size: var(--font-size-xs);
   border: 1px solid var(--border);
   background-color: var(--bg-elevated);
@@ -645,6 +655,8 @@ tbody {
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background-color var(--transition-fast);
+  min-height: 36px;
+  height: 36px;
 }
 
 #content_table tr:hover,
@@ -654,11 +666,12 @@ tbody {
 
 #content_table td,
 #inactive_content_table td {
-  padding: 2px var(--space-sm);
+  padding: 4px var(--space-sm);
   font-size: var(--font-size-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 #content_table td p,

@@ -18,6 +18,8 @@ var SERVER = new Object();
 var BULK_EDIT = false;
 var COLUMN_TO_SORT;
 var INACTIVE_COLUMN_TO_SORT;
+var SORT_DIRECTION = {}; // tracks sort direction per table: { "content_table": "asc"|"desc", ... }
+var ORIGINAL_ROW_ORDER = {}; // stores original row order per table for "default" reset
 var SEARCH_MAPPING = new Object();
 var UNDO = new Object();
 var SERVER_CONNECTION = false;
@@ -191,89 +193,142 @@ function selectAllChannels(table_name = "content_table") {
     return;
 }
 // bulkEdit() moved to toggleBulkEdit() in menu_ts.js
+function clearSortIndicators(table, table_name) {
+    var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+    if (!headerRow) return;
+    var tds = headerRow.getElementsByTagName("TD");
+    for (var i = 0; i < tds.length; i++) {
+        if (tds[i].classList.contains("pointer") || tds[i].classList.contains("sortThis")) {
+            tds[i].className = "pointer";
+            // Remove any existing sort arrow
+            var arrow = tds[i].querySelector(".sort-arrow");
+            if (arrow) arrow.remove();
+        }
+    }
+}
 function sortTable(column, table_name = "content_table") {
-    // console.log("COLUMN: " + column);
-    if ((column == COLUMN_TO_SORT && table_name == "content_table") || (column == INACTIVE_COLUMN_TO_SORT && table_name == "inactive_content_table")) {
+    var table = document.getElementById(table_name);
+    if (!table) return;
+    var currentSortCol = (table_name == "content_table") ? COLUMN_TO_SORT : INACTIVE_COLUMN_TO_SORT;
+    var currentDir = SORT_DIRECTION[table_name];
+    var newDir;
+    // Determine new sort direction: asc -> desc -> default (reset)
+    if (column == currentSortCol) {
+        if (currentDir == "asc") {
+            newDir = "desc";
+        } else if (currentDir == "desc") {
+            newDir = null; // reset to default
+        } else {
+            newDir = "asc";
+        }
+    } else {
+        newDir = "asc";
+    }
+    // Clear all sort indicators
+    clearSortIndicators(table, table_name);
+    // If resetting to default order
+    if (newDir == null) {
+        SORT_DIRECTION[table_name] = null;
+        if (table_name == "content_table") { COLUMN_TO_SORT = null; }
+        else { INACTIVE_COLUMN_TO_SORT = null; }
+        // Restore original row order if saved
+        if (ORIGINAL_ROW_ORDER[table_name]) {
+            var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+            var filterRow = table.querySelector(".column-filter-row");
+            while (table.firstChild) { table.removeChild(table.firstChild); }
+            if (headerRow) table.appendChild(headerRow);
+            if (filterRow) table.appendChild(filterRow);
+            ORIGINAL_ROW_ORDER[table_name].forEach(function(row) {
+                table.appendChild(row);
+            });
+        }
         return;
     }
-    var table = document.getElementById(table_name);
-    var tableHead = table.getElementsByTagName("TR")[0];
-    var tableItems = tableHead.getElementsByTagName("TD");
-    var sortObj = new Object();
-    var x, xValue;
-    var tableHeader;
+    // Save original order if not already saved
+    if (!ORIGINAL_ROW_ORDER[table_name]) {
+        var origRows = [];
+        var allRows = table.rows;
+        for (var i = 0; i < allRows.length; i++) {
+            if (allRows[i].className.indexOf("content_table_header") !== -1 ||
+                allRows[i].className.indexOf("inactive_content_table_header") !== -1 ||
+                allRows[i].className.indexOf("column-filter-row") !== -1) continue;
+            origRows.push(allRows[i]);
+        }
+        ORIGINAL_ROW_ORDER[table_name] = origRows.slice();
+    }
+    // Set sort state
+    SORT_DIRECTION[table_name] = newDir;
+    if (table_name == "content_table") { COLUMN_TO_SORT = column; }
+    else { INACTIVE_COLUMN_TO_SORT = column; }
+    // Add sort indicator to active column
+    var headerRow = table.querySelector(table_name == "content_table" ? ".content_table_header" : ".inactive_content_table_header");
+    if (headerRow) {
+        var tds = headerRow.getElementsByTagName("TD");
+        if (tds[column]) {
+            tds[column].className = "sortThis";
+            var arrow = document.createElement("SPAN");
+            arrow.className = "sort-arrow";
+            arrow.innerText = (newDir == "asc") ? " \u25B2" : " \u25BC";
+            tds[column].appendChild(arrow);
+        }
+    }
+    // Collect data rows (skip header and filter rows)
+    var dataRows = [];
+    var allRows = table.rows;
+    var filterRow = null;
+    for (var i = 0; i < allRows.length; i++) {
+        if (allRows[i].className.indexOf("content_table_header") !== -1 ||
+            allRows[i].className.indexOf("inactive_content_table_header") !== -1) continue;
+        if (allRows[i].className.indexOf("column-filter-row") !== -1) {
+            filterRow = allRows[i];
+            continue;
+        }
+        dataRows.push(allRows[i]);
+    }
+    if (dataRows.length === 0) return;
+    // Sort data rows
     var sortByString = false;
-    if (column > 0 && COLUMN_TO_SORT > 0 && table_name == "content_table") {
-        tableItems[COLUMN_TO_SORT].className = "pointer";
-        tableItems[column].className = "sortThis";
-    }
-    else if (column > 0 && INACTIVE_COLUMN_TO_SORT > 0 && table_name == "inactive_content_table") {
-        tableItems[INACTIVE_COLUMN_TO_SORT].className = "pointer";
-        tableItems[column].className = "sortThis";
-    }
-    if (table_name == "content_table") {
-        COLUMN_TO_SORT = column;
-    }
-    else if (table_name == "inactive_content_table") {
-        INACTIVE_COLUMN_TO_SORT = column;
-    }
-    var rows = table.rows;
-    if (rows[1] != undefined) {
-        tableHeader = rows[0];
-        x = rows[1].getElementsByTagName("TD")[column];
-        for (i = 1; i < rows.length; i++) {
-            x = rows[i].getElementsByTagName("TD")[column];
-            switch (x.childNodes[0].tagName.toLowerCase()) {
-                case "input":
-                    xValue = x.getElementsByTagName("INPUT")[0].value.toLowerCase();
-                    break;
-                case "p":
-                    xValue = x.getElementsByTagName("P")[0].innerText.toLowerCase();
-                    break;
-                default: console.log(x.childNodes[0].tagName);
-            }
-            if (xValue == "") {
-                xValue = i;
-                sortObj[i] = rows[i];
-            }
-            else {
-                switch (isNaN(xValue)) {
-                    case false:
-                        xValue = parseFloat(xValue);
-                        sortObj[xValue] = rows[i];
-                        break;
-                    case true:
-                        sortByString = true;
-                        sortObj[xValue.toLowerCase() + i] = rows[i];
-                        break;
-                }
-            }
-        }
-        while (table.firstChild) {
-            table.removeChild(table.firstChild);
-        }
-        var sortValues = getObjKeys(sortObj);
-        if (sortByString == true) {
-            if (column == 3) {
-                var collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-                sortValues.sort(collator.compare);
-            }
-            else {
-                sortValues.sort();
-            }
-        }
-        else {
-            function sortFloat(a, b) {
-                return a - b;
-            }
-            sortValues.sort(sortFloat);
-        }
-        table.appendChild(tableHeader);
-        for (var i = 0; i < sortValues.length; i++) {
-            table.appendChild(sortObj[sortValues[i]]);
+    // Detect type from first data row
+    var firstCell = dataRows[0].getElementsByTagName("TD")[column];
+    if (firstCell && firstCell.childNodes[0]) {
+        var tag = firstCell.childNodes[0].tagName ? firstCell.childNodes[0].tagName.toLowerCase() : "";
+        if (tag == "input") {
+            var testVal = firstCell.getElementsByTagName("INPUT")[0].value;
+            if (isNaN(testVal) || testVal === "") sortByString = true;
+        } else {
+            sortByString = true;
         }
     }
-    return;
+    dataRows.sort(function(rowA, rowB) {
+        var cellA = rowA.getElementsByTagName("TD")[column];
+        var cellB = rowB.getElementsByTagName("TD")[column];
+        var valA = "", valB = "";
+        if (cellA && cellA.childNodes[0]) {
+            var tagA = cellA.childNodes[0].tagName ? cellA.childNodes[0].tagName.toLowerCase() : "";
+            if (tagA == "input") valA = cellA.getElementsByTagName("INPUT")[0].value.toLowerCase();
+            else if (tagA == "p") valA = cellA.getElementsByTagName("P")[0].innerText.toLowerCase();
+            else valA = cellA.innerText.toLowerCase();
+        }
+        if (cellB && cellB.childNodes[0]) {
+            var tagB = cellB.childNodes[0].tagName ? cellB.childNodes[0].tagName.toLowerCase() : "";
+            if (tagB == "input") valB = cellB.getElementsByTagName("INPUT")[0].value.toLowerCase();
+            else if (tagB == "p") valB = cellB.getElementsByTagName("P")[0].innerText.toLowerCase();
+            else valB = cellB.innerText.toLowerCase();
+        }
+        var result;
+        if (!sortByString && !isNaN(valA) && !isNaN(valB) && valA !== "" && valB !== "") {
+            result = parseFloat(valA) - parseFloat(valB);
+        } else {
+            var collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+            result = collator.compare(valA, valB);
+        }
+        return (newDir == "desc") ? -result : result;
+    });
+    // Rebuild table: header, filter row, then sorted data rows
+    while (table.firstChild) { table.removeChild(table.firstChild); }
+    if (headerRow) table.appendChild(headerRow);
+    if (filterRow) table.appendChild(filterRow);
+    dataRows.forEach(function(row) { table.appendChild(row); });
 }
 function createSearchObj() {
     SEARCH_MAPPING = new Object();
