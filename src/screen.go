@@ -35,7 +35,6 @@ func showInfo(str string) {
 
 		printLogOnScreen(logMsg, "info")
 
-		logMsg = strings.Replace(logMsg, " ", "&nbsp;", -1)
 		WebScreenLog.Log = append(WebScreenLog.Log, time.Now().Format("2006-01-02 15:04:05")+" "+logMsg)
 		logCleanUp()
 
@@ -68,7 +67,6 @@ func showDebug(str string, level int) {
 		printLogOnScreen(logMsg, "debug")
 
 		mutex.Lock()
-		logMsg = strings.Replace(logMsg, " ", "&nbsp;", -1)
 		WebScreenLog.Log = append(WebScreenLog.Log, time.Now().Format("2006-01-02 15:04:05")+" "+logMsg)
 		logCleanUp()
 		mutex.Unlock()

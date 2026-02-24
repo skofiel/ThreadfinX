@@ -45,6 +45,22 @@
     "inactiveStreams": "Inactive Streams",
     "websocketError": "No websocket connection to Threadfin could be established. Check your network configuration."
   },
+  "log": {
+    "filter": {
+      "all": "All",
+      "error": "Errors",
+      "warning": "Warnings",
+      "debug": "Debug",
+      "info": "Info"
+    },
+    "column": {
+      "date": "Date / Time",
+      "type": "Type",
+      "source": "Source",
+      "message": "Message"
+    },
+    "search": "Search logs..."
+  },
   "button": {
     "back": "Back",
     "backup": "Backup",
@@ -441,6 +457,14 @@
     "ignoreFilters": {
       "title": "Ignore Filters",
       "description": "If checked, filtering is completely ignored."
+    },
+    "debugLevel": {
+      "title": "Debug Level",
+      "description": "Set the verbosity of debug messages in the log.<br>0: Off - No debug output<br>1: Basic - File operations, backups, EPG info<br>2: Intermediate - Buffer details, parsing errors<br>3: Verbose - Full HTTP traces, SSDP logger, M3U8 content",
+      "off": "0 - Off",
+      "level1": "1 - Basic",
+      "level2": "2 - Intermediate",
+      "level3": "3 - Verbose"
     },
     "epgSource": {
       "title": "EPG Source",

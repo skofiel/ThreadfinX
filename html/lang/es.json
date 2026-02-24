@@ -45,6 +45,22 @@
     "inactiveStreams": "Streams inactivos",
     "websocketError": "No se pudo establecer conexión WebSocket con Threadfin. Compruebe su configuración de red."
   },
+  "log": {
+    "filter": {
+      "all": "Todos",
+      "error": "Errores",
+      "warning": "Avisos",
+      "debug": "Depuración",
+      "info": "Info"
+    },
+    "column": {
+      "date": "Fecha / Hora",
+      "type": "Tipo",
+      "source": "Origen",
+      "message": "Mensaje"
+    },
+    "search": "Buscar en logs..."
+  },
   "button": {
     "back": "Atrás",
     "backup": "Copia de seguridad",
@@ -441,6 +457,14 @@
     "ignoreFilters": {
       "title": "Ignorar filtros",
       "description": "Si está marcado, el filtrado se ignora completamente."
+    },
+    "debugLevel": {
+      "title": "Nivel de depuración",
+      "description": "Establece el nivel de detalle de los mensajes de depuración en el log.<br>0: Desactivado - Sin mensajes de depuración<br>1: Básico - Operaciones de archivos, backups, info EPG<br>2: Intermedio - Detalles de buffer, errores de análisis<br>3: Detallado - Trazas HTTP completas, logger SSDP, contenido M3U8",
+      "off": "0 - Desactivado",
+      "level1": "1 - Básico",
+      "level2": "2 - Intermedio",
+      "level3": "3 - Detallado"
     },
     "epgSource": {
       "title": "Fuente EPG",
