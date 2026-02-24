@@ -623,7 +623,8 @@
       "value": "Valor",
       "addLanguage": "Añadir Idioma",
       "editTranslations": "Editar Traducciones",
-      "newLanguagePrompt": "Introduzca el código del idioma (ej. fr, de, it):"
+      "newLanguagePrompt": "Introduzca el código del idioma (ej. fr, de, it):",
+      "search": "Buscar traducciones..."
     },
     "bufferTimeout": {
       "title": "Tiempo de espera para nuevas conexiones",

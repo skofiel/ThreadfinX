@@ -623,7 +623,8 @@
       "value": "Value",
       "addLanguage": "Add Language",
       "editTranslations": "Edit Translations",
-      "newLanguagePrompt": "Enter language code (e.g. fr, de, it):"
+      "newLanguagePrompt": "Enter language code (e.g. fr, de, it):",
+      "search": "Search translations..."
     },
     "bufferTimeout": {
       "title": "Timeout for new client connections",

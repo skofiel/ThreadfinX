@@ -266,15 +266,19 @@ select option {
   color: var(--text-primary);
 }
 
-select option:checked,
-select option:hover {
-  background-color: var(--accent);
+select option:checked {
+  background: var(--accent) linear-gradient(0deg, var(--accent) 0%, var(--accent) 100%);
   color: #fff;
 }
 
 select:focus option:checked {
   background: var(--accent) linear-gradient(0deg, var(--accent) 0%, var(--accent) 100%);
   color: #fff;
+}
+
+/* Accent color for native browser controls (select hover, checkbox, range, etc.) */
+html, select, input {
+  accent-color: var(--accent);
 }
 
 input {
@@ -337,7 +341,7 @@ input[type=text],
 input[type=search],
 input[type=password] {
   color: var(--text-primary);
-  width: calc(100%);
+  width: 100%;
   outline: none;
   border: 1px solid var(--border);
   background-color: var(--bg-elevated);
@@ -345,6 +349,13 @@ input[type=password] {
   padding: 10px 12px;
   font-family: var(--font-family);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Inside Bootstrap input-groups, let flex handle width */
+.input-group input[type=text],
+.input-group input[type=password] {
+  width: auto;
+  flex: 1 1 0%;
 }
 
 input[type=text]:focus,

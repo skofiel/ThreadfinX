@@ -126,7 +126,7 @@
               <select id="translation-lang-select" onchange="javascript: loadTranslationLang(this.value)"></select>
               <div class="log-search-wrap">
                 <span class="material-symbols-outlined log-search-icon">search</span>
-                <input type="text" class="log-search" id="translation-search" placeholder="{{.log.search}}" oninput="javascript: filterTranslations(this.value)">
+                <input type="text" class="log-search" id="translation-search" placeholder="{{.settings.translationEditor.search}}" oninput="javascript: filterTranslations(this.value)">
               </div>
             </div>
             <div id="translation-table-container" style="max-height: 60vh; overflow-y: auto; margin-top: var(--space-md);">

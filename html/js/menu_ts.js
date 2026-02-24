@@ -949,13 +949,15 @@ function applyColumnWidths(tableId, tableHeader) {
     // Add resize handles to header cells
     addResizeHandles(tableId);
 }
-// --- Column Width Persistence ---
+// --- Column Width Persistence (scoped per menu) ---
 function saveColumnWidths(tableId, widths) {
-    var key = "colWidths_" + tableId;
+    var menuKey = sessionStorage.getItem("threadfin_menu") || "";
+    var key = "colWidths_" + menuKey + "_" + tableId;
     try { localStorage.setItem(key, JSON.stringify(widths)); } catch(e) {}
 }
 function loadColumnWidths(tableId) {
-    var key = "colWidths_" + tableId;
+    var menuKey = sessionStorage.getItem("threadfin_menu") || "";
+    var key = "colWidths_" + menuKey + "_" + tableId;
     try {
         var saved = JSON.parse(localStorage.getItem(key));
         return saved || {};
@@ -1332,7 +1334,7 @@ function createLayout() {
         else if (SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] >= 0.8) {
             activeClass = "text-danger";
         }
-        document.getElementById("playlist-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>playlist_play</span>Playlist: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
+        document.getElementById("playlist-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>playlist_play</span>Playlist:&nbsp;<span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
     }
     if (document.getElementById("client-connection-information")) {
         let activeClass = "text-accent";
@@ -1342,7 +1344,7 @@ function createLayout() {
         else if (SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] >= 0.8) {
             activeClass = "text-danger";
         }
-        document.getElementById("client-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>devices</span>Clients: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activeClients"] + " / " + SERVER["clientInfo"]["totalClients"] + "</span>";
+        document.getElementById("client-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>devices</span>Clients:&nbsp;<span class='" + activeClass + "'>" + SERVER["clientInfo"]["activeClients"] + " / " + SERVER["clientInfo"]["totalClients"] + "</span>";
     }
     // Update error badge
     updateErrorBadge();
@@ -2231,13 +2233,12 @@ class XMLTVFile {
         var values = new Array("-");
         var text = new Array("-");
         for (let i = 0; i < fileIDs.length; i++) {
-            if (fileIDs[i] != "Threadfin Dummy") {
-                values.push(getValueFromProviderFile(fileIDs[i], "xmltv", "file.threadfin"));
-                text.push(getValueFromProviderFile(fileIDs[i], "xmltv", "name"));
-            }
-            else {
-                values.push(fileIDs[i]);
-                text.push(fileIDs[i]);
+            if (fileIDs[i] == "Threadfin Dummy") continue;
+            var providerFile = getValueFromProviderFile(fileIDs[i], "xmltv", "file.threadfin");
+            var providerName = getValueFromProviderFile(fileIDs[i], "xmltv", "name");
+            if (providerFile !== undefined && providerName !== undefined) {
+                values.push(providerFile);
+                text.push(providerName);
             }
         }
         var select = document.createElement("SELECT");
