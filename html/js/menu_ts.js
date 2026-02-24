@@ -41,8 +41,7 @@ class MainMenuItem extends MainMenu {
         if (this.iconName) {
             var icon = this.createIcon(this.iconName);
             item.appendChild(icon);
-        }
-        else {
+        } else {
             var img = this.createIMG(this.imgSrc);
             item.appendChild(img);
         }
@@ -65,7 +64,7 @@ class MainMenuItem extends MainMenu {
                 this.tableHeader = ["{{.users.table.username}}", "{{.users.table.password}}", "{{.users.table.web}}", "{{.users.table.pms}}", "{{.users.table.m3u}}", "{{.users.table.xml}}", "{{.users.table.api}}"];
                 break;
             case "mapping":
-                this.tableHeader = ["BULK", "{{.mapping.table.chNo}}", "{{.mapping.table.logo}}", "{{.mapping.table.channelName}}", "{{.mapping.table.playlist}}", "{{.mapping.table.groupTitle}}", "{{.mapping.table.xmltvFile}}", "{{.mapping.table.xmltvID}}"];
+                this.tableHeader = ["{{.mapping.table.chNo}}", "{{.mapping.table.logo}}", "{{.mapping.table.channelName}}", "{{.mapping.table.playlist}}", "{{.mapping.table.groupTitle}}", "{{.mapping.table.xmltvFile}}", "{{.mapping.table.xmltvID}}"];
                 break;
         }
     }
@@ -344,7 +343,6 @@ class Content {
                 });
                 break;
             case "mapping":
-                BULK_EDIT = false;
                 createSearchObj();
                 checkUndo("epgMapping");
                 console.log("MAPPING");
@@ -355,12 +353,6 @@ class Content {
                         var tr = document.createElement("TR");
                         tr.id = key;
                         tr.className = "activeEPG";
-                        // Bulk
-                        var cell = new Cell();
-                        cell.child = true;
-                        cell.childType = "BULK";
-                        cell.value = false;
-                        tr.appendChild(cell.createCell());
                         // Kanalnummer
                         var cell = new Cell();
                         cell.child = true;
@@ -462,7 +454,6 @@ class Content {
         var rows = new Array();
         switch (menuKey) {
             case "mapping":
-                BULK_EDIT = false;
                 createSearchObj();
                 checkUndo("epgMapping");
                 console.log("MAPPING");
@@ -473,12 +464,6 @@ class Content {
                         var tr = document.createElement("TR");
                         tr.id = key;
                         tr.className = "notActiveEPG";
-                        // Bulk
-                        var cell = new Cell();
-                        cell.child = true;
-                        cell.childType = "BULK";
-                        cell.value = false;
-                        tr.appendChild(cell.createCell());
                         // Kanalnummer
                         var cell = new Cell();
                         cell.child = true;
@@ -606,24 +591,6 @@ class Cell {
                     element.value = this.value;
                     element.type = "text";
                     break;
-                case "BULK":
-                    element = document.createElement("INPUT");
-                    element.checked = this.value;
-                    element.type = "checkbox";
-                    element.className = "bulk hideBulk";
-                    break;
-                case "BULK_HEAD":
-                    element = document.createElement("INPUT");
-                    element.checked = this.value;
-                    element.type = "checkbox";
-                    element.className = "bulk hideBulk";
-                    if (this.active) {
-                        element.setAttribute("onclick", "javascript: selectAllChannels()");
-                    }
-                    else {
-                        element.setAttribute("onclick", "javascript: selectAllChannels('inactive_content_table')");
-                    }
-                    break;
                 case "IMG":
                     var imgElement;
                     imgElement = document.createElement(this.childType);
@@ -642,7 +609,10 @@ class Cell {
             td.innerHTML = this.value;
         }
         if (this.onclick == true) {
-            td.setAttribute("onclick", this.onclickFunktion);
+            td.setAttribute("data-sort-col", this.sortColumn !== undefined ? this.sortColumn : "");
+            if (this.sortTableId) {
+                td.setAttribute("data-sort-table", this.sortTableId);
+            }
             td.className = "pointer";
         }
         if (this.tdClassName != undefined) {
@@ -665,6 +635,9 @@ class ShowContent extends Content {
     }
     show() {
         COLUMN_TO_SORT = -1;
+        INACTIVE_COLUMN_TO_SORT = -1;
+        SORT_DIRECTION = {};
+        ORIGINAL_ROW_ORDER = {};
         // Alten Inhalt löschen
         var doc = document.getElementById(this.DocumentID);
         doc.innerHTML = "";
@@ -681,8 +654,6 @@ class ShowContent extends Content {
         else {
             popup_header.appendChild(h);
         }
-        var hr = this.createHR();
-        doc.appendChild(hr);
         // Interaktion
         var div = this.createInteraction();
         doc.appendChild(div);
@@ -721,29 +692,21 @@ class ShowContent extends Content {
                 interaction.appendChild(input);
                 break;
             case "mapping":
-                // showElement("loading", true)
                 var input = this.createInput("button", menuKey, "{{.button.save}}");
                 input.setAttribute("onclick", 'javascript: savePopupData("mapping", "", "")');
                 interaction.appendChild(input);
-                var input = this.createInput("button", menuKey, "{{.button.bulkEdit}}");
-                input.setAttribute("onclick", 'javascript: bulkEdit()');
-                interaction.appendChild(input);
-                var input = this.createInput("search", "search", "");
-                input.setAttribute("id", "searchMapping");
-                input.setAttribute("placeholder", "{{.button.search}}");
-                input.className = "search";
-                input.setAttribute("onchange", 'javascript: searchInMapping()');
-                interaction.appendChild(input);
                 break;
             case "settings":
-                var input = this.createInput("button", menuKey, "{{.button.save}}");
-                input.setAttribute("onclick", 'javascript: saveSettings();');
-                interaction.appendChild(input);
                 var input = this.createInput("button", menuKey, "{{.button.backup}}");
                 input.setAttribute("onclick", 'javascript: backup();');
+                input.className = "black";
                 interaction.appendChild(input);
                 var input = this.createInput("button", menuKey, "{{.button.restore}}");
                 input.setAttribute("onclick", 'javascript: restore();');
+                input.className = "black";
+                interaction.appendChild(input);
+                var input = this.createInput("button", menuKey, "{{.button.save}}");
+                input.setAttribute("onclick", 'javascript: saveSettings();');
                 interaction.appendChild(input);
                 var wrapper = document.createElement("DIV");
                 wrapper.setAttribute("id", "box-wrapper");
@@ -775,117 +738,549 @@ class ShowContent extends Content {
                 console.log("Show content (menuKey):", menuKey);
                 break;
         }
-        // Create table (if needed)
+        // Build table(s)
         var tableHeader = menuItems[this.menuID].tableHeader;
         if (tableHeader.length > 0) {
             var wrapper = document.createElement("DIV");
             doc.appendChild(wrapper);
             wrapper.setAttribute("id", "box-wrapper");
-            var table = this.createTABLE();
-            wrapper.appendChild(table);
+            // Sortable columns for mapping
+            var sortableColumns = {};
+            if (menuKey == "mapping") {
+                sortableColumns = {
+                    "{{.mapping.table.chNo}}": 0,
+                    "{{.mapping.table.channelName}}": 2,
+                    "{{.mapping.table.playlist}}": 3,
+                    "{{.mapping.table.groupTitle}}": 4,
+                    "{{.mapping.table.xmltvFile}}": 5,
+                    "{{.mapping.table.xmltvID}}": 6
+                };
+            }
+            // Panel title
+            var panelTitle = menuItems[this.menuID].headline;
+            if (menuKey == "mapping") panelTitle = "{{.grid.activeChannels}}";
+            // Build active grid panel
+            var panel = buildGridPanel(panelTitle, menuKey == "mapping" ? "active-panel" : "", "content_table");
+            wrapper.appendChild(panel);
+            var table = panel.querySelector("#content_table");
             var header = this.createTableRow();
             table.appendChild(header);
-            // Table header
-            tableHeader.forEach(element => {
+            // Header cells
+            tableHeader.forEach(function(element) {
                 var cell = new Cell();
                 cell.child = true;
                 cell.childType = "P";
                 cell.value = element;
-                if (element == "BULK") {
-                    cell.childType = "BULK_HEAD";
-                    cell.active = true;
-                    cell.value = false;
-                }
-                if (menuKey == "mapping") {
-                    if (element == "{{.mapping.table.chNo}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(1);";
-                        cell.tdClassName = "sortThis";
-                    }
-                    if (element == "{{.mapping.table.channelName}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(3);";
-                    }
-                    if (element == "{{.mapping.table.playlist}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(4);";
-                    }
-                    if (element == "{{.mapping.table.groupTitle}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(5);";
-                    }
+                if (sortableColumns[element] !== undefined) {
+                    cell.onclick = true;
+                    cell.sortColumn = sortableColumns[element];
+                    if (sortableColumns[element] == 1) cell.tdClassName = "sortThis";
                 }
                 header.appendChild(cell.createCell());
             });
-            table.appendChild(header);
-            // Inhalt der Tabelle
+            attachSortClickHandlers("content_table");
+            // Column filter row
+            var filterRow = buildFilterRow(tableHeader, "content_table");
+            table.appendChild(filterRow);
+            // Table rows
             var rows = this.createTableContent(menuKey);
-            rows.forEach(tr => {
-                table.appendChild(tr);
-            });
-            var br = this.createBR();
-            doc.appendChild(br);
-            // Create inactive channels for mapping
+            rows.forEach(function(tr) { table.appendChild(tr); });
+            updateGridStatus(panel, rows.length);
+            buildColumnVisibility(panel, tableHeader, "content_table");
+            restoreColumnVisibility("content_table");
+            applyColumnWidths("content_table", tableHeader);
+            // Inactive table for mapping
             if (menuKey == "mapping") {
-                var inactivetable = this.createInactiveTABLE();
-                wrapper.appendChild(inactivetable);
-                var header = this.createInactiveTableRow();
-                inactivetable.appendChild(header);
-                // Kopfzeile der Tablle
-                tableHeader.forEach(element => {
+                var inactivePanel = buildGridPanel("{{.grid.inactiveChannels}}", "inactive-panel", "inactive_content_table");
+                wrapper.appendChild(inactivePanel);
+                var inactivetable = inactivePanel.querySelector("#inactive_content_table");
+                var iheader = this.createInactiveTableRow();
+                inactivetable.appendChild(iheader);
+                tableHeader.forEach(function(element) {
                     var cell = new Cell();
                     cell.child = true;
                     cell.childType = "P";
                     cell.value = element;
-                    if (element == "BULK") {
-                        cell.childType = "BULK_HEAD";
-                        cell.active = false;
-                        cell.value = false;
+                    if (sortableColumns[element] !== undefined) {
+                        cell.onclick = true;
+                        cell.sortColumn = sortableColumns[element];
+                        cell.sortTableId = "inactive_content_table";
+                        if (sortableColumns[element] == 1) cell.tdClassName = "sortThis";
                     }
-                    if (menuKey == "mapping") {
-                        if (element == "{{.mapping.table.chNo}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(1, 'inactive_content_table');";
-                            cell.tdClassName = "sortThis";
-                        }
-                        if (element == "{{.mapping.table.channelName}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(3, 'inactive_content_table');";
-                        }
-                        if (element == "{{.mapping.table.playlist}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(4, 'inactive_content_table');";
-                        }
-                        if (element == "{{.mapping.table.groupTitle}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(5, 'inactive_content_table');";
-                        }
-                    }
-                    header.appendChild(cell.createCell());
+                    iheader.appendChild(cell.createCell());
                 });
-                inactivetable.appendChild(header);
-                // Inhalt der Tabelle
-                var rows = this.createInactiveTableContent(menuKey);
-                rows.forEach(tr => {
-                    inactivetable.appendChild(tr);
-                });
+                attachSortClickHandlers("inactive_content_table");
+                var iFilterRow = buildFilterRow(tableHeader, "inactive_content_table");
+                inactivetable.appendChild(iFilterRow);
+                var irows = this.createInactiveTableContent(menuKey);
+                irows.forEach(function(tr) { inactivetable.appendChild(tr); });
+                updateGridStatus(inactivePanel, irows.length);
+                buildColumnVisibility(inactivePanel, tableHeader, "inactive_content_table");
+                restoreColumnVisibility("inactive_content_table");
+                applyColumnWidths("inactive_content_table", tableHeader);
             }
         }
         switch (menuKey) {
             case "mapping":
-                sortTable(1);
-                sortTable(1, "inactive_content_table");
+                sortTable(0);
+                sortTable(0, "inactive_content_table");
                 break;
             case "filter":
                 showPreview(true);
-                sortTable(1);
+                sortTable(0);
                 break;
             default:
                 COLUMN_TO_SORT = -1;
+                INACTIVE_COLUMN_TO_SORT = -1;
                 sortTable(0);
                 break;
         }
         showElement("loading", false);
+    }
+}
+// --- Grid Panel Helper Functions ---
+function buildGridPanel(title, headerClass, tableId) {
+    var panel = document.createElement("DIV");
+    panel.className = "grid-panel";
+    panel.setAttribute("data-table-id", tableId);
+    var panelHeader = document.createElement("DIV");
+    panelHeader.className = "grid-panel-header" + (headerClass ? " " + headerClass : "");
+    var h4 = document.createElement("H4");
+    h4.innerText = title;
+    panelHeader.appendChild(h4);
+    var status = document.createElement("SPAN");
+    status.className = "grid-status";
+    panelHeader.appendChild(status);
+    var controls = document.createElement("DIV");
+    controls.className = "grid-controls";
+    var clearBtn = document.createElement("BUTTON");
+    clearBtn.className = "col-visibility-btn";
+    clearBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">filter_alt_off</span> {{.button.clearFilters}}';
+    clearBtn.setAttribute("onclick", "javascript: clearColumnFilters('" + tableId + "')");
+    controls.appendChild(clearBtn);
+    var colBtnWrap = document.createElement("DIV");
+    colBtnWrap.style.position = "relative";
+    var colBtn = document.createElement("BUTTON");
+    colBtn.className = "col-visibility-btn";
+    colBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">view_column</span> {{.button.columns}}';
+    colBtn.setAttribute("onclick", "javascript: toggleColumnDropdown(this)");
+    colBtnWrap.appendChild(colBtn);
+    var dropdown = document.createElement("DIV");
+    dropdown.className = "col-visibility-dropdown";
+    colBtnWrap.appendChild(dropdown);
+    controls.appendChild(colBtnWrap);
+    panelHeader.appendChild(controls);
+    panel.appendChild(panelHeader);
+    var table = document.createElement("TABLE");
+    table.id = tableId;
+    table.className = "table";
+    panel.appendChild(table);
+    var noResults = document.createElement("DIV");
+    noResults.className = "grid-no-results";
+    noResults.innerText = "{{.grid.noResults}}";
+    panel.appendChild(noResults);
+    return panel;
+}
+// Store table headers per table ID for column width recalculation
+var TABLE_HEADERS = {};
+function applyColumnWidths(tableId, tableHeader) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    if (tableHeader) TABLE_HEADERS[tableId] = tableHeader;
+    else tableHeader = TABLE_HEADERS[tableId];
+    if (!tableHeader) return;
+    // Remove existing colgroup
+    var existing = table.querySelector("colgroup");
+    if (existing) existing.remove();
+    // Load user-set column widths
+    var userWidths = loadColumnWidths(tableId);
+    // Determine which columns are visible
+    var panel = table.closest(".grid-panel");
+    var visibleCols = [];
+    var colCount = tableHeader.length;
+    for (var i = 0; i < colCount; i++) {
+        var isVisible = true;
+        if (panel) {
+            var cb = panel.querySelector('.col-visibility-dropdown input[data-col-idx="' + i + '"]');
+            if (cb && !cb.checked) isVisible = false;
+        }
+        visibleCols.push(isVisible);
+    }
+    // Determine default fixed widths: ChNo=60px, Logo=70px, rest=auto-proportional
+    var defaultFixedWidths = {};
+    for (var i = 0; i < colCount; i++) {
+        var hdr = tableHeader[i];
+        if (hdr == "{{.mapping.table.chNo}}" || hdr == "{{.filter.table.startingNumber}}") defaultFixedWidths[i] = 60;
+        else if (hdr == "{{.mapping.table.logo}}") defaultFixedWidths[i] = 70;
+    }
+    // Calculate total fixed px (user-set + default fixed) and count of flex columns (visible only)
+    var totalFixed = 0;
+    var flexCount = 0;
+    for (var i = 0; i < colCount; i++) {
+        if (!visibleCols[i]) continue;
+        if (userWidths[i] !== undefined) totalFixed += userWidths[i];
+        else if (defaultFixedWidths[i]) totalFixed += defaultFixedWidths[i];
+        else flexCount++;
+    }
+    // Build colgroup
+    var colgroup = document.createElement("COLGROUP");
+    for (var i = 0; i < colCount; i++) {
+        var col = document.createElement("COL");
+        if (!visibleCols[i]) {
+            col.style.width = "0px";
+            col.style.display = "none";
+        } else if (userWidths[i] !== undefined) {
+            col.style.width = userWidths[i] + "px";
+        } else if (defaultFixedWidths[i]) {
+            col.style.width = defaultFixedWidths[i] + "px";
+        } else {
+            // Distribute remaining space equally among flex columns
+            if (flexCount > 0) {
+                col.style.width = "calc((100% - " + totalFixed + "px) / " + flexCount + ")";
+            }
+        }
+        colgroup.appendChild(col);
+    }
+    table.insertBefore(colgroup, table.firstChild);
+    // Add resize handles to header cells
+    addResizeHandles(tableId);
+}
+// --- Column Width Persistence ---
+function saveColumnWidths(tableId, widths) {
+    var key = "colWidths_" + tableId;
+    try { localStorage.setItem(key, JSON.stringify(widths)); } catch(e) {}
+}
+function loadColumnWidths(tableId) {
+    var key = "colWidths_" + tableId;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key));
+        return saved || {};
+    } catch(e) { return {}; }
+}
+// --- Smart Sort Click Handlers (distinguishes click from drag) ---
+function attachSortClickHandlers(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var headerRow = table.querySelector(".content_table_header") || table.querySelector(".inactive_content_table_header");
+    if (!headerRow) return;
+    var tds = headerRow.getElementsByTagName("TD");
+    for (var i = 0; i < tds.length; i++) {
+        var td = tds[i];
+        var sortCol = td.getAttribute("data-sort-col");
+        if (sortCol === null || sortCol === "") continue;
+        (function(cell, col, tblId) {
+            var startX, startY, wasDrag;
+            cell.addEventListener("mousedown", function(e) {
+                // Ignore if clicking on the resize handle
+                if (e.target.classList.contains("col-resize-handle")) return;
+                startX = e.pageX;
+                startY = e.pageY;
+                wasDrag = false;
+            });
+            cell.addEventListener("mousemove", function(e) {
+                if (startX !== undefined) {
+                    var dx = Math.abs(e.pageX - startX);
+                    var dy = Math.abs(e.pageY - startY);
+                    if (dx > 5 || dy > 5) {
+                        wasDrag = true;
+                    }
+                }
+            });
+            cell.addEventListener("click", function(e) {
+                // Ignore if clicking on the resize handle
+                if (e.target.classList.contains("col-resize-handle")) return;
+                if (wasDrag) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    wasDrag = false;
+                    startX = undefined;
+                    startY = undefined;
+                    return;
+                }
+                // Real click - trigger sort
+                var sortTableArg = cell.getAttribute("data-sort-table");
+                if (sortTableArg) {
+                    sortTable(parseInt(col), sortTableArg);
+                } else {
+                    sortTable(parseInt(col));
+                }
+                startX = undefined;
+                startY = undefined;
+            });
+        })(td, sortCol, tableId);
+    }
+}
+// --- Column Resize Handles ---
+function addResizeHandles(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var headerRow = table.querySelector(".content_table_header") || table.querySelector(".inactive_content_table_header");
+    if (!headerRow) return;
+    var tds = headerRow.getElementsByTagName("TD");
+    for (var i = 0; i < tds.length; i++) {
+        // Skip hidden columns
+        if (tds[i].style.display == "none") continue;
+        // Remove existing handle if any
+        var existingHandle = tds[i].querySelector(".col-resize-handle");
+        if (existingHandle) existingHandle.remove();
+        var handle = document.createElement("DIV");
+        handle.className = "col-resize-handle";
+        handle.setAttribute("data-col-idx", i);
+        handle.setAttribute("data-table-id", tableId);
+        handle.addEventListener("mousedown", initColResize);
+        handle.addEventListener("click", function(e) { e.stopPropagation(); });
+        tds[i].appendChild(handle);
+    }
+}
+function initColResize(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var handle = e.target;
+    var colIdx = parseInt(handle.getAttribute("data-col-idx"));
+    var tableId = handle.getAttribute("data-table-id");
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var colgroup = table.querySelector("colgroup");
+    if (!colgroup) return;
+    var col = colgroup.children[colIdx];
+    if (!col) return;
+    // Get current rendered width of the column
+    var headerRow = table.querySelector(".content_table_header") || table.querySelector(".inactive_content_table_header");
+    var td = headerRow.getElementsByTagName("TD")[colIdx];
+    var startWidth = td.offsetWidth;
+    var startX = e.pageX;
+    handle.classList.add("resizing");
+    document.body.classList.add("col-resizing");
+    var userWidths = loadColumnWidths(tableId);
+    function onMouseMove(e) {
+        var diff = e.pageX - startX;
+        var newWidth = Math.max(30, startWidth + diff);
+        col.style.width = newWidth + "px";
+    }
+    function onMouseUp(e) {
+        var diff = e.pageX - startX;
+        var newWidth = Math.max(30, startWidth + diff);
+        userWidths[colIdx] = newWidth;
+        saveColumnWidths(tableId, userWidths);
+        handle.classList.remove("resizing");
+        document.body.classList.remove("col-resizing");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        // Re-apply widths to recalculate flex columns
+        applyColumnWidths(tableId);
+    }
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+}
+function buildFilterRow(tableHeader, tableId) {
+    var filterRow = document.createElement("TR");
+    filterRow.className = "column-filter-row";
+    tableHeader.forEach(function(element, idx) {
+        var td = document.createElement("TD");
+        if (element == "{{.mapping.table.logo}}") {
+            td.innerHTML = "";
+        } else {
+            var inp = document.createElement("INPUT");
+            inp.type = "text";
+            inp.placeholder = "{{.button.filterPlaceholder}}";
+            inp.setAttribute("data-col-idx", idx);
+            inp.setAttribute("data-table-id", tableId);
+            inp.setAttribute("oninput", "javascript: filterColumn(this)");
+            td.appendChild(inp);
+        }
+        filterRow.appendChild(td);
+    });
+    return filterRow;
+}
+function updateGridStatus(panel, visibleCount, totalCount) {
+    var status = panel.querySelector(".grid-status");
+    if (status) {
+        if (totalCount !== undefined && totalCount != visibleCount) {
+            status.innerText = "{{.grid.showing}} " + visibleCount + " {{.grid.of}} " + totalCount + " {{.grid.channels}}";
+        } else {
+            status.innerText = visibleCount + " {{.grid.channels}}";
+        }
+        status.setAttribute("data-total", totalCount !== undefined ? totalCount : visibleCount);
+    }
+}
+function buildColumnVisibility(panel, tableHeader, tableId) {
+    var dropdown = panel.querySelector(".col-visibility-dropdown");
+    if (!dropdown) return;
+    tableHeader.forEach(function(element, idx) {
+        var label = document.createElement("LABEL");
+        var cb = document.createElement("INPUT");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.setAttribute("data-col-idx", idx);
+        cb.setAttribute("data-table-id", tableId);
+        cb.setAttribute("onchange", "javascript: toggleColumnVisibility(this)");
+        label.appendChild(cb);
+        var span = document.createElement("SPAN");
+        span.innerText = element;
+        label.appendChild(span);
+        dropdown.appendChild(label);
+    });
+}
+function toggleColumnDropdown(btn) {
+    var dropdown = btn.parentNode.querySelector(".col-visibility-dropdown");
+    if (dropdown) {
+        dropdown.classList.toggle("show");
+        if (dropdown.classList.contains("show")) {
+            // Reset position
+            dropdown.style.top = "";
+            dropdown.style.bottom = "";
+            // Check if dropdown would be clipped at bottom of viewport
+            setTimeout(function() {
+                var rect = dropdown.getBoundingClientRect();
+                var viewportHeight = window.innerHeight;
+                if (rect.bottom > viewportHeight) {
+                    // Not enough space below, open upward
+                    dropdown.style.top = "auto";
+                    dropdown.style.bottom = "100%";
+                }
+            }, 0);
+            // Close on outside click
+            setTimeout(function() {
+                document.addEventListener("click", function closeDropdown(e) {
+                    if (!btn.parentNode.contains(e.target)) {
+                        dropdown.classList.remove("show");
+                        document.removeEventListener("click", closeDropdown);
+                    }
+                });
+            }, 0);
+        }
+    }
+}
+function toggleColumnVisibility(cb) {
+    var colIdx = parseInt(cb.getAttribute("data-col-idx"));
+    var tableId = cb.getAttribute("data-table-id");
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var rows = table.getElementsByTagName("TR");
+    var display = cb.checked ? "" : "none";
+    for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i].getElementsByTagName("TD");
+        if (cells[colIdx]) {
+            cells[colIdx].style.display = display;
+        }
+    }
+    // Persist column visibility to localStorage
+    saveColumnVisibility(tableId);
+    // Recalculate column widths
+    applyColumnWidths(tableId);
+}
+function saveColumnVisibility(tableId) {
+    var panel = document.querySelector('.grid-panel[data-table-id="' + tableId + '"]');
+    if (!panel) return;
+    var checkboxes = panel.querySelectorAll('.col-visibility-dropdown input[type="checkbox"]');
+    var state = {};
+    checkboxes.forEach(function(cb) {
+        var idx = cb.getAttribute("data-col-idx");
+        state[idx] = cb.checked;
+    });
+    var key = "colVisibility_" + tableId;
+    try { localStorage.setItem(key, JSON.stringify(state)); } catch(e) {}
+}
+function restoreColumnVisibility(tableId) {
+    var key = "colVisibility_" + tableId;
+    var saved;
+    try { saved = JSON.parse(localStorage.getItem(key)); } catch(e) { return; }
+    if (!saved) return;
+    var panel = document.querySelector('.grid-panel[data-table-id="' + tableId + '"]');
+    if (!panel) return;
+    var checkboxes = panel.querySelectorAll('.col-visibility-dropdown input[type="checkbox"]');
+    checkboxes.forEach(function(cb) {
+        var idx = cb.getAttribute("data-col-idx");
+        if (saved.hasOwnProperty(idx)) {
+            cb.checked = saved[idx];
+            // Apply visibility
+            var table = document.getElementById(tableId);
+            if (table) {
+                var rows = table.getElementsByTagName("TR");
+                var display = saved[idx] ? "" : "none";
+                for (var i = 0; i < rows.length; i++) {
+                    var cells = rows[i].getElementsByTagName("TD");
+                    if (cells[parseInt(idx)]) {
+                        cells[parseInt(idx)].style.display = display;
+                    }
+                }
+            }
+        }
+    });
+}
+function filterColumn(inp) {
+    var colIdx = parseInt(inp.getAttribute("data-col-idx"));
+    var tableId = inp.getAttribute("data-table-id");
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    // Collect all filter values for this table
+    var filterRow = table.querySelector(".column-filter-row");
+    var filters = {};
+    if (filterRow) {
+        var filterInputs = filterRow.querySelectorAll("input[type='text']");
+        filterInputs.forEach(function(fi) {
+            var idx = parseInt(fi.getAttribute("data-col-idx"));
+            var val = fi.value.toLowerCase().trim();
+            if (val) filters[idx] = val;
+        });
+    }
+    var rows = table.getElementsByTagName("TR");
+    var visibleCount = 0;
+    var totalCount = 0;
+    for (var i = 0; i < rows.length; i++) {
+        // Skip header and filter rows
+        if (rows[i].className.indexOf("content_table_header") !== -1 ||
+            rows[i].className.indexOf("inactive_content_table_header") !== -1 ||
+            rows[i].className.indexOf("column-filter-row") !== -1) continue;
+        totalCount++;
+        var show = true;
+        var cells = rows[i].getElementsByTagName("TD");
+        for (var fIdx in filters) {
+            var cell = cells[fIdx];
+            if (cell) {
+                var text = cell.innerText.toLowerCase();
+                if (text.indexOf(filters[fIdx]) === -1) {
+                    show = false;
+                    break;
+                }
+            }
+        }
+        rows[i].style.display = show ? "" : "none";
+        if (show) visibleCount++;
+    }
+    // Update status
+    var panel = table.closest(".grid-panel");
+    if (panel) {
+        updateGridStatus(panel, visibleCount, totalCount);
+        var noResults = panel.querySelector(".grid-no-results");
+        if (noResults) {
+            noResults.style.display = (visibleCount === 0 && totalCount > 0) ? "block" : "none";
+        }
+    }
+}
+function clearColumnFilters(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var filterRow = table.querySelector(".column-filter-row");
+    if (filterRow) {
+        var inputs = filterRow.querySelectorAll("input[type='text']");
+        inputs.forEach(function(inp) { inp.value = ""; });
+    }
+    // Show all rows
+    var rows = table.getElementsByTagName("TR");
+    var count = 0;
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].className.indexOf("content_table_header") !== -1 ||
+            rows[i].className.indexOf("inactive_content_table_header") !== -1 ||
+            rows[i].className.indexOf("column-filter-row") !== -1) continue;
+        rows[i].style.display = "";
+        count++;
+    }
+    var panel = table.closest(".grid-panel");
+    if (panel) {
+        updateGridStatus(panel, count);
+        var noResults = panel.querySelector(".grid-no-results");
+        if (noResults) noResults.style.display = "none";
     }
 }
 function PageReady() {
@@ -896,7 +1291,26 @@ function PageReady() {
     }, 10000);
     return;
 }
+function applyAccentColor() {
+    var accent = (SERVER["settings"] && SERVER["settings"]["accentColor"]) ? SERVER["settings"]["accentColor"] : "#d46c4a";
+    document.documentElement.style.setProperty('--accent', accent);
+    // Compute hover variant (lighter)
+    var r = parseInt(accent.slice(1, 3), 16);
+    var g = parseInt(accent.slice(3, 5), 16);
+    var b = parseInt(accent.slice(5, 7), 16);
+    r = Math.min(255, r + 20);
+    g = Math.min(255, g + 20);
+    b = Math.min(255, b + 20);
+    var hoverColor = "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0");
+    document.documentElement.style.setProperty('--accent-hover', hoverColor);
+    document.documentElement.style.setProperty('--accent-subtle', accent + "26");
+    // Apply font size
+    var fontSize = (SERVER["settings"] && SERVER["settings"]["fontSize"]) ? SERVER["settings"]["fontSize"] : "14px";
+    document.documentElement.style.setProperty('--font-size-base', fontSize);
+}
 function createLayout() {
+    // Apply accent color from settings
+    applyAccentColor();
     // Client Info
     var obj = SERVER["clientInfo"];
     var keys = getObjKeys(obj);
@@ -907,7 +1321,7 @@ function createLayout() {
         }
     }
     if (document.getElementById("playlist-connection-information")) {
-        let activeClass = "text-primary";
+        let activeClass = "text-accent";
         if (SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] >= 0.6 && SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] < 0.8) {
             activeClass = "text-warning";
         }
@@ -917,7 +1331,7 @@ function createLayout() {
         document.getElementById("playlist-connection-information").innerHTML = "<span class='material-symbols-outlined conn-icon'>playlist_play</span>Playlist: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
     }
     if (document.getElementById("client-connection-information")) {
-        let activeClass = "text-primary";
+        let activeClass = "text-accent";
         if (SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] >= 0.6 && SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] < 0.8) {
             activeClass = "text-warning";
         }
@@ -955,25 +1369,49 @@ function createLayout() {
                 break;
         }
     }
+    // Auto-open menu on first load
+    if (!window._menuOpened) {
+        window._menuOpened = true;
+        // Check if there's a saved menu from a reload (e.g. language change)
+        var savedMenu = sessionStorage.getItem("threadfin_menu");
+        sessionStorage.removeItem("threadfin_menu");
+        var defaultMenuKey = savedMenu || "playlist";
+        if (!savedMenu) {
+            // Smart default: if mapped channels exist, open mapping
+            if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
+                var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
+                if (mappedKeys.length > 0) {
+                    defaultMenuKey = "mapping";
+                }
+            }
+        }
+        // Find the menu item and click it
+        for (let i = 0; i < menuItems.length; i++) {
+            if (menuItems[i].menuKey == defaultMenuKey) {
+                var menuElement = document.getElementById(menuItems[i].id);
+                if (menuElement) {
+                    menuElement.click();
+                }
+                break;
+            }
+        }
+    }
     return;
 }
 function updateErrorBadge() {
     var badge = document.getElementById("error-badge-count");
     var badgeBtn = document.getElementById("error-badge");
-    if (!badge || !badgeBtn)
-        return;
+    if (!badge || !badgeBtn) return;
     var errorCount = 0;
-    // Count errors from log data
     if (SERVER["log"] && SERVER["log"]["log"]) {
         var logs = SERVER["log"]["log"];
         var logKeys = getObjKeys(logs);
-        logKeys.forEach(function (logID) {
+        logKeys.forEach(function(logID) {
             if (logs[logID].indexOf("ERROR") != -1) {
                 errorCount++;
             }
         });
     }
-    // Also check from clientInfo if available
     if (SERVER["clientInfo"] && SERVER["clientInfo"]["errors"]) {
         var serverErrors = parseInt(SERVER["clientInfo"]["errors"]);
         if (!isNaN(serverErrors) && serverErrors > errorCount) {
@@ -984,22 +1422,18 @@ function updateErrorBadge() {
     if (errorCount > 0) {
         badgeBtn.classList.add("has-errors");
         badgeBtn.classList.remove("no-errors");
-    }
-    else {
+    } else {
         badgeBtn.classList.remove("has-errors");
         badgeBtn.classList.add("no-errors");
     }
     // Bind click to navigate to log screen (only once)
     if (!badgeBtn.dataset.bound) {
         badgeBtn.dataset.bound = "true";
-        badgeBtn.addEventListener("click", function () {
-            // Find the log menu item and click it
+        badgeBtn.addEventListener("click", function() {
             for (var i = 0; i < menuItems.length; i++) {
                 if (menuItems[i].menuKey === "log") {
                     var logEl = document.getElementById(menuItems[i].id);
-                    if (logEl) {
-                        logEl.click();
-                    }
+                    if (logEl) logEl.click();
                     break;
                 }
             }
@@ -1014,9 +1448,12 @@ function openThisMenu(element) {
     }
     element.classList.add("menu-active");
     var id = element.id;
+    // Track current menu for potential reload
+    if (menuItems[id]) {
+        sessionStorage.setItem("threadfin_menu", menuItems[id].menuKey);
+    }
     var content = new ShowContent(id);
     content.show();
-    enableGroupSelection(".bulk");
     return;
 }
 class PopupWindow {
@@ -1593,18 +2030,6 @@ function openPopUp(dataType, element) {
             break;
         case "mapping":
             content.createHeadline("{{.mainMenu.item.mapping}}");
-            if (BULK_EDIT == true) {
-                var dbKey = "x-channels-start";
-                var input = content.createInput("text", dbKey, data[dbKey]);
-                // Set the value to the first selected channel
-                var channels = getAllSelectedChannels();
-                var channel = SERVER["xepg"]["epgMapping"][channels[0]];
-                if (typeof channel !== "undefined") {
-                    input.setAttribute("value", channel["x-channelID"]);
-                }
-                input.setAttribute("onchange", 'javascript: changeChannelNumbers("' + channels + '");');
-                content.appendRow("{{.mapping.channelGroupStart.title}}", input);
-            }
             // Aktiv 
             var dbKey = "x-active";
             var input = content.createCheckbox(dbKey);
@@ -1617,10 +2042,6 @@ function openPopUp(dataType, element) {
             var dbKey = "x-name";
             var input = content.createInput("text", dbKey, data[dbKey]);
             input.setAttribute("onchange", "javascript: this.className = 'changed'");
-            if (BULK_EDIT == true) {
-                input.style.border = "solid 1px red";
-                input.setAttribute("readonly", "true");
-            }
             content.appendRow("{{.mapping.channelName.title}}", input);
             content.description("<span class='text-danger'>" + data["tvg-id"] + "</span> <span class='text-primary'>(" + data["x-epg"] + ")</span>");
             // Beschreibung 
@@ -1744,23 +2165,25 @@ function openPopUp(dataType, element) {
             content.appendRow("{{.mapping.backupChannel3.title}}", xmlTvBackup3IdContainer);
             // Interaktion
             content.createInteraction();
-            var input = content.createInput("button", "cancel", "{{.button.probeChannel}}");
+            var input = content.createInput("button", "probe", "{{.button.probeChannel}}");
             input.setAttribute("onclick", 'javascript: probeChannel("' + data["url"] + '");');
+            input.className = "black";
             content.addInteraction(input);
             // Logo hochladen
-            var input = content.createInput("button", "cancel", "{{.button.uploadLogo}}");
+            var input = content.createInput("button", "upload", "{{.button.uploadLogo}}");
             input.setAttribute("onclick", 'javascript: uploadLogo();');
+            input.className = "black";
             content.addInteraction(input);
+            // Spacer to push cancel+done to right
+            var spacer = document.createElement("span");
+            spacer.style.flex = "1";
+            document.getElementById("popup-interaction").appendChild(spacer);
             // Abbrechen
             var input = content.createInput("button", "cancel", "{{.button.cancel}}");
             input.setAttribute("onclick", 'javascript: showElement("popup", false);');
             content.addInteraction(input);
             // Fertig
-            var ids = new Array();
-            ids = getAllSelectedChannels();
-            if (ids.length == 0) {
-                ids.push(id);
-            }
+            var ids = [id];
             var input = content.createInput("button", "save", "{{.button.done}}");
             input.setAttribute("onclick", 'javascript: donePopupData("' + dataType + '", "' + ids + '", "false");');
             content.addInteraction(input);
@@ -2066,7 +2489,7 @@ function changeChannelLogo(epgMapId) {
     const xmlTvFile = xmlTvFileSelect.options[xmlTvFileSelect.selectedIndex].value;
     const xmlTvIdInput = document.getElementById('xmltv-id-picker-input');
     const newXmlTvId = xmlTvIdInput.value;
-    const updateLogo = !BULK_EDIT || document.getElementById('update-icon').checked;
+    const updateLogo = document.getElementById('update-icon').checked;
     let logo;
     if (updateLogo == true && xmlTvFile != 'Threadfin Dummy') {
         if (SERVER['xepg']['xmltvMap'][xmlTvFile].hasOwnProperty(newXmlTvId)) {
@@ -2226,9 +2649,9 @@ function donePopupData(dataType, idsStr) {
     var div = document.getElementById("popup-custom");
     var inputs = div.getElementsByClassName("changed");
     ids.forEach(id => {
-        var input = new Object();
-        input = SERVER["xepg"]["epgMapping"][id];
-        console.log("INPUT: " + input);
+        var input = SERVER["xepg"]["epgMapping"][id];
+        if (!input) { console.log("donePopupData: no mapping for id " + id); return; }
+        // Apply changed values to the SERVER data object
         for (let i = 0; i < inputs.length; i++) {
             var name;
             var value;
@@ -2253,68 +2676,46 @@ function donePopupData(dataType, idsStr) {
                     input[name] = value;
                     break;
             }
-            switch (name) {
-                case "tvg-logo":
-                    //(document.getElementById(id).childNodes[2].firstChild as HTMLElement).setAttribute("src", value)
-                    break;
-                case "x-channel-start":
-                    document.getElementById(id).childNodes[3].firstChild.innerHTML = value;
-                    break;
-                case "x-name":
-                    document.getElementById(id).childNodes[3].firstChild.innerHTML = value;
-                    break;
-                case "x-category":
+            if (name == "x-xmltv-file" && value == "-") { input["x-active"] = false; }
+            if (name == "x-mapping" && value == "-") { input["x-active"] = false; }
+        }
+        // Update the visible table row (wrapped in try-catch so UI errors don't block save)
+        try {
+            var row = document.getElementById(id);
+            if (row) {
+                var tds = row.getElementsByTagName("TD");
+                // td[0]=ChNo, td[1]=Logo, td[2]=Name, td[3]=Playlist, td[4]=Group, td[5]=XMLTV File, td[6]=XMLTV ID
+                if (input["x-name"] && tds[2]) tds[2].firstChild.innerHTML = input["x-name"];
+                if (input["x-group-title"] && tds[4]) tds[4].firstChild.innerHTML = input["x-group-title"];
+                if (input["x-xmltv-file"] && tds[5]) {
+                    var displayVal = input["x-xmltv-file"];
+                    if (displayVal != "Threadfin Dummy" && displayVal != "-") {
+                        displayVal = getValueFromProviderFile(displayVal, "xmltv", "name");
+                    }
+                    tds[5].firstChild.innerHTML = displayVal;
+                }
+                if (input["x-mapping"] && tds[6]) tds[6].firstChild.innerHTML = input["x-mapping"];
+                if (input["tvg-logo"] && tds[1] && tds[1].firstChild && tds[1].firstChild.firstChild) {
+                    tds[1].firstChild.firstChild.setAttribute("src", input["tvg-logo"]);
+                }
+                if (input["x-category"]) {
                     var color = "white";
                     var catColorSettings = SERVER["settings"]["epgCategoriesColors"];
                     var colors_split = catColorSettings.split("|");
                     for (var ii = 0; ii < colors_split.length; ii++) {
                         var catsColor_split = colors_split[ii].split(":");
-                        if (catsColor_split[0] == value) {
-                            color = catsColor_split[1];
-                        }
+                        if (catsColor_split[0] == input["x-category"]) { color = catsColor_split[1]; }
                     }
-                    document.getElementById(id).childNodes[3].firstChild.style.borderColor = color;
-                    break;
-                case "x-group-title":
-                    document.getElementById(id).childNodes[5].firstChild.innerHTML = value;
-                    break;
-                case "x-xmltv-file":
-                    if (value != "Threadfin Dummy" && value != "-") {
-                        value = getValueFromProviderFile(value, "xmltv", "name");
-                    }
-                    if (value == "-") {
-                        input["x-active"] = false;
-                    }
-                    document.getElementById(id).childNodes[6].firstChild.innerHTML = value;
-                    break;
-                case "x-mapping":
-                    if (value == "-") {
-                        input["x-active"] = false;
-                    }
-                    document.getElementById(id).childNodes[7].firstChild.innerHTML = value;
-                    break;
-                case "x-backup-channel":
-                    document.getElementById(id).childNodes[7].firstChild.innerHTML = value;
-                    break;
-                case "x-hide-channel":
-                    document.getElementById(id).childNodes[7].firstChild.innerHTML = value;
-                    break;
-                default:
+                    if (tds[2] && tds[2].firstChild) tds[2].firstChild.style.borderColor = color;
+                }
+                row.className = (input["x-active"] == false) ? "notActiveEPG" : "activeEPG";
             }
-            createSearchObj();
-            searchInMapping();
+        } catch(e) {
+            console.log("donePopupData UI update error: ", e);
         }
-        if (input["x-active"] == false) {
-            document.getElementById(id).className = "notActiveEPG";
-        }
-        else {
-            document.getElementById(id).className = "activeEPG";
-        }
-        console.log(input["tvg-logo"]);
-        document.getElementById(id).childNodes[2].firstChild.firstChild.setAttribute("src", input["tvg-logo"]);
     });
+    createSearchObj();
     showElement("popup", false);
-    return;
 }
 function showPreview(element) {
     var div = document.getElementById("myStreamsBox");
@@ -2324,40 +2725,40 @@ function showPreview(element) {
             return;
             break;
     }
+    div.innerHTML = "";
+    var streamLabels = {
+        "activeStreams": "{{.status.activeStreams}}",
+        "inactiveStreams": "{{.status.inactiveStreams}}"
+    };
     var streams = ["activeStreams", "inactiveStreams"];
     streams.forEach(preview => {
-        var table = document.getElementById(preview);
-        table.innerHTML = "";
         var obj = SERVER["data"]["StreamPreviewUI"][preview];
-        var caption = document.createElement("CAPTION");
-        var result = preview.replace(/([A-Z])/g, " $1");
-        var finalResult = result.charAt(0).toUpperCase() + result.slice(1);
-        caption.innerHTML = finalResult;
-        table.appendChild(caption);
-        var tbody = document.createElement("TBODY");
-        table.appendChild(tbody);
+        var panel = document.createElement("DIV");
+        panel.className = "stream-panel";
+        // Header
+        var header = document.createElement("DIV");
+        header.className = "stream-panel-header " + (preview === "activeStreams" ? "active-header" : "inactive-header");
+        var title = document.createElement("H4");
+        title.innerText = streamLabels[preview];
+        header.appendChild(title);
+        var count = document.createElement("SPAN");
+        count.className = "stream-count";
+        count.innerText = obj.length;
+        header.appendChild(count);
+        panel.appendChild(header);
+        // Grid of channels
+        var grid = document.createElement("DIV");
+        grid.className = "stream-grid";
         obj.slice(0, 1000).forEach(channel => {
-            var tr = document.createElement("TR");
-            var tdKey = document.createElement("TD");
-            var tdVal = document.createElement("TD");
-            tdKey.className = "tdKey";
-            tdVal.className = "tdVal";
-            switch (preview) {
-                case "activeStreams":
-                    tdKey.innerText = "Channel: (+)";
-                    break;
-                case "inactiveStreams":
-                    tdKey.innerText = "Channel: (-)";
-                    break;
-            }
-            tdVal.innerText = channel;
-            tr.appendChild(tdKey);
-            tr.appendChild(tdVal);
-            tbody.appendChild(tr);
-            table.appendChild(tr);
+            var item = document.createElement("DIV");
+            item.className = "stream-item";
+            item.innerText = channel;
+            item.setAttribute("title", channel);
+            grid.appendChild(item);
         });
+        panel.appendChild(grid);
+        div.appendChild(panel);
     });
-    // showElement("loading", false)
     div.className = "visible";
     return;
 }
