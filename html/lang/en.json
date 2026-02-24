@@ -48,7 +48,6 @@
   "button": {
     "back": "Back",
     "backup": "Backup",
-    "bulkEdit": "Bulk Edit",
     "cancel": "Cancel",
     "delete": "Delete",
     "done": "Done",
@@ -72,7 +71,6 @@
   "grid": {
     "activeChannels": "Active Channels",
     "inactiveChannels": "Inactive Channels",
-    "bulkEditHint": "Select channels using checkboxes, then click a channel to edit all selected at once.",
     "noResults": "No results match the current filters.",
     "of": "of",
     "channels": "channels",

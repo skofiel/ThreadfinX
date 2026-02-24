@@ -381,8 +381,13 @@ caption {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: var(--space-lg);
+}
+
+/* Table container inside grid panel clips table content but allows header controls to overflow */
+.grid-panel > table {
+  overflow: hidden;
 }
 
 /* Grid panel header bar */
@@ -455,6 +460,8 @@ caption {
   box-shadow: var(--shadow-lg);
   padding: var(--space-sm) 0;
   min-width: 160px;
+  max-height: 300px;
+  overflow-y: auto;
   display: none;
 }
 
@@ -484,25 +491,6 @@ caption {
   flex-shrink: 0;
 }
 
-/* Bulk edit hint banner */
-.bulk-edit-hint {
-  display: none;
-  padding: var(--space-xs) var(--space-lg);
-  background-color: var(--accent-subtle);
-  border-bottom: 1px solid var(--border);
-  font-size: var(--font-size-xs);
-  color: var(--accent);
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.bulk-edit-hint .material-symbols-outlined {
-  font-size: 16px;
-}
-
-.bulk-edit-active .bulk-edit-hint {
-  display: flex;
-}
 
 /* Content Tables */
 #content_table,
@@ -546,6 +534,31 @@ caption {
   display: inline;
   margin: 0;
   padding: 0;
+}
+
+/* Column resize handle */
+.col-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  background-color: transparent;
+  z-index: 10;
+  transition: background-color var(--transition-fast);
+}
+
+.col-resize-handle:hover,
+.col-resize-handle.resizing {
+  background-color: var(--accent);
+}
+
+/* While resizing, prevent text selection globally */
+body.col-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 /* Sortable column header */
@@ -716,22 +729,6 @@ tbody {
   font-family: var(--font-family-mono);
 }
 
-/* Bulk checkboxes */
-#content_table input[type=checkbox],
-#inactive_content_table input[type=checkbox] {
-  max-width: 25px;
-  margin: auto;
-}
-
-.showBulk {
-  display: block;
-}
-
-.hideBulk {
-  display: none;
-}
-
-.noBulk {}
 
 /* EPG Status Indicators */
 #content_table tr.activeEPG,
@@ -753,11 +750,6 @@ tbody {
   display: none;
 }
 
-/* Active bulk edit button */
-input[type=button].active-bulk {
-  background-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-subtle);
-}
 
 /* --- Log Screen --- */
 #logScreen p {
