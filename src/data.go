@@ -126,7 +126,7 @@ func updateServerSettings(request RequestStruct) (settings SettingsStruct, err e
 					if intVal > 3 {
 						intVal = 3
 					}
-					value = float64(intVal)
+					value = intVal
 				}
 
 			}

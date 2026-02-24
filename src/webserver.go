@@ -549,7 +549,7 @@ func WS(w http.ResponseWriter, r *http.Request) {
 		case "saveSettings":
 			var authenticationUpdate = Settings.AuthenticationWEB
 			var previousLanguage = Settings.Language
-			// var previousStoreBufferInRAM = Settings.StoreBufferInRAM
+			var previousStoreBufferInRAM = Settings.StoreBufferInRAM
 			response.Settings, err = updateServerSettings(request)
 			if err == nil {
 				if Settings.AuthenticationWEB == true && authenticationUpdate == false {
@@ -560,9 +560,9 @@ func WS(w http.ResponseWriter, r *http.Request) {
 					response.Reload = true
 				}
 
-				// if Settings.StoreBufferInRAM != previousStoreBufferInRAM {
-				initBufferVFS()
-				// }
+				if Settings.StoreBufferInRAM != previousStoreBufferInRAM {
+					initBufferVFS()
+				}
 			}
 
 		case "saveFilesM3U":
