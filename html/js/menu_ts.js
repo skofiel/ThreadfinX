@@ -880,7 +880,23 @@ function PageReady() {
     }, 10000);
     return;
 }
+function applyAccentColor() {
+    var accent = (SERVER["settings"] && SERVER["settings"]["accentColor"]) ? SERVER["settings"]["accentColor"] : "#d46c4a";
+    document.documentElement.style.setProperty('--accent', accent);
+    // Compute hover variant (lighter)
+    var r = parseInt(accent.slice(1, 3), 16);
+    var g = parseInt(accent.slice(3, 5), 16);
+    var b = parseInt(accent.slice(5, 7), 16);
+    r = Math.min(255, r + 20);
+    g = Math.min(255, g + 20);
+    b = Math.min(255, b + 20);
+    var hoverColor = "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0");
+    document.documentElement.style.setProperty('--accent-hover', hoverColor);
+    document.documentElement.style.setProperty('--accent-subtle', accent + "26");
+}
 function createLayout() {
+    // Apply accent color from settings
+    applyAccentColor();
     // Client Info
     var obj = SERVER["clientInfo"];
     var keys = getObjKeys(obj);

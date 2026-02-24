@@ -158,6 +158,7 @@ func loadSettings() (settings SettingsStruct, err error) {
 	defaults["enableNonAscii"] = false
 	defaults["epgCategories"] = "Kids:kids|News:news|Movie:movie|Series:series|Sports:sports"
 	defaults["epgCategoriesColors"] = "kids:mediumpurple|news:tomato|movie:royalblue|series:gold|sports:yellowgreen"
+	defaults["accentColor"] = "#d46c4a"
 	defaults["tuner"] = 1
 	defaults["update"] = []string{"0000"}
 	defaults["user.agent"] = System.Name

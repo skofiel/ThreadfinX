@@ -337,6 +337,17 @@ class SettingsCategory {
                 setting.appendChild(tdLeft);
                 setting.appendChild(tdRight);
                 break;
+            case "accentColor":
+                var tdLeft = document.createElement("TD");
+                tdLeft.innerHTML = "{{.settings.accentColor.title}}" + ":";
+                var tdRight = document.createElement("TD");
+                var input = content.createInput("text", "accentColor", data.toString());
+                input.setAttribute("placeholder", "{{.settings.accentColor.placeholder}}");
+                input.setAttribute("onchange", "javascript: this.className = 'changed'");
+                tdRight.appendChild(input);
+                setting.appendChild(tdLeft);
+                setting.appendChild(tdRight);
+                break;
             case "ThreadfinAutoUpdate":
                 var tdLeft = document.createElement("TD");
                 tdLeft.innerHTML = "{{.settings.ThreadfinAutoUpdate.title}}" + ":";
@@ -551,6 +562,9 @@ class SettingsCategory {
                 break;
             case "epgCategoriesColors":
                 text = "{{.settings.epgCategoriesColors.description}}";
+                break;
+            case "accentColor":
+                text = "{{.settings.accentColor.description}}";
                 break;
             case "buffer.timeout":
                 text = "{{.settings.bufferTimeout.description}}";

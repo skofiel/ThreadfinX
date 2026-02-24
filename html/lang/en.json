@@ -532,6 +532,12 @@
       "title": "EPG Categories Colors",
       "description": "Customize the EPG Category colors. The format is value:color|value:color, so news:tomato|sports:yellowgreen|movies:royalblue"
     },
+    "accentColor":
+    {
+      "title": "Accent Color",
+      "description": "Set the UI accent color in hex format (e.g. #d46c4a). Changes apply after page reload.",
+      "placeholder": "#d46c4a"
+    },
     "bufferTimeout": {
       "title": "Timeout for new client connections",
       "description": "The Threadfin buffer waits until new client connections are established. Helpful for fast channel switching. Value in milliseconds.",

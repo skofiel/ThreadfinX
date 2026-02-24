@@ -37,7 +37,7 @@ menuItems.push(new MainMenuItem("log", "{{.mainMenu.item.log}}", "log.png", "{{.
 menuItems.push(new MainMenuItem("logout", "{{.mainMenu.item.logout}}", "logout.png", "{{.mainMenu.headline.logout}}"));
 // Kategorien für die Einstellungen
 var settingsCategory = new Array();
-settingsCategory.push(new SettingsCategoryItem("{{.settings.category.general}}", "ThreadfinAutoUpdate,ssdp,tuner,epgSource,epgCategories,epgCategoriesColors,dummy,dummyChannel,ignoreFilters,api"));
+settingsCategory.push(new SettingsCategoryItem("{{.settings.category.general}}", "ThreadfinAutoUpdate,ssdp,tuner,epgSource,epgCategories,epgCategoriesColors,accentColor,dummy,dummyChannel,ignoreFilters,api"));
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.files}}", "update,files.update,temp.path,cache.images,bindIpAddress,httpThreadfinDomain,forceHttps,excludeStreamHttps,httpsPort,httpsThreadfinDomain,xepg.replace.missing.images,xepg.replace.channel.title,enableNonAscii"));
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.streaming}}", "udpxy,buffer.size.kb,buffer.timeout,user.agent,ffmpeg.path,ffmpeg.options,ffmpeg.forceHttp,vlc.path,vlc.options"));
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.backup}}", "backup.path,backup.keep"));
