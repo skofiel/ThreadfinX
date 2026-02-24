@@ -57,6 +57,7 @@ type RequestStruct struct {
 		EnableNonAscii           *bool     `json:"enableNonAscii,omitempty"`
 		EpgCategories            *string   `json:"epgCategories,omitempty"`
 		EpgCategoriesColors      *string   `json:"epgCategoriesColors,omitempty"`
+		AccentColor              *string   `json:"accentColor,omitempty"`
 		Dummy                    *bool     `json:"dummy,omitempty"`
 		DummyChannel             *string   `json:"dummyChannel,omitempty"`
 		IgnoreFilters            *bool     `json:"ignoreFilters,omitempty"`
