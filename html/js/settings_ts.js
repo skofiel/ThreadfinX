@@ -337,52 +337,6 @@ class SettingsCategory {
                 setting.appendChild(tdLeft);
                 setting.appendChild(tdRight);
                 break;
-            case "language":
-                var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.language.title}}" + ":";
-                var tdRight = document.createElement("TD");
-                var text = ["English", "Español"];
-                var values = ["en", "es"];
-                var select = content.createSelect(text, values, data, settingsKey);
-                select.setAttribute("onchange", "javascript: this.className = 'changed'");
-                tdRight.appendChild(select);
-                setting.appendChild(tdLeft);
-                setting.appendChild(tdRight);
-                break;
-            case "accentColor":
-                var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.accentColor.title}}" + ":";
-                var tdRight = document.createElement("TD");
-                var colorWrapper = document.createElement("DIV");
-                colorWrapper.className = "accent-color-picker";
-                var colorInput = document.createElement("INPUT");
-                colorInput.setAttribute("type", "color");
-                colorInput.setAttribute("name", "accentColor_picker");
-                colorInput.setAttribute("value", data.toString() || "#d46c4a");
-                colorInput.className = "color-wheel";
-                colorInput.setAttribute("oninput", "javascript: var hex=document.getElementsByName('accentColor')[0]; hex.value=this.value; hex.className='changed'; this.className='color-wheel changed'; document.documentElement.style.setProperty('--accent', this.value);");
-                colorWrapper.appendChild(colorInput);
-                var hexInput = content.createInput("text", "accentColor", data.toString());
-                hexInput.setAttribute("placeholder", "{{.settings.accentColor.placeholder}}");
-                hexInput.setAttribute("oninput", "javascript: this.className = 'hex-input changed'; var picker=document.getElementsByName('accentColor_picker')[0]; if(this.value.match(/^#[0-9a-fA-F]{6}$/)){picker.value=this.value; document.documentElement.style.setProperty('--accent', this.value);}");
-                hexInput.className = "hex-input";
-                colorWrapper.appendChild(hexInput);
-                tdRight.appendChild(colorWrapper);
-                setting.appendChild(tdLeft);
-                setting.appendChild(tdRight);
-                break;
-            case "fontSize":
-                var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.fontSize.title}}" + ":";
-                var tdRight = document.createElement("TD");
-                var text = ["12px", "13px", "14px", "15px", "16px", "17px", "18px"];
-                var values = ["12px", "13px", "14px", "15px", "16px", "17px", "18px"];
-                var select = content.createSelect(text, values, data || "14px", settingsKey);
-                select.setAttribute("onchange", "javascript: this.className = 'changed'; document.documentElement.style.setProperty('--font-size-base', this.value);");
-                tdRight.appendChild(select);
-                setting.appendChild(tdLeft);
-                setting.appendChild(tdRight);
-                break;
             case "ThreadfinAutoUpdate":
                 var tdLeft = document.createElement("TD");
                 tdLeft.innerHTML = "{{.settings.ThreadfinAutoUpdate.title}}" + ":";
@@ -598,15 +552,6 @@ class SettingsCategory {
             case "epgCategoriesColors":
                 text = "{{.settings.epgCategoriesColors.description}}";
                 break;
-            case "accentColor":
-                text = "{{.settings.accentColor.description}}";
-                break;
-            case "fontSize":
-                text = "{{.settings.fontSize.description}}";
-                break;
-            case "language":
-                text = "{{.settings.language.description}}";
-                break;
             case "buffer.timeout":
                 text = "{{.settings.bufferTimeout.description}}";
                 break;
@@ -741,18 +686,15 @@ function saveSettings() {
                                 break;
                             case "buffer.timeout":
                                 value = parseFloat(value);
-                                break;
                         }
                         newSettings[name] = value;
-                        break;
-                    case "color":
-                        // Skip color picker inputs (we use the text hex input)
                         break;
                 }
                 break;
             case "SELECT":
                 name = settings[i].name;
                 value = settings[i].value;
+                // Wenn der Wert eine Zahl ist, wird dieser als Zahl gespeichert
                 if (isNaN(value)) {
                     newSettings[name] = value;
                 }
@@ -762,29 +704,8 @@ function saveSettings() {
                 break;
         }
     }
-    if (Object.keys(newSettings).length === 0) {
-        showSaveConfirmation("{{.settings.noChanges}}");
-        return;
-    }
     var data = new Object();
     data["settings"] = newSettings;
     var server = new Server(cmd);
     server.request(data);
-    // Show success toast
-    showSaveConfirmation();
-}
-function showSaveConfirmation(message) {
-    var existing = document.getElementById("save-toast");
-    if (existing) existing.remove();
-    var toast = document.createElement("DIV");
-    toast.id = "save-toast";
-    toast.className = message ? "save-toast save-toast-info" : "save-toast";
-    toast.innerHTML = message || "{{.settings.savedSuccess}}";
-    document.body.appendChild(toast);
-    // Trigger animation
-    setTimeout(function() { toast.classList.add("show"); }, 10);
-    setTimeout(function() {
-        toast.classList.remove("show");
-        setTimeout(function() { toast.remove(); }, 300);
-    }, 3000);
 }

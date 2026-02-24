@@ -1,24 +1,7 @@
-// Set navbar height CSS variable for sticky toolbar positioning
-(function() {
-    function updateNavbarHeight() {
-        var nav = document.querySelector('nav.navbar');
-        if (nav) {
-            document.documentElement.style.setProperty('--navbar-height', nav.offsetHeight + 'px');
-        }
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateNavbarHeight);
-    } else {
-        updateNavbarHeight();
-    }
-    window.addEventListener('resize', updateNavbarHeight);
-})();
-
 var SERVER = new Object();
+var BULK_EDIT = false;
 var COLUMN_TO_SORT;
 var INACTIVE_COLUMN_TO_SORT;
-var SORT_DIRECTION = {}; // tracks sort direction per table: { "content_table": "asc"|"desc", ... }
-var ORIGINAL_ROW_ORDER = {}; // stores original row order per table for "default" reset
 var SEARCH_MAPPING = new Object();
 var UNDO = new Object();
 var SERVER_CONNECTION = false;
@@ -32,7 +15,7 @@ clipboard.on('success', function (e) {
     tooltip.setContent({ '.tooltip-inner': 'Copied!' });
 });
 clipboard.on('error', function (e) {
-    // clipboard error handled silently
+    console.log(e);
 });
 var popupModal = new bootstrap.Modal(document.getElementById("popup"), {
     keyboard: true,
@@ -44,29 +27,30 @@ var loadingModal = new bootstrap.Modal(document.getElementById("loading"), {
 });
 // Menü
 var menuItems = new Array();
-menuItems.push(new MainMenuItem("playlist", "{{.mainMenu.item.playlist}}", "m3u.png", "{{.mainMenu.headline.playlist}}"));
-menuItems.push(new MainMenuItem("xmltv", "{{.mainMenu.item.xmltv}}", "xmltv.png", "{{.mainMenu.headline.xmltv}}"));
-menuItems.push(new MainMenuItem("filter", "{{.mainMenu.item.filter}}", "filter.png", "{{.mainMenu.headline.filter}}"));
-menuItems.push(new MainMenuItem("mapping", "{{.mainMenu.item.mapping}}", "mapping.png", "{{.mainMenu.headline.mapping}}"));
-menuItems.push(new MainMenuItem("users", "{{.mainMenu.item.users}}", "users.png", "{{.mainMenu.headline.users}}"));
-menuItems.push(new MainMenuItem("settings", "{{.mainMenu.item.settings}}", "settings.png", "{{.mainMenu.headline.settings}}"));
-menuItems.push(new MainMenuItem("log", "{{.mainMenu.item.log}}", "log.png", "{{.mainMenu.headline.log}}"));
-menuItems.push(new MainMenuItem("logout", "{{.mainMenu.item.logout}}", "logout.png", "{{.mainMenu.headline.logout}}"));
-// Note: PNG filenames above are mapped to Material Icons in MainMenu.iconMap
+menuItems.push(new MainMenuItem("playlist", "{{.mainMenu.item.playlist}}", "m3u.png", "{{.mainMenu.headline.playlist}}", "playlist_play"));
+menuItems.push(new MainMenuItem("xmltv", "{{.mainMenu.item.xmltv}}", "xmltv.png", "{{.mainMenu.headline.xmltv}}", "live_tv"));
+menuItems.push(new MainMenuItem("filter", "{{.mainMenu.item.filter}}", "filter.png", "{{.mainMenu.headline.filter}}", "filter_list"));
+menuItems.push(new MainMenuItem("mapping", "{{.mainMenu.item.mapping}}", "mapping.png", "{{.mainMenu.headline.mapping}}", "swap_horiz"));
+menuItems.push(new MainMenuItem("users", "{{.mainMenu.item.users}}", "users.png", "{{.mainMenu.headline.users}}", "people"));
+menuItems.push(new MainMenuItem("log", "{{.mainMenu.item.log}}", "log.png", "{{.mainMenu.headline.log}}", "terminal"));
+menuItems.push(new MainMenuItem("settings", "{{.mainMenu.item.settings}}", "settings.png", "{{.mainMenu.headline.settings}}", "settings", true));
+menuItems.push(new MainMenuItem("logout", "{{.mainMenu.item.logout}}", "logout.png", "{{.mainMenu.headline.logout}}", "logout", true));
 // Kategorien für die Einstellungen
 var settingsCategory = new Array();
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.general}}", "ThreadfinAutoUpdate,ssdp,tuner,epgSource,epgCategories,epgCategoriesColors,dummy,dummyChannel,ignoreFilters,api"));
-settingsCategory.push(new SettingsCategoryItem("{{.settings.category.appearance}}", "language,accentColor,fontSize"));
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.files}}", "update,files.update,temp.path,cache.images,bindIpAddress,httpThreadfinDomain,forceHttps,excludeStreamHttps,httpsPort,httpsThreadfinDomain,xepg.replace.missing.images,xepg.replace.channel.title,enableNonAscii"));
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.streaming}}", "udpxy,buffer.size.kb,buffer.timeout,user.agent,ffmpeg.path,ffmpeg.options,ffmpeg.forceHttp,vlc.path,vlc.options"));
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.backup}}", "backup.path,backup.keep"));
 settingsCategory.push(new SettingsCategoryItem("{{.settings.category.authentication}}", "authentication.web,authentication.pms,authentication.m3u,authentication.xml,authentication.api"));
 function showPopUpElement(elm) {
     showElement(elm, true);
+    // setTimeout(function () {
+    //   showElement("popup", true);
+    // }, 10);
     return;
 }
 function showElement(elmID, type) {
-    if (elmID === "popup-custom" || elmID === "popup") {
+    if (elmID == "popup-custom" || elmID == "popup") {
         switch (type) {
             case true:
                 popupModal.show();
@@ -76,7 +60,7 @@ function showElement(elmID, type) {
                 break;
         }
     }
-    if (elmID === "loading") {
+    if (elmID == "loading") {
         switch (type) {
             case true:
                 loadingModal.show();
@@ -103,7 +87,7 @@ function getLocalData(dataType, id) {
         case "filter":
         case "custom-filter":
         case "group-title":
-            if (id === -1) {
+            if (id == -1) {
                 data["active"] = true;
                 data["liveEvent"] = false;
                 data["caseSensitive"] = false;
@@ -145,148 +129,150 @@ function getObjKeys(obj) {
 function getOwnObjProps(object) {
     return object ? Object.getOwnPropertyNames(object) : [];
 }
-function clearSortIndicators(table, table_name) {
-    var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
-    if (!headerRow) return;
-    var tds = headerRow.getElementsByTagName("TD");
-    for (var i = 0; i < tds.length; i++) {
-        if (tds[i].classList.contains("pointer") || tds[i].classList.contains("sortThis")) {
-            tds[i].className = "pointer";
-            // Remove any existing sort arrow (may be in TD or nested in P)
-            var arrows = tds[i].querySelectorAll(".sort-arrow");
-            arrows.forEach(function(a) { a.remove(); });
-        }
+function getAllSelectedChannels() {
+    var channels = new Array();
+    if (BULK_EDIT == false) {
+        return channels;
     }
-}
-function sortTable(column, table_name = "content_table") {
-    var table = document.getElementById(table_name);
-    if (!table) return;
-    var currentSortCol = (table_name === "content_table") ? COLUMN_TO_SORT : INACTIVE_COLUMN_TO_SORT;
-    var currentDir = SORT_DIRECTION[table_name];
-    var newDir;
-    // Determine new sort direction: asc -> desc -> default (reset)
-    if (column === currentSortCol) {
-        if (currentDir === "asc") {
-            newDir = "desc";
-        } else if (currentDir === "desc") {
-            newDir = null; // reset to default
-        } else {
-            newDir = "asc";
-        }
-    } else {
-        newDir = "asc";
-    }
-    // Clear all sort indicators
-    clearSortIndicators(table, table_name);
-    // If resetting to default order
-    if (newDir === null) {
-        SORT_DIRECTION[table_name] = null;
-        if (table_name === "content_table") { COLUMN_TO_SORT = null; }
-        else { INACTIVE_COLUMN_TO_SORT = null; }
-        // Restore original row order if saved
-        if (ORIGINAL_ROW_ORDER[table_name]) {
-            var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
-            var filterRow = table.querySelector(".column-filter-row");
-            while (table.firstChild) { table.removeChild(table.firstChild); }
-            if (headerRow) table.appendChild(headerRow);
-            if (filterRow) table.appendChild(filterRow);
-            ORIGINAL_ROW_ORDER[table_name].forEach(function(row) {
-                table.appendChild(row);
-            });
-        }
-        return;
-    }
-    // Save original order if not already saved
-    if (!ORIGINAL_ROW_ORDER[table_name]) {
-        var origRows = [];
-        var allRows = table.rows;
-        for (var i = 0; i < allRows.length; i++) {
-            if (allRows[i].className.indexOf("content_table_header") !== -1 ||
-                allRows[i].className.indexOf("inactive_content_table_header") !== -1 ||
-                allRows[i].className.indexOf("column-filter-row") !== -1) continue;
-            origRows.push(allRows[i]);
-        }
-        ORIGINAL_ROW_ORDER[table_name] = origRows.slice();
-    }
-    // Set sort state
-    SORT_DIRECTION[table_name] = newDir;
-    if (table_name === "content_table") { COLUMN_TO_SORT = column; }
-    else { INACTIVE_COLUMN_TO_SORT = column; }
-    // Add sort indicator to active column
-    var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
-    if (headerRow) {
-        var tds = headerRow.getElementsByTagName("TD");
-        if (tds[column]) {
-            tds[column].className = "sortThis";
-            var arrow = document.createElement("SPAN");
-            arrow.className = "sort-arrow";
-            arrow.innerText = (newDir === "asc") ? " \u25B2" : " \u25BC";
-            // Append inside the <p> child if it exists, otherwise to the TD
-            var pChild = tds[column].querySelector("p, P");
-            if (pChild) {
-                pChild.appendChild(arrow);
-            } else {
-                tds[column].appendChild(arrow);
+    var trs = document.getElementById("content_table").getElementsByTagName("TR");
+    for (var i = 1; i < trs.length; i++) {
+        if (trs[i].style.display != "none") {
+            if (trs[i].firstChild.firstChild.checked == true) {
+                channels.push(trs[i].id);
             }
         }
     }
-    // Collect data rows (skip header and filter rows)
-    var dataRows = [];
-    var allRows = table.rows;
-    var filterRow = null;
-    for (var i = 0; i < allRows.length; i++) {
-        if (allRows[i].className.indexOf("content_table_header") !== -1 ||
-            allRows[i].className.indexOf("inactive_content_table_header") !== -1) continue;
-        if (allRows[i].className.indexOf("column-filter-row") !== -1) {
-            filterRow = allRows[i];
-            continue;
+    var trs_inactive = document.getElementById("inactive_content_table").getElementsByTagName("TR");
+    for (var i = 1; i < trs_inactive.length; i++) {
+        if (trs_inactive[i].style.display != "none") {
+            if (trs_inactive[i].firstChild.firstChild.checked == true) {
+                channels.push(trs_inactive[i].id);
+            }
         }
-        dataRows.push(allRows[i]);
     }
-    if (dataRows.length === 0) return;
-    // Sort data rows
+    return channels;
+}
+function selectAllChannels(table_name = "content_table") {
+    var bulk = false;
+    var trs = document.getElementById(table_name).getElementsByTagName("TR");
+    if (trs[0].firstChild.firstChild.checked == true) {
+        bulk = true;
+    }
+    for (var i = 1; i < trs.length; i++) {
+        if (trs[i].style.display != "none") {
+            switch (bulk) {
+                case true:
+                    trs[i].firstChild.firstChild.checked = true;
+                    break;
+                case false:
+                    trs[i].firstChild.firstChild.checked = false;
+                    break;
+            }
+        }
+    }
+    return;
+}
+function bulkEdit() {
+    BULK_EDIT = !BULK_EDIT;
+    var className;
+    var rows = document.getElementsByClassName("bulk");
+    switch (BULK_EDIT) {
+        case true:
+            className = "bulk showBulk";
+            break;
+        case false:
+            className = "bulk hideBulk";
+            break;
+    }
+    for (var i = 0; i < rows.length; i++) {
+        rows[i].className = className;
+        rows[i].checked = false;
+    }
+    return;
+}
+function sortTable(column, table_name = "content_table") {
+    // console.log("COLUMN: " + column);
+    if ((column == COLUMN_TO_SORT && table_name == "content_table") || (column == INACTIVE_COLUMN_TO_SORT && table_name == "inactive_content_table")) {
+        return;
+    }
+    var table = document.getElementById(table_name);
+    var tableHead = table.getElementsByTagName("TR")[0];
+    var tableItems = tableHead.getElementsByTagName("TD");
+    var sortObj = new Object();
+    var x, xValue;
+    var tableHeader;
     var sortByString = false;
-    // Detect type from first data row
-    var firstCell = dataRows[0].getElementsByTagName("TD")[column];
-    if (firstCell && firstCell.childNodes[0]) {
-        var tag = firstCell.childNodes[0].tagName ? firstCell.childNodes[0].tagName.toLowerCase() : "";
-        if (tag === "input") {
-            var testVal = firstCell.getElementsByTagName("INPUT")[0].value;
-            if (isNaN(testVal) || testVal === "") sortByString = true;
-        } else {
-            sortByString = true;
+    if (column > 0 && COLUMN_TO_SORT > 0 && table_name == "content_table") {
+        tableItems[COLUMN_TO_SORT].className = "pointer";
+        tableItems[column].className = "sortThis";
+    }
+    else if (column > 0 && INACTIVE_COLUMN_TO_SORT > 0 && table_name == "inactive_content_table") {
+        tableItems[INACTIVE_COLUMN_TO_SORT].className = "pointer";
+        tableItems[column].className = "sortThis";
+    }
+    if (table_name == "content_table") {
+        COLUMN_TO_SORT = column;
+    }
+    else if (table_name == "inactive_content_table") {
+        INACTIVE_COLUMN_TO_SORT = column;
+    }
+    var rows = table.rows;
+    if (rows[1] != undefined) {
+        tableHeader = rows[0];
+        x = rows[1].getElementsByTagName("TD")[column];
+        for (i = 1; i < rows.length; i++) {
+            x = rows[i].getElementsByTagName("TD")[column];
+            switch (x.childNodes[0].tagName.toLowerCase()) {
+                case "input":
+                    xValue = x.getElementsByTagName("INPUT")[0].value.toLowerCase();
+                    break;
+                case "p":
+                    xValue = x.getElementsByTagName("P")[0].innerText.toLowerCase();
+                    break;
+                default: console.log(x.childNodes[0].tagName);
+            }
+            if (xValue == "") {
+                xValue = i;
+                sortObj[i] = rows[i];
+            }
+            else {
+                switch (isNaN(xValue)) {
+                    case false:
+                        xValue = parseFloat(xValue);
+                        sortObj[xValue] = rows[i];
+                        break;
+                    case true:
+                        sortByString = true;
+                        sortObj[xValue.toLowerCase() + i] = rows[i];
+                        break;
+                }
+            }
+        }
+        while (table.firstChild) {
+            table.removeChild(table.firstChild);
+        }
+        var sortValues = getObjKeys(sortObj);
+        if (sortByString == true) {
+            if (column == 3) {
+                var collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+                sortValues.sort(collator.compare);
+            }
+            else {
+                sortValues.sort();
+            }
+        }
+        else {
+            function sortFloat(a, b) {
+                return a - b;
+            }
+            sortValues.sort(sortFloat);
+        }
+        table.appendChild(tableHeader);
+        for (var i = 0; i < sortValues.length; i++) {
+            table.appendChild(sortObj[sortValues[i]]);
         }
     }
-    dataRows.sort(function(rowA, rowB) {
-        var cellA = rowA.getElementsByTagName("TD")[column];
-        var cellB = rowB.getElementsByTagName("TD")[column];
-        var valA = "", valB = "";
-        if (cellA && cellA.childNodes[0]) {
-            var tagA = cellA.childNodes[0].tagName ? cellA.childNodes[0].tagName.toLowerCase() : "";
-            if (tagA === "input") valA = cellA.getElementsByTagName("INPUT")[0].value.toLowerCase();
-            else if (tagA === "p") valA = cellA.getElementsByTagName("P")[0].innerText.toLowerCase();
-            else valA = cellA.innerText.toLowerCase();
-        }
-        if (cellB && cellB.childNodes[0]) {
-            var tagB = cellB.childNodes[0].tagName ? cellB.childNodes[0].tagName.toLowerCase() : "";
-            if (tagB === "input") valB = cellB.getElementsByTagName("INPUT")[0].value.toLowerCase();
-            else if (tagB === "p") valB = cellB.getElementsByTagName("P")[0].innerText.toLowerCase();
-            else valB = cellB.innerText.toLowerCase();
-        }
-        var result;
-        if (!sortByString && !isNaN(valA) && !isNaN(valB) && valA !== "" && valB !== "") {
-            result = parseFloat(valA) - parseFloat(valB);
-        } else {
-            var collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-            result = collator.compare(valA, valB);
-        }
-        return (newDir === "desc") ? -result : result;
-    });
-    // Rebuild table: header, filter row, then sorted data rows
-    while (table.firstChild) { table.removeChild(table.firstChild); }
-    if (headerRow) table.appendChild(headerRow);
-    if (filterRow) table.appendChild(filterRow);
-    dataRows.forEach(function(row) { table.appendChild(row); });
+    return;
 }
 function createSearchObj() {
     SEARCH_MAPPING = new Object();
@@ -295,7 +281,7 @@ function createSearchObj() {
     var channelKeys = ["x-active", "x-channelID", "x-name", "_file.m3u.name", "x-group-title", "x-xmltv-file"];
     channels.forEach(id => {
         channelKeys.forEach(key => {
-            if (key === "x-active") {
+            if (key == "x-active") {
                 switch (data[id][key]) {
                     case true:
                         SEARCH_MAPPING[id] = "online ";
@@ -306,9 +292,9 @@ function createSearchObj() {
                 }
             }
             else {
-                if (key === "x-xmltv-file") {
+                if (key == "x-xmltv-file") {
                     var xmltvFile = getValueFromProviderFile(data[id][key], "xmltv", "name");
-                    if (xmltvFile !== undefined) {
+                    if (xmltvFile != undefined) {
                         SEARCH_MAPPING[id] = SEARCH_MAPPING[id] + xmltvFile + " ";
                     }
                 }
@@ -320,7 +306,44 @@ function createSearchObj() {
     });
     return;
 }
-// searchInMapping() removed - replaced by per-column filters in menu_ts.js
+function enableGroupSelection(selector) {
+    var lastcheck = null; // no checkboxes clicked yet
+    // get desired checkboxes
+    var checkboxes = document.querySelectorAll(selector);
+    // loop over checkboxes to add event listener
+    Array.prototype.forEach.call(checkboxes, function (cbx, idx) {
+        cbx.addEventListener('click', function (evt) {
+            // test for shift key, not first checkbox, and not same checkbox
+            if (evt.shiftKey && null !== lastcheck && idx !== lastcheck) {
+                // get range of checks between last-checkbox and shift-checkbox
+                // Math.min/max does our sorting for us
+                Array.prototype.slice.call(checkboxes, Math.min(lastcheck, idx), Math.max(lastcheck, idx))
+                    // and loop over each
+                    .forEach(function (ccbx) {
+                    ccbx.checked = true;
+                });
+            }
+            lastcheck = idx; // set this checkbox as last-checked for later
+        });
+    });
+}
+function searchInMapping() {
+    var searchValue = document.getElementById("searchMapping").value;
+    var trs = document.getElementById("content_table").getElementsByTagName("TR");
+    for (var i = 1; i < trs.length; ++i) {
+        var id = trs[i].getAttribute("id");
+        var element = SEARCH_MAPPING[id];
+        switch (element.toLowerCase().includes(searchValue.toLowerCase())) {
+            case true:
+                document.getElementById(id).style.display = "";
+                break;
+            case false:
+                document.getElementById(id).style.display = "none";
+                break;
+        }
+    }
+    return;
+}
 function changeChannelNumbers(elements) {
     var starting_number_element = document.getElementsByName("x-channels-start")[0];
     var elems = elements.split(",");
@@ -328,18 +351,18 @@ function changeChannelNumbers(elements) {
     var data = SERVER["xepg"]["epgMapping"];
     elems.forEach(element => {
         var elem = document.getElementById(element);
-        var input = elem.childNodes[0].firstChild;
+        var input = elem.childNodes[1].firstChild;
         input.value = starting_number.toString();
         data[element]["x-channelID"] = starting_number.toString();
         starting_number++;
     });
-    if (COLUMN_TO_SORT === 0) {
+    if (COLUMN_TO_SORT == 1) {
         COLUMN_TO_SORT = -1;
-        sortTable(0);
+        sortTable(1);
     }
-    if (INACTIVE_COLUMN_TO_SORT === 0) {
+    if (INACTIVE_COLUMN_TO_SORT == 1) {
         INACTIVE_COLUMN_TO_SORT = -1;
-        sortTable(0, "inactive_content_page");
+        sortTable(1, "inactive_content_page");
     }
 }
 function changeChannelNumber(element) {
@@ -357,10 +380,10 @@ function changeChannelNumber(element) {
         channelNumbers.push(channelNumber);
     });
     for (var i = 0; i < channelNumbers.length; i++) {
-        if (channelNumbers.indexOf(newNumber) === -1) {
+        if (channelNumbers.indexOf(newNumber) == -1) {
             break;
         }
-        if (Math.floor(newNumber) === newNumber) {
+        if (Math.floor(newNumber) == newNumber) {
             newNumber = newNumber + 1;
         }
         else {
@@ -371,19 +394,22 @@ function changeChannelNumber(element) {
     }
     data[dbID]["x-channelID"] = newNumber.toString();
     element.value = newNumber;
-    if (COLUMN_TO_SORT === 0) {
+    if (COLUMN_TO_SORT == 1) {
         COLUMN_TO_SORT = -1;
-        sortTable(0);
+        sortTable(1);
     }
-    if (INACTIVE_COLUMN_TO_SORT === 0) {
+    if (INACTIVE_COLUMN_TO_SORT == 1) {
         INACTIVE_COLUMN_TO_SORT = -1;
-        sortTable(0, "inactive_content_page");
+        sortTable(1, "inactive_content_page");
     }
     return;
 }
 function backup() {
     var data = new Object();
+    console.log("Backup data");
     var cmd = "ThreadfinBackup";
+    console.log("SEND TO SERVER");
+    console.log(data);
     var server = new Server(cmd);
     server.request(data);
     return;
@@ -395,20 +421,34 @@ function toggleChannelStatus(id) {
         var checkbox = document.getElementById("active");
         status = (checkbox).checked;
     }
-    var channel = SERVER["xepg"]["epgMapping"][id];
-    channel["x-active"] = status;
-    if (channel["x-active"] === true) {
-        if (channel["x-xmltv-file"] === "-" || channel["x-mapping"] === "-") {
-            checkbox.checked = true;
-            channel["x-active"] = true;
+    var ids = getAllSelectedChannels();
+    if (ids.length == 0) {
+        ids.push(id);
+    }
+    ids.forEach(id => {
+        var channel = SERVER["xepg"]["epgMapping"][id];
+        channel["x-active"] = status;
+        switch (channel["x-active"]) {
+            case true:
+                if (channel["x-xmltv-file"] == "-" || channel["x-mapping"] == "-") {
+                    if (BULK_EDIT == false) {
+                        // alert(channel["x-name"] + ": Missing XMLTV file / channel")
+                        checkbox.checked = true;
+                    }
+                    channel["x-active"] = true;
+                }
+                break;
+            case false:
+                // code...
+                break;
         }
-    }
-    if (channel["x-active"] === false) {
-        document.getElementById(id).className = "notActiveEPG";
-    }
-    else {
-        document.getElementById(id).className = "activeEPG";
-    }
+        if (channel["x-active"] == false) {
+            document.getElementById(id).className = "notActiveEPG";
+        }
+        else {
+            document.getElementById(id).className = "activeEPG";
+        }
+    });
 }
 function restore() {
     if (document.getElementById('upload')) {
@@ -422,15 +462,15 @@ function restore() {
     document.body.appendChild(restore);
     restore.click();
     restore.onchange = function () {
-        if (!restore.files || !restore.files[0]) return;
         var filename = restore.files[0].name;
         var check = confirm("File: " + filename + "\n{{.confirm.restore}}");
-        if (check === true) {
+        if (check == true) {
             var reader = new FileReader();
-            var file = restore.files[0];
+            var file = document.querySelector('input[type=file]').files[0];
             if (file) {
                 reader.readAsDataURL(file);
                 reader.onload = function () {
+                    console.log(reader.result);
                     var data = new Object();
                     var cmd = "ThreadfinRestore";
                     data["base64"] = reader.result;
@@ -458,14 +498,17 @@ function uploadLogo() {
     upload.id = "upload";
     document.body.appendChild(upload);
     upload.click();
+    upload.onblur = function () {
+        alert();
+    };
     upload.onchange = function () {
-        if (!upload.files || !upload.files[0]) return;
         var filename = upload.files[0].name;
         var reader = new FileReader();
-        var file = upload.files[0];
+        var file = document.querySelector('input[type=file]').files[0];
         if (file) {
             reader.readAsDataURL(file);
             reader.onload = function () {
+                console.log(reader.result);
                 var data = new Object();
                 var cmd = "uploadLogo";
                 data["base64"] = reader.result;
@@ -486,7 +529,7 @@ function uploadLogo() {
 }
 function probeChannel(url) {
     if (document.getElementById("probeDetails")) {
-        document.getElementById("probeDetails").textContent = "{{.status.probingChannel}}";
+        document.getElementById("probeDetails").innerHTML = "Probing Channel Details...";
     }
     var data = new Object();
     var cmd = "probeChannel";
@@ -521,13 +564,14 @@ function sortSelect(elem) {
     var newSelectedIndex = 0;
     for (var i = 0; i < tmpAry.length; i++) {
         elem.options[i] = tmpAry[i];
-        if (elem.options[i].value === selectedValue)
+        if (elem.options[i].value == selectedValue)
             newSelectedIndex = i;
     }
     elem.selectedIndex = newSelectedIndex; // Set new selected index after sorting
     return;
 }
 function updateLog() {
+    console.log("TOKEN");
     var server = new Server("updateLog");
     server.request(new Object());
 }
