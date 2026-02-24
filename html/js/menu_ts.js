@@ -907,7 +907,7 @@ function createLayout() {
         }
     }
     if (document.getElementById("playlist-connection-information")) {
-        let activeClass = "text-primary";
+        let activeClass = "text-accent";
         if (SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] >= 0.6 && SERVER["clientInfo"]["activePlaylist"] / SERVER["clientInfo"]["totalPlaylist"] < 0.8) {
             activeClass = "text-warning";
         }
@@ -917,7 +917,7 @@ function createLayout() {
         document.getElementById("playlist-connection-information").innerHTML = "{{.status.playlistConnections}}: <span class='" + activeClass + "'>" + SERVER["clientInfo"]["activePlaylist"] + " / " + SERVER["clientInfo"]["totalPlaylist"] + "</span>";
     }
     if (document.getElementById("client-connection-information")) {
-        let activeClass = "text-primary";
+        let activeClass = "text-accent";
         if (SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] >= 0.6 && SERVER["clientInfo"]["activeClients"] / SERVER["clientInfo"]["totalClients"] < 0.8) {
             activeClass = "text-warning";
         }
@@ -949,20 +949,25 @@ function createLayout() {
                 break;
         }
     }
-    // Smart default page: if no menu is currently open, auto-open one
-    if (!window._menuOpened) {
-        window._menuOpened = true;
-        var defaultMenuKey = "playlist";
-        // Check if there are mapped channels (xepg data exists)
+    // Determine which menu to open
+    var targetMenuKey = null;
+    if (window._currentMenuKey) {
+        // Stay on the current page (e.g. after saving settings)
+        targetMenuKey = window._currentMenuKey;
+    } else if (!window._menuOpened) {
+        // First load: smart default
+        targetMenuKey = "playlist";
         if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
             var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
             if (mappedKeys.length > 0) {
-                defaultMenuKey = "mapping";
+                targetMenuKey = "mapping";
             }
         }
-        // Find the menu item and click it
+    }
+    if (targetMenuKey) {
+        window._menuOpened = true;
         for (let i = 0; i < menuItems.length; i++) {
-            if (menuItems[i].menuKey == defaultMenuKey) {
+            if (menuItems[i].menuKey == targetMenuKey) {
                 var menuElement = document.getElementById(menuItems[i].id);
                 if (menuElement) {
                     menuElement.click();
@@ -975,6 +980,8 @@ function createLayout() {
 }
 function openThisMenu(element) {
     var id = element.id;
+    // Track the currently open menu
+    window._currentMenuKey = menuItems[id] ? menuItems[id].menuKey : null;
     var content = new ShowContent(id);
     content.show();
     enableGroupSelection(".bulk");

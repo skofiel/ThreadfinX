@@ -426,6 +426,10 @@ input[type=button].center {
 }
 
 /* --- Utility Classes --- */
+.text-accent {
+  color: var(--accent) !important;
+}
+
 .pointer {
   cursor: pointer;
 }

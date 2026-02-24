@@ -705,7 +705,6 @@ function saveSettings() {
     var div = document.getElementById("content_settings");
     var settings = div.getElementsByClassName("changed");
     var newSettings = new Object();
-    var languageChanged = false;
     for (let i = 0; i < settings.length; i++) {
         var name;
         var value;
@@ -739,11 +738,7 @@ function saveSettings() {
             case "SELECT":
                 name = settings[i].name;
                 value = settings[i].value;
-                if (name == "language") {
-                    languageChanged = true;
-                    newSettings[name] = value;
-                }
-                else if (isNaN(value)) {
+                if (isNaN(value)) {
                     newSettings[name] = value;
                 }
                 else {
@@ -757,14 +752,12 @@ function saveSettings() {
     }
     var data = new Object();
     data["settings"] = newSettings;
+    // Remember we are on settings page so we stay here after save
+    window._currentMenuKey = "settings";
     var server = new Server(cmd);
     server.request(data);
     // Show success toast
     showSaveConfirmation();
-    // If language changed, reload the page after a short delay
-    if (languageChanged) {
-        setTimeout(function() { location.reload(); }, 1500);
-    }
 }
 function showSaveConfirmation() {
     var existing = document.getElementById("save-toast");

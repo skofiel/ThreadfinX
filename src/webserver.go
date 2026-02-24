@@ -476,12 +476,15 @@ func WS(w http.ResponseWriter, r *http.Request) {
 		// Data write commands
 		case "saveSettings":
 			var authenticationUpdate = Settings.AuthenticationWEB
+			var previousLanguage = Settings.Language
 			// var previousStoreBufferInRAM = Settings.StoreBufferInRAM
 			response.Settings, err = updateServerSettings(request)
 			if err == nil {
-				response.OpenMenu = strconv.Itoa(indexOfString("settings", System.WEB.Menu))
-
 				if Settings.AuthenticationWEB == true && authenticationUpdate == false {
+					response.Reload = true
+				}
+
+				if Settings.Language != previousLanguage {
 					response.Reload = true
 				}
 
