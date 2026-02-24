@@ -200,9 +200,9 @@ function clearSortIndicators(table, table_name) {
     for (var i = 0; i < tds.length; i++) {
         if (tds[i].classList.contains("pointer") || tds[i].classList.contains("sortThis")) {
             tds[i].className = "pointer";
-            // Remove any existing sort arrow
-            var arrow = tds[i].querySelector(".sort-arrow");
-            if (arrow) arrow.remove();
+            // Remove any existing sort arrow (may be in TD or nested in P)
+            var arrows = tds[i].querySelectorAll(".sort-arrow");
+            arrows.forEach(function(a) { a.remove(); });
         }
     }
 }
@@ -269,7 +269,13 @@ function sortTable(column, table_name = "content_table") {
             var arrow = document.createElement("SPAN");
             arrow.className = "sort-arrow";
             arrow.innerText = (newDir == "asc") ? " \u25B2" : " \u25BC";
-            tds[column].appendChild(arrow);
+            // Append inside the <p> child if it exists, otherwise to the TD
+            var pChild = tds[column].querySelector("p, P");
+            if (pChild) {
+                pChild.appendChild(arrow);
+            } else {
+                tds[column].appendChild(arrow);
+            }
         }
     }
     // Collect data rows (skip header and filter rows)

@@ -827,6 +827,7 @@ class ShowContent extends Content {
             updateGridStatus(panel, rows.length);
             buildColumnVisibility(panel, tableHeader, "content_table");
             restoreColumnVisibility("content_table");
+            applyColumnWidths("content_table", tableHeader);
             // Inactive table for mapping
             if (menuKey == "mapping") {
                 var inactivePanel = buildGridPanel("{{.grid.inactiveChannels}}", "inactive-panel", "inactive_content_table");
@@ -858,6 +859,7 @@ class ShowContent extends Content {
                 updateGridStatus(inactivePanel, irows.length);
                 buildColumnVisibility(inactivePanel, tableHeader, "inactive_content_table");
                 restoreColumnVisibility("inactive_content_table");
+                applyColumnWidths("inactive_content_table", tableHeader);
             }
         }
         switch (menuKey) {
@@ -924,6 +926,62 @@ function buildGridPanel(title, headerClass, tableId) {
     noResults.innerText = "{{.grid.noResults}}";
     panel.appendChild(noResults);
     return panel;
+}
+// Store table headers per table ID for column width recalculation
+var TABLE_HEADERS = {};
+function applyColumnWidths(tableId, tableHeader) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    if (tableHeader) TABLE_HEADERS[tableId] = tableHeader;
+    else tableHeader = TABLE_HEADERS[tableId];
+    if (!tableHeader) return;
+    // Remove existing colgroup
+    var existing = table.querySelector("colgroup");
+    if (existing) existing.remove();
+    // Determine which columns are visible
+    var panel = table.closest(".grid-panel");
+    var visibleCols = [];
+    var colCount = tableHeader.length;
+    for (var i = 0; i < colCount; i++) {
+        var isVisible = true;
+        if (panel) {
+            var cb = panel.querySelector('.col-visibility-dropdown input[data-col-idx="' + i + '"]');
+            if (cb && !cb.checked) isVisible = false;
+        }
+        visibleCols.push(isVisible);
+    }
+    // Determine fixed widths: BULK=40px, ChNo=60px, Logo=70px, rest=auto-proportional
+    var fixedWidths = {};
+    for (var i = 0; i < colCount; i++) {
+        var hdr = tableHeader[i];
+        if (hdr == "BULK") fixedWidths[i] = 40;
+        else if (hdr == "{{.mapping.table.chNo}}" || hdr == "{{.filter.table.startingNumber}}") fixedWidths[i] = 60;
+        else if (hdr == "{{.mapping.table.logo}}") fixedWidths[i] = 70;
+    }
+    // Calculate total fixed and count of flex columns (visible only)
+    var totalFixed = 0;
+    var flexCount = 0;
+    for (var i = 0; i < colCount; i++) {
+        if (!visibleCols[i]) continue;
+        if (fixedWidths[i]) totalFixed += fixedWidths[i];
+        else flexCount++;
+    }
+    // Build colgroup
+    var colgroup = document.createElement("COLGROUP");
+    for (var i = 0; i < colCount; i++) {
+        var col = document.createElement("COL");
+        if (!visibleCols[i]) {
+            col.style.width = "0px";
+            col.style.display = "none";
+        } else if (fixedWidths[i]) {
+            col.style.width = fixedWidths[i] + "px";
+        } else {
+            // Distribute remaining space equally among flex columns
+            col.style.width = "calc((100% - " + totalFixed + "px) / " + flexCount + ")";
+        }
+        colgroup.appendChild(col);
+    }
+    table.insertBefore(colgroup, table.firstChild);
 }
 function buildFilterRow(tableHeader, tableId) {
     var filterRow = document.createElement("TR");
@@ -1007,6 +1065,8 @@ function toggleColumnVisibility(cb) {
     }
     // Persist column visibility to localStorage
     saveColumnVisibility(tableId);
+    // Recalculate column widths
+    applyColumnWidths(tableId);
 }
 function saveColumnVisibility(tableId) {
     var panel = document.querySelector('.grid-panel[data-table-id="' + tableId + '"]');
@@ -2554,7 +2614,6 @@ function donePopupData(dataType, idsStr) {
                 default:
             }
             createSearchObj();
-            searchInMapping();
         }
         if (input["x-active"] == false) {
             document.getElementById(id).className = "notActiveEPG";

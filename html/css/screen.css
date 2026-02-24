@@ -512,7 +512,10 @@ caption {
   --bs-table-color: none;
   border-collapse: collapse;
   width: 100%;
+  table-layout: fixed;
 }
+
+/* Column widths set via JS colgroup for flexible resize on show/hide */
 
 /* Table header row */
 #content_table .content_table_header,
@@ -571,17 +574,20 @@ caption {
   padding: 3px 4px;
 }
 
-.column-filter-row input[type="text"] {
-  width: calc(100% - 2px);
+.column-filter-row td input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   box-sizing: border-box;
   padding: 3px 6px;
-  margin: 0 1px;
+  margin: 0;
   font-size: var(--font-size-xs);
   border: 1px solid var(--border);
   background-color: var(--bg-elevated);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   transition: border-color var(--transition-fast);
+  font-family: var(--font-family);
 }
 
 .column-filter-row input[type="text"]:focus {
@@ -683,9 +689,9 @@ tbody {
   white-space: nowrap;
 }
 
-/* Channel number input */
-#content_table input[type=text],
-#inactive_content_table input[type=text] {
+/* Channel number input (exclude filter row inputs) */
+#content_table tr:not(.column-filter-row) input[type=text],
+#inactive_content_table tr:not(.column-filter-row) input[type=text] {
   width: 100%;
   min-width: 50px;
   max-width: 70px;
