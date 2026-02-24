@@ -10,6 +10,19 @@ nav img {
   float: left;
 }
 
+nav .material-symbols-outlined {
+  float: left;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.nav-item:hover .material-symbols-outlined,
+.nav-item.menu-active .material-symbols-outlined {
+  color: inherit;
+}
+
 nav p {
   text-align: left;
   padding: 0 var(--space-xl);
@@ -175,6 +188,7 @@ nav p {
 #content {
   display: block;
   padding: var(--space-md);
+  overflow: visible;
 }
 
 /* --- Stream Info Tables --- */
@@ -202,7 +216,6 @@ nav p {
   position: absolute;
   right: 0;
   bottom: 0;
-  background: url("../img/touch.png");
   background-color: var(--bg-dark);
   background-position: bottom right;
 }
@@ -574,16 +587,17 @@ tbody {
 .interaction,
 #interaction {
   margin-top: var(--space-xl);
-  display: inline-flex;
-  float: right;
+  display: flex;
+  align-items: center;
   gap: var(--space-sm);
+  width: 100%;
 }
 
 .interaction input[type=button],
 .interaction input[type=submit] {
   background-color: var(--accent);
   min-width: 100px;
-  margin: 0 var(--space-sm);
+  margin: 0 var(--space-xs);
   text-align: center;
 }
 
@@ -661,7 +675,7 @@ tbody {
 
   #settings {
     position: relative;
-    overflow: auto;
+    overflow: visible;
   }
 
   .screenLogHidden {
@@ -1170,6 +1184,8 @@ tbody {
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-sm);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 #content-interaction input[type=button] {

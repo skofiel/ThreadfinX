@@ -3,8 +3,25 @@ class MainMenu {
         this.DocumentID = "main-menu";
         this.HTMLTag = "LI";
         this.ImagePath = "img/";
+        this.iconMap = {
+            "m3u.png": "playlist_play",
+            "xmltv.png": "live_tv",
+            "filter.png": "filter_alt",
+            "mapping.png": "account_tree",
+            "users.png": "group",
+            "settings.png": "settings",
+            "log.png": "receipt_long",
+            "logout.png": "logout"
+        };
     }
     createIMG(src) {
+        var iconName = this.iconMap[src];
+        if (iconName) {
+            var element = document.createElement("SPAN");
+            element.className = "material-symbols-outlined";
+            element.textContent = iconName;
+            return element;
+        }
         var element = document.createElement("IMG");
         element.setAttribute("src", this.ImagePath + src);
         return element;
@@ -718,14 +735,16 @@ class ShowContent extends Content {
                 interaction.appendChild(input);
                 break;
             case "settings":
-                var input = this.createInput("button", menuKey, "{{.button.save}}");
-                input.setAttribute("onclick", 'javascript: saveSettings();');
-                interaction.appendChild(input);
                 var input = this.createInput("button", menuKey, "{{.button.backup}}");
                 input.setAttribute("onclick", 'javascript: backup();');
+                input.className = "black";
                 interaction.appendChild(input);
                 var input = this.createInput("button", menuKey, "{{.button.restore}}");
                 input.setAttribute("onclick", 'javascript: restore();');
+                input.className = "black";
+                interaction.appendChild(input);
+                var input = this.createInput("button", menuKey, "{{.button.save}}");
+                input.setAttribute("onclick", 'javascript: saveSettings();');
                 interaction.appendChild(input);
                 var wrapper = document.createElement("DIV");
                 wrapper.setAttribute("id", "box-wrapper");
@@ -1715,13 +1734,19 @@ function openPopUp(dataType, element) {
             content.appendRow("{{.mapping.backupChannel3.title}}", xmlTvBackup3IdContainer);
             // Interaktion
             content.createInteraction();
-            var input = content.createInput("button", "cancel", "{{.button.probeChannel}}");
+            var input = content.createInput("button", "probe", "{{.button.probeChannel}}");
             input.setAttribute("onclick", 'javascript: probeChannel("' + data["url"] + '");');
+            input.className = "black";
             content.addInteraction(input);
             // Logo hochladen
-            var input = content.createInput("button", "cancel", "{{.button.uploadLogo}}");
+            var input = content.createInput("button", "upload", "{{.button.uploadLogo}}");
             input.setAttribute("onclick", 'javascript: uploadLogo();');
+            input.className = "black";
             content.addInteraction(input);
+            // Spacer to push cancel+done to right
+            var spacer = document.createElement("span");
+            spacer.style.flex = "1";
+            document.getElementById("popup-interaction").appendChild(spacer);
             // Abbrechen
             var input = content.createInput("button", "cancel", "{{.button.cancel}}");
             input.setAttribute("onclick", 'javascript: showElement("popup", false);');
