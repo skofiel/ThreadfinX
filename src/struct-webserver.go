@@ -63,6 +63,7 @@ type RequestStruct struct {
 		Dummy                    *bool     `json:"dummy,omitempty"`
 		DummyChannel             *string   `json:"dummyChannel,omitempty"`
 		IgnoreFilters            *bool     `json:"ignoreFilters,omitempty"`
+		DebugLevel               *int      `json:"debugLevel,omitempty"`
 	} `json:"settings,omitempty"`
 
 	// Upload Logo
@@ -88,6 +89,11 @@ type RequestStruct struct {
 
 	// Probe Url
 	ProbeURL string `json:"probeURL,omitempty"`
+
+	// Translations
+	TranslationLang string                 `json:"translationLang,omitempty"`
+	Translations    map[string]interface{} `json:"translations,omitempty"`
+	NewLanguage     string                 `json:"newLanguage,omitempty"`
 }
 
 // ResponseStruct : Antworten an den Client (WEB)
@@ -144,7 +150,10 @@ type ResponseStruct struct {
 	XEPG                map[string]interface{} `json:"xepg,required"`
 	ProbeInfo           ProbeInfoStruct        `json:"probeInfo,omitempty"`
 
-	Notification map[string]Notification `json:"notification,omitempty"`
+	Notification   map[string]Notification            `json:"notification,omitempty"`
+	Translations   map[string]map[string]interface{} `json:"translations,omitempty"`
+	AvailableLangs []string                          `json:"availableLangs,omitempty"`
+	TestProgress   TestChannelsProgress              `json:"testProgress,omitempty"`
 }
 
 type ProbeInfoStruct struct {

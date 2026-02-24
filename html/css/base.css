@@ -266,6 +266,17 @@ select option {
   color: var(--text-primary);
 }
 
+select option:checked,
+select option:hover {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+select:focus option:checked {
+  background: var(--accent) linear-gradient(0deg, var(--accent) 0%, var(--accent) 100%);
+  color: #fff;
+}
+
 input {
   -webkit-appearance: none;
   margin: 0;
@@ -374,17 +385,21 @@ input[type="checkbox"]:checked {
 }
 
 input[type="checkbox"]:before {
-  position: initial;
-  left: 0;
-  margin-left: -4px;
-  content: " ";
+  content: "\00a0";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  text-align: center;
+  line-height: 14px;
 }
 
 input[type="checkbox"]:checked:before {
-  position: initial;
-  left: 0;
-  margin-left: -3px;
   content: "\2713";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  text-align: center;
+  line-height: 14px;
   color: #fff;
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-sm);

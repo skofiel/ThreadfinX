@@ -43,7 +43,15 @@
     "mappedChannels": "Canales asignados",
     "activeStreams": "Streams activos",
     "inactiveStreams": "Streams inactivos",
-    "websocketError": "No se pudo establecer conexión WebSocket con Threadfin. Compruebe su configuración de red."
+    "websocketError": "No se pudo establecer conexión WebSocket con Threadfin. Compruebe su configuración de red.",
+    "threadfinVersion": "Versión de Threadfin",
+    "threadfinBranch": "Rama de Threadfin",
+    "errors": "Errores",
+    "warnings": "Avisos",
+    "dvrIP": "DVR IP",
+    "m3uUrlLabel": "URL M3U",
+    "m3uUrlHint": "Grupos específicos: [http://...?group-title=foo,bar]",
+    "xmltvUrlLabel": "URL XMLTV"
   },
   "log": {
     "filter": {
@@ -67,6 +75,7 @@
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "done": "Hecho",
+    "close": "Cerrar",
     "login": "Iniciar sesión",
     "new": "Nuevo",
     "next": "Siguiente",
@@ -78,6 +87,8 @@
     "resetLogs": "Borrar registros",
     "uploadLogo": "Subir logotipo",
     "probeChannel": "Analizar canal",
+    "testChannels": "Probar Canales",
+    "stopTest": "Detener Prueba",
     "sortChannelsAlpha": "Ordenar canales alfabéticamente",
     "sortChannelNumbers": "Ordenar canales",
     "columns": "Columnas",
@@ -369,6 +380,11 @@
       "title": "Detalles del análisis",
       "placeholder": "",
       "description": ""
+    },
+    "channelUrl": {
+      "title": "URL del Canal",
+      "placeholder": "",
+      "description": ""
     }
   },
   "users": {
@@ -599,6 +615,15 @@
     {
       "title": "Idioma",
       "description": "Seleccione el idioma de la interfaz. Los cambios requieren recargar la página."
+    },
+    "translationEditor":
+    {
+      "title": "Editor de Traducciones",
+      "key": "Clave",
+      "value": "Valor",
+      "addLanguage": "Añadir Idioma",
+      "editTranslations": "Editar Traducciones",
+      "newLanguagePrompt": "Introduzca el código del idioma (ej. fr, de, it):"
     },
     "bufferTimeout": {
       "title": "Tiempo de espera para nuevas conexiones",

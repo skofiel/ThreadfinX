@@ -186,7 +186,9 @@ function sortTable(column, table_name = "content_table") {
         if (ORIGINAL_ROW_ORDER[table_name]) {
             var headerRow = table.querySelector(table_name === "content_table" ? ".content_table_header" : ".inactive_content_table_header");
             var filterRow = table.querySelector(".column-filter-row");
+            var colgroup = table.querySelector("colgroup");
             while (table.firstChild) { table.removeChild(table.firstChild); }
+            if (colgroup) table.appendChild(colgroup);
             if (headerRow) table.appendChild(headerRow);
             if (filterRow) table.appendChild(filterRow);
             ORIGINAL_ROW_ORDER[table_name].forEach(function(row) {
@@ -281,8 +283,10 @@ function sortTable(column, table_name = "content_table") {
         }
         return (newDir === "desc") ? -result : result;
     });
-    // Rebuild table: header, filter row, then sorted data rows
+    // Rebuild table: colgroup, header, filter row, then sorted data rows
+    var colgroup = table.querySelector("colgroup");
     while (table.firstChild) { table.removeChild(table.firstChild); }
+    if (colgroup) table.appendChild(colgroup);
     if (headerRow) table.appendChild(headerRow);
     if (filterRow) table.appendChild(filterRow);
     dataRows.forEach(function(row) { table.appendChild(row); });

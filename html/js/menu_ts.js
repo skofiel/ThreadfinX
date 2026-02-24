@@ -692,6 +692,10 @@ class ShowContent extends Content {
                 interaction.appendChild(input);
                 break;
             case "mapping":
+                var testBtn = this.createInput("button", "testChannels", "{{.button.testChannels}}");
+                testBtn.setAttribute("onclick", 'javascript: startTestChannels()');
+                testBtn.className = "black";
+                interaction.appendChild(testBtn);
                 var input = this.createInput("button", menuKey, "{{.button.save}}");
                 input.setAttribute("onclick", 'javascript: savePopupData("mapping", "", "")');
                 interaction.appendChild(input);
@@ -2044,7 +2048,28 @@ function openPopUp(dataType, element) {
             input.setAttribute("onchange", "javascript: this.className = 'changed'");
             content.appendRow("{{.mapping.channelName.title}}", input);
             content.description("<span class='text-danger'>" + data["tvg-id"] + "</span> <span class='text-primary'>(" + data["x-epg"] + ")</span>");
-            // Beschreibung 
+            // Channel URL (readonly with copy button)
+            if (data["url"]) {
+                var urlContainer = document.createElement("DIV");
+                urlContainer.className = "input-group";
+                var urlInput = document.createElement("INPUT");
+                urlInput.setAttribute("type", "text");
+                urlInput.setAttribute("readonly", "readonly");
+                urlInput.className = "form-control";
+                urlInput.id = "channel-url-field";
+                urlInput.value = data["url"];
+                urlContainer.appendChild(urlInput);
+                var copyBtn = document.createElement("BUTTON");
+                copyBtn.className = "input-group-text copy-btn";
+                copyBtn.setAttribute("data-clipboard-target", "#channel-url-field");
+                copyBtn.setAttribute("data-bs-title", "Copy to clipboard");
+                copyBtn.setAttribute("data-bs-toggle", "tooltip");
+                copyBtn.setAttribute("data-bs-placement", "bottom");
+                copyBtn.innerHTML = "<span class='material-symbols-outlined' style='font-size:18px;'>content_copy</span>";
+                urlContainer.appendChild(copyBtn);
+                content.appendRow("{{.mapping.channelUrl.title}}", urlContainer);
+            }
+            // Beschreibung
             var dbKey = "x-description";
             var input = content.createInput("text", dbKey, data[dbKey]);
             input.setAttribute("placeholder", "{{.mapping.description.placeholder}}");
@@ -2169,15 +2194,15 @@ function openPopUp(dataType, element) {
             input.setAttribute("onclick", 'javascript: probeChannel("' + data["url"] + '");');
             input.className = "black";
             content.addInteraction(input);
-            // Logo hochladen
+            // Spacer to push remaining buttons to right
+            var spacer = document.createElement("span");
+            spacer.style.flex = "1";
+            document.getElementById("popup-interaction").appendChild(spacer);
+            // Logo hochladen (moved to right side)
             var input = content.createInput("button", "upload", "{{.button.uploadLogo}}");
             input.setAttribute("onclick", 'javascript: uploadLogo();');
             input.className = "black";
             content.addInteraction(input);
-            // Spacer to push cancel+done to right
-            var spacer = document.createElement("span");
-            spacer.style.flex = "1";
-            document.getElementById("popup-interaction").appendChild(spacer);
             // Abbrechen
             var input = content.createInput("button", "cancel", "{{.button.cancel}}");
             input.setAttribute("onclick", 'javascript: showElement("popup", false);');
@@ -2411,9 +2436,8 @@ function setXmltvChannel(epgMapId, xmlTvFileSelect) {
     // Remove old XMLTV ID selection box
     const xmlTvIdPickerParent = document.getElementById('xmltv-id-picker-container').parentElement;
     xmlTvIdPickerParent.innerHTML = '';
-    // Create new XMLTV ID selection box
-    const tvgId = SERVER['xepg']['epgMapping'][epgMapId]['tvg-id'];
-    const [xmlTvIdContainer, xmlTvIdInput, xmlTvIdDatalist] = xmlTv.newXmlTvIdPicker(newXmlTvFile, tvgId);
+    // Create new XMLTV ID selection box - start with no selection instead of tvg-id
+    const [xmlTvIdContainer, xmlTvIdInput, xmlTvIdDatalist] = xmlTv.newXmlTvIdPicker(newXmlTvFile, '-');
     xmlTvIdContainer.setAttribute('id', 'xmltv-id-picker-container');
     xmlTvIdInput.setAttribute('list', 'xmltv-id-picker-datalist');
     xmlTvIdInput.setAttribute('name', 'x-mapping'); // Should stay x-mapping as it will be used in donePopupData to make a server request
@@ -2779,3 +2803,86 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
+
+// --- Test Channels ---
+var TEST_CHANNELS_INTERVAL = null;
+
+function startTestChannels() {
+    var server = new Server("startTestChannels");
+    server.request({});
+    // Start polling for progress
+    if (TEST_CHANNELS_INTERVAL) clearInterval(TEST_CHANNELS_INTERVAL);
+    TEST_CHANNELS_INTERVAL = setInterval(function() {
+        var server = new Server("getTestChannelsProgress");
+        server.request({});
+    }, 2000);
+    // Change button to stop
+    var btn = document.querySelector('input[name="testChannels"]');
+    if (btn) {
+        btn.value = "{{.button.stopTest}}";
+        btn.setAttribute("onclick", "javascript: stopTestChannels()");
+    }
+}
+
+function stopTestChannels() {
+    var server = new Server("stopTestChannels");
+    server.request({});
+    if (TEST_CHANNELS_INTERVAL) {
+        clearInterval(TEST_CHANNELS_INTERVAL);
+        TEST_CHANNELS_INTERVAL = null;
+    }
+    var btn = document.querySelector('input[name="testChannels"]');
+    if (btn) {
+        btn.value = "{{.button.testChannels}}";
+        btn.setAttribute("onclick", "javascript: startTestChannels()");
+    }
+}
+
+function handleTestChannelsProgress(progress) {
+    if (!progress) return;
+    // Update button text with progress
+    var btn = document.querySelector('input[name="testChannels"]');
+    if (btn && progress.running) {
+        btn.value = "{{.button.stopTest}} (" + progress.tested + "/" + progress.total + ")";
+    }
+    if (progress.complete) {
+        if (TEST_CHANNELS_INTERVAL) {
+            clearInterval(TEST_CHANNELS_INTERVAL);
+            TEST_CHANNELS_INTERVAL = null;
+        }
+        if (btn) {
+            btn.value = "{{.button.testChannels}}";
+            btn.setAttribute("onclick", "javascript: startTestChannels()");
+        }
+        showTestChannelsResults(progress);
+    }
+}
+
+function showTestChannelsResults(progress) {
+    // Show results in a popup-like notification
+    var resultHtml = "<h4>Test Results</h4>";
+    resultHtml += "<p>OK: <span class='text-accent'>" + progress.ok + "</span> | ";
+    resultHtml += "Failed: <span style='color:var(--danger)'>" + progress.failed + "</span> | ";
+    resultHtml += "Skipped: <span style='color:var(--warning)'>" + progress.skipped + "</span></p>";
+    if (progress.results) {
+        var failed = progress.results.filter(function(r) { return r.status === "error"; });
+        if (failed.length > 0) {
+            resultHtml += "<h5>Failed Channels:</h5><ul style='max-height:300px;overflow-y:auto;'>";
+            failed.forEach(function(r) {
+                resultHtml += "<li style='list-style-type:disc;margin-left:20px;cursor:default;'>" +
+                    "<strong>" + (r.channelName || r.channelId) + "</strong>" +
+                    (r.active ? " (active)" : " (inactive)") +
+                    " - " + r.error + "</li>";
+            });
+            resultHtml += "</ul>";
+        }
+    }
+    // Show in popup
+    var header = document.getElementById("popup_header");
+    var content = document.getElementById("popup-custom");
+    var footer = document.getElementById("popup_footer");
+    if (header) header.innerHTML = "<h3>{{.button.testChannels}}</h3>";
+    if (content) content.innerHTML = resultHtml;
+    if (footer) footer.innerHTML = '<input type="button" name="cancel" value="{{.button.close}}" onclick="javascript: showElement(\'popup\', false);">';
+    showElement("popup", true);
+}

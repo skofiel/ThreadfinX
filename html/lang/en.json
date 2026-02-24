@@ -43,7 +43,15 @@
     "mappedChannels": "Mapped Channels",
     "activeStreams": "Active Streams",
     "inactiveStreams": "Inactive Streams",
-    "websocketError": "No websocket connection to Threadfin could be established. Check your network configuration."
+    "websocketError": "No websocket connection to Threadfin could be established. Check your network configuration.",
+    "threadfinVersion": "Threadfin Version",
+    "threadfinBranch": "Threadfin Branch",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "dvrIP": "DVR IP",
+    "m3uUrlLabel": "M3U URL",
+    "m3uUrlHint": "Specific groups: [http://...?group-title=foo,bar]",
+    "xmltvUrlLabel": "XMLTV URL"
   },
   "log": {
     "filter": {
@@ -67,6 +75,7 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "done": "Done",
+    "close": "Close",
     "login": "Login",
     "new": "New",
     "next": "Next",
@@ -78,6 +87,8 @@
     "resetLogs": "Reset Logs",
     "uploadLogo": "Upload Logo",
     "probeChannel": "Probe Channel",
+    "testChannels": "Test Channels",
+    "stopTest": "Stop Test",
     "sortChannelsAlpha": "Sort Channels Alphabetically",
     "sortChannelNumbers": "Sort Channels",
     "columns": "Columns",
@@ -369,6 +380,11 @@
       "title": "Probe Details",
       "placeholder": "",
       "description": ""
+    },
+    "channelUrl": {
+      "title": "Channel URL",
+      "placeholder": "",
+      "description": ""
     }
   },
   "users": {
@@ -599,6 +615,15 @@
     {
       "title": "Language",
       "description": "Select the interface language. Changes require a page reload."
+    },
+    "translationEditor":
+    {
+      "title": "Translation Editor",
+      "key": "Key",
+      "value": "Value",
+      "addLanguage": "Add Language",
+      "editTranslations": "Edit Translations",
+      "newLanguagePrompt": "Enter language code (e.g. fr, de, it):"
     },
     "bufferTimeout": {
       "title": "Timeout for new client connections",

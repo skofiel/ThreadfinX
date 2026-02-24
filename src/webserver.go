@@ -698,6 +698,30 @@ func WS(w http.ResponseWriter, r *http.Request) {
 			resolution, frameRate, audioChannels, _ := probeChannel(request)
 			response.ProbeInfo = ProbeInfoStruct{Resolution: resolution, FrameRate: frameRate, AudioChannel: audioChannels}
 
+		case "getTranslations":
+			response.Translations, response.AvailableLangs, err = getTranslations()
+
+		case "saveTranslations":
+			err = saveTranslation(request.TranslationLang, request.Translations)
+			if err == nil {
+				response.Reload = true
+			}
+
+		case "addLanguage":
+			err = addLanguage(request.NewLanguage)
+			if err == nil {
+				response.Translations, response.AvailableLangs, err = getTranslations()
+			}
+
+		case "startTestChannels":
+			err = StartTestChannels()
+
+		case "stopTestChannels":
+			StopTestChannels()
+
+		case "getTestChannelsProgress":
+			response.TestProgress = GetTestChannelsProgress()
+
 		default:
 			showDebug(fmt.Sprintf("Unknown WebSocket command: %s", request.Cmd), 1)
 		}
