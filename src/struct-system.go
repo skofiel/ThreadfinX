@@ -342,6 +342,7 @@ type SettingsStruct struct {
 	EpgCategories             string                `json:"epgCategories"`
 	EpgCategoriesColors       string                `json:"epgCategoriesColors"`
 	AccentColor               string                `json:"accentColor"`
+	FontSize                  string                `json:"fontSize"`
 	Dummy                     bool                  `json:"dummy"`
 	DummyChannel              string                `json:"dummyChannel"`
 	IgnoreFilters             bool                  `json:"ignoreFilters"`

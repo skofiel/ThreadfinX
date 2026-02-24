@@ -9,7 +9,7 @@ function setMenuItem() {
   menu_m3u["_element"] = "LI";
   menu_m3u["_configKey"] = "files.m3u";
   menu_m3u["_text"] = "Playlist";
-  menu_m3u["_icon"] = "img/m3u.png";
+  menu_m3u["_icon"] = "playlist_play";
   menu_m3u["_headline"] = "Playlists: Local or remote";
   menu_m3u["_usage"] = "<b>Info</b><br>Availability: File availability in percent<br>Streams:      Number of streams in the file.<br>group-title:  Streams that are assigned to a group. Simplifies filtering streams<br>tvg-id:       This ID is used for automatic mapping, must match with the channel ID in the XMLTV file.<br>Unique ID:    Streams with a unique ID to identify them. Allows channel name changes in the M3U without losing the XMLTV mapping (PPV / live events).<br><br><b>Usage M3U:</b><br>Remote playlist: http://your.iptv.provider.com/file.m3u<br>Local  playlist: /path/to/file.m3u<br><br><b>Usage HDHomeRun:</b><br>IP: 192.168.1.10:5004<br>"
   menu_m3u["name"] = "file";
@@ -25,7 +25,7 @@ function setMenuItem() {
   menu_filter["_element"] = "LI";
   menu_filter["_configKey"] = "filter";
   menu_filter["_text"] = "Filter";
-  menu_filter["_icon"] = "img/filter.png";
+  menu_filter["_icon"] = "filter_alt";
   menu_filter["_headline"] = "Filter by M3U parameters, e.g. group-title";
   menu_filter["_usage"] = "<b>Usage:</b><br>Sport - All sports channels<br>Sport {HD} - All HD sports channels<br>Sport {HD} !{ES,DE} - All HD sports channels, but no Spanish and German<br><br>To filter the streams of a HDHomeRun, the playlist name can be entered:<br>My tuner {HD}"
   //menu_filter["_usage"]       = "<b>Usage:</b><br>All sports channels: Sport<br>All HD sports channels: Sport {HD}<br>All HD sports channels, but no Spanish and German: Sport {HD} !{ES,DE}"
@@ -41,7 +41,7 @@ function setMenuItem() {
   menu_id["_element"] = "LI";
   menu_id["_configKey"] = "id";
   menu_id["_text"] = "PMS ID";
-  menu_id["_icon"] = "img/number.png";
+  menu_id["_icon"] = "tag";
   menu_id["_headline"] = "Setup PMS guide number";
   menu_id["_usage"] = 'Some playlists have unique channel IDs.<br>Enter the keyword of the ID. The channel assignment in PMS will change as a result.<br><br>e.g. channelID<br>#EXTINF:0 type="stream" <b>channelId</b>="81", My Streaming Channel HD<br><br>Only enter here if you know what you are doing!'
   menu_id["name"] = "id";
@@ -57,7 +57,7 @@ function setMenuItem() {
   menu_xmltv["_element"] = "LI";
   menu_xmltv["_configKey"] = "files.xmltv";
   menu_xmltv["_text"] = "XMLTV";
-  menu_xmltv["_icon"] = "img/xmltv.png";
+  menu_xmltv["_icon"] = "live_tv";
   menu_xmltv["_headline"] = "XMLTV files: Local or remote";
   menu_xmltv["_usage"] = "<b>Info:</b><br>Availability: File availability in percent<br>Channels:     Number of channels in the file<br>Programs:     Number of EPG data<br><br><b>Usage:</b><br>Remote XMLTV file: http://your.epg.provider.com/guide.xml<br>Local  XMLTV file: /path/to/guide.xml"
   menu_xmltv["name"] = "xmltv";
@@ -70,7 +70,7 @@ function setMenuItem() {
   menu_mapping = new Object();
   menu_mapping["_element"] = "LI";
   menu_mapping["_text"] = "Mapping";
-  menu_mapping["_icon"] = "img/mapping.png";
+  menu_mapping["_icon"] = "account_tree";
   menu_mapping["_configKey"] = "mapping";
   menu_mapping["_headline"] = "XMLTV assignment and sorting of channels";
   menu_mapping["id"] = "mapping";
@@ -80,7 +80,7 @@ function setMenuItem() {
   menu_users = new Object();
   menu_users["_element"] = "LI";
   menu_users["_text"] = "Users";
-  menu_users["_icon"] = "img/users.png";
+  menu_users["_icon"] = "group";
   menu_users["_configKey"] = "users";
   menu_users["_headline"] = "Administration of users and permissions";
   menu_users["id"] = "users";
@@ -91,7 +91,7 @@ function setMenuItem() {
   menu_settings = new Object();
   menu_settings["_element"] = "LI";
   menu_settings["_text"] = "Settings";
-  menu_settings["_icon"] = "img/settings.png";
+  menu_settings["_icon"] = "settings";
   menu_settings["_configKey"] = "settings";
   menu_settings["_headline"] = "Settings";
   menu_settings["_subMenu"] = "701,702,703,704,705,706,707,708,799,710,711,712,713,714";
@@ -102,7 +102,7 @@ function setMenuItem() {
   menu_log = new Object();
   menu_log["_element"] = "LI";
   menu_log["_text"] = "Log";
-  menu_log["_icon"] = "img/log.png";
+  menu_log["_icon"] = "receipt_long";
   menu_log["_headline"] = "Log";
   menu_log["_configKey"] = "log";
   menu_log["id"] = "log";
@@ -112,7 +112,7 @@ function setMenuItem() {
   menu_logout = new Object();
   menu_logout["_element"] = "LI";
   menu_logout["_text"] = "Logout";
-  menu_logout["_icon"] = "img/logout.png";
+  menu_logout["_icon"] = "logout";
   menu_logout["id"] = "logout";
   menu_logout["onclick"] = "javascript: logout();";
   menu_logout["class"] = "menu-notActive";
@@ -122,7 +122,7 @@ function setMenuItem() {
   menu_schedule["_element"] = "LI";
   menu_schedule["_configKey"] = "update";
   menu_schedule["_text"] = "Schedule";
-  menu_schedule["_icon"] = "img/schedule.png";
+  menu_schedule["_icon"] = "schedule";
   menu_schedule["_headline"] = "Schedule for updating M3U, XMLTV files and creating a local backup";
   menu_schedule["_usage"] = "<b>Usage:</b><br>0815 = 8:15 am<br>1930 = 7:30 pm"
   menu_schedule["name"] = "update";
@@ -151,7 +151,7 @@ function setMenuItem() {
   menu_tuner["_configKey"] = "tuner";
   menu_tuner["_label"] = "Available tuners";
   menu_tuner["_text"] = "Tuner";
-  menu_tuner["_icon"] = "img/tuner.png";
+  menu_tuner["_icon"] = "tune";
   menu_tuner["_headline"] = "Number of tuners";
   menu_tuner["_usage"] = "This setting is only used by Plex and Emby.<br>The number of concurrent streams allowed by the IPTV provider.<br>After a change, Threadfin must be delete in the PMS DVR settings and set up again."
   menu_tuner["name"] = "tuner";
@@ -403,13 +403,12 @@ function createMenu() {
         delete newItem["_text"]
         nav.appendChild(createElement(newItem));
         newItem["_text"] = itemText;
-        var newIcon = new Object();
-        newIcon["_element"] = "IMG";
-        newIcon["src"] = newItem["_icon"];
 
         var currentElement = document.getElementById(menuItems[i]);
-        currentElement.appendChild(createElement(newIcon));
-
+        var iconSpan = document.createElement("SPAN");
+        iconSpan.className = "material-symbols-outlined";
+        iconSpan.textContent = newItem["_icon"];
+        currentElement.appendChild(iconSpan);
 
         var text = new Object();
         text["_element"] = "P"
@@ -419,7 +418,7 @@ function createMenu() {
         break;
 
       default:
-        nav.appendChild(createElement(newIcon));
+        nav.appendChild(createElement(newItem));
         break;
     }
 

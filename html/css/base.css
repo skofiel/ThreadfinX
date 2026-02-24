@@ -20,6 +20,7 @@
   --border-light: #4a4a47;
   --danger: #e05252;
   --danger-hover: #c94444;
+  --danger-soft: #c9544f;
   --success: #4caf50;
   --warning: #f0ad4e;
   --info: #5bc0de;
@@ -308,8 +309,16 @@ input[type=submit]:active {
   transform: translateY(0);
 }
 
-input[type=button]:hover.delete {
-  background-color: var(--danger);
+input[type=button].delete,
+input[type=button][name="delete"] {
+  background-color: transparent;
+  border: 1px solid var(--danger-soft);
+  color: var(--danger-soft);
+}
+
+input[type=button].delete:hover,
+input[type=button][name="delete"]:hover {
+  background-color: var(--danger-soft);
   color: #fff;
 }
 
@@ -391,20 +400,23 @@ input[type="checkbox"].bulk:checked:before {
   color: #fff;
 }
 
-input[type=button].cancel {
+input[type=button].cancel,
+input[type=button][name="cancel"] {
   background-color: transparent;
-  border: 1px solid var(--danger);
-  color: var(--danger);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
 }
 
-input[type=button].cancel:hover {
-  background-color: var(--danger);
-  color: #fff;
+input[type=button].cancel:hover,
+input[type=button][name="cancel"]:hover {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
 }
 
-input[type=button].save {
+input[type=button].save,
+input[type=button][name="save"] {
   background-color: var(--accent);
-  float: right;
 }
 
 input[type=button].black,
@@ -634,4 +646,55 @@ table {
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* ============================================
+   Google Material Icons
+   ============================================ */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  vertical-align: middle;
+}
+
+/* Nav menu icons */
+nav .material-symbols-outlined,
+.nav-item .material-symbols-outlined {
+  font-size: 20px;
+  margin-right: 4px;
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Filled style for certain icons */
+.material-symbols-outlined.filled {
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* ============================================
+   Standardized Popup Button Bar (UI/UX)
+   Button order: [Delete] ... spacer ... [Secondary actions] [Cancel] [Primary action]
+   ============================================ */
+#popup-interaction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* Push delete button to the left, rest stays right */
+#popup-interaction input[type=button].delete,
+#popup-interaction input[type=button][name="delete"] {
+  margin-right: auto;
 }

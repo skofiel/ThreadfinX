@@ -3,8 +3,25 @@ class MainMenu {
         this.DocumentID = "main-menu";
         this.HTMLTag = "LI";
         this.ImagePath = "img/";
+        this.iconMap = {
+            "m3u.png": "playlist_play",
+            "xmltv.png": "live_tv",
+            "filter.png": "filter_alt",
+            "mapping.png": "account_tree",
+            "users.png": "group",
+            "settings.png": "settings",
+            "log.png": "receipt_long",
+            "logout.png": "logout"
+        };
     }
     createIMG(src) {
+        var iconName = this.iconMap[src];
+        if (iconName) {
+            var element = document.createElement("SPAN");
+            element.className = "material-symbols-outlined";
+            element.textContent = iconName;
+            return element;
+        }
         var element = document.createElement("IMG");
         element.setAttribute("src", this.ImagePath + src);
         return element;
@@ -718,14 +735,16 @@ class ShowContent extends Content {
                 interaction.appendChild(input);
                 break;
             case "settings":
-                var input = this.createInput("button", menuKey, "{{.button.save}}");
-                input.setAttribute("onclick", 'javascript: saveSettings();');
-                interaction.appendChild(input);
                 var input = this.createInput("button", menuKey, "{{.button.backup}}");
                 input.setAttribute("onclick", 'javascript: backup();');
+                input.className = "black";
                 interaction.appendChild(input);
                 var input = this.createInput("button", menuKey, "{{.button.restore}}");
                 input.setAttribute("onclick", 'javascript: restore();');
+                input.className = "black";
+                interaction.appendChild(input);
+                var input = this.createInput("button", menuKey, "{{.button.save}}");
+                input.setAttribute("onclick", 'javascript: saveSettings();');
                 interaction.appendChild(input);
                 var wrapper = document.createElement("DIV");
                 wrapper.setAttribute("id", "box-wrapper");
@@ -891,6 +910,9 @@ function applyAccentColor() {
     var hoverColor = "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0");
     document.documentElement.style.setProperty('--accent-hover', hoverColor);
     document.documentElement.style.setProperty('--accent-subtle', accent + "26");
+    // Apply font size
+    var fontSize = (SERVER["settings"] && SERVER["settings"]["fontSize"]) ? SERVER["settings"]["fontSize"] : "14px";
+    document.documentElement.style.setProperty('--font-size-base', fontSize);
 }
 function createLayout() {
     // Apply accent color from settings
@@ -947,15 +969,20 @@ function createLayout() {
                 break;
         }
     }
-    // Smart default page: only auto-open on first load
+    // Auto-open menu on first load
     if (!window._menuOpened) {
         window._menuOpened = true;
-        var defaultMenuKey = "playlist";
-        // Check if there are mapped channels (xepg data exists)
-        if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
-            var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
-            if (mappedKeys.length > 0) {
-                defaultMenuKey = "mapping";
+        // Check if there's a saved menu from a reload (e.g. language change)
+        var savedMenu = sessionStorage.getItem("threadfin_menu");
+        sessionStorage.removeItem("threadfin_menu");
+        var defaultMenuKey = savedMenu || "playlist";
+        if (!savedMenu) {
+            // Smart default: if mapped channels exist, open mapping
+            if (SERVER["xepg"] && SERVER["xepg"]["epgMapping"]) {
+                var mappedKeys = getObjKeys(SERVER["xepg"]["epgMapping"]);
+                if (mappedKeys.length > 0) {
+                    defaultMenuKey = "mapping";
+                }
             }
         }
         // Find the menu item and click it
@@ -973,6 +1000,10 @@ function createLayout() {
 }
 function openThisMenu(element) {
     var id = element.id;
+    // Track current menu for potential reload
+    if (menuItems[id]) {
+        sessionStorage.setItem("threadfin_menu", menuItems[id].menuKey);
+    }
     var content = new ShowContent(id);
     content.show();
     enableGroupSelection(".bulk");
@@ -1703,13 +1734,19 @@ function openPopUp(dataType, element) {
             content.appendRow("{{.mapping.backupChannel3.title}}", xmlTvBackup3IdContainer);
             // Interaktion
             content.createInteraction();
-            var input = content.createInput("button", "cancel", "{{.button.probeChannel}}");
+            var input = content.createInput("button", "probe", "{{.button.probeChannel}}");
             input.setAttribute("onclick", 'javascript: probeChannel("' + data["url"] + '");');
+            input.className = "black";
             content.addInteraction(input);
             // Logo hochladen
-            var input = content.createInput("button", "cancel", "{{.button.uploadLogo}}");
+            var input = content.createInput("button", "upload", "{{.button.uploadLogo}}");
             input.setAttribute("onclick", 'javascript: uploadLogo();');
+            input.className = "black";
             content.addInteraction(input);
+            // Spacer to push cancel+done to right
+            var spacer = document.createElement("span");
+            spacer.style.flex = "1";
+            document.getElementById("popup-interaction").appendChild(spacer);
             // Abbrechen
             var input = content.createInput("button", "cancel", "{{.button.cancel}}");
             input.setAttribute("onclick", 'javascript: showElement("popup", false);');
@@ -2283,40 +2320,40 @@ function showPreview(element) {
             return;
             break;
     }
+    div.innerHTML = "";
+    var streamLabels = {
+        "activeStreams": "{{.status.activeStreams}}",
+        "inactiveStreams": "{{.status.inactiveStreams}}"
+    };
     var streams = ["activeStreams", "inactiveStreams"];
     streams.forEach(preview => {
-        var table = document.getElementById(preview);
-        table.innerHTML = "";
         var obj = SERVER["data"]["StreamPreviewUI"][preview];
-        var caption = document.createElement("CAPTION");
-        var result = preview.replace(/([A-Z])/g, " $1");
-        var finalResult = result.charAt(0).toUpperCase() + result.slice(1);
-        caption.innerHTML = finalResult;
-        table.appendChild(caption);
-        var tbody = document.createElement("TBODY");
-        table.appendChild(tbody);
+        var panel = document.createElement("DIV");
+        panel.className = "stream-panel";
+        // Header
+        var header = document.createElement("DIV");
+        header.className = "stream-panel-header " + (preview === "activeStreams" ? "active-header" : "inactive-header");
+        var title = document.createElement("H4");
+        title.innerText = streamLabels[preview];
+        header.appendChild(title);
+        var count = document.createElement("SPAN");
+        count.className = "stream-count";
+        count.innerText = obj.length;
+        header.appendChild(count);
+        panel.appendChild(header);
+        // Grid of channels
+        var grid = document.createElement("DIV");
+        grid.className = "stream-grid";
         obj.slice(0, 1000).forEach(channel => {
-            var tr = document.createElement("TR");
-            var tdKey = document.createElement("TD");
-            var tdVal = document.createElement("TD");
-            tdKey.className = "tdKey";
-            tdVal.className = "tdVal";
-            switch (preview) {
-                case "activeStreams":
-                    tdKey.innerText = "Channel: (+)";
-                    break;
-                case "inactiveStreams":
-                    tdKey.innerText = "Channel: (-)";
-                    break;
-            }
-            tdVal.innerText = channel;
-            tr.appendChild(tdKey);
-            tr.appendChild(tdVal);
-            tbody.appendChild(tr);
-            table.appendChild(tr);
+            var item = document.createElement("DIV");
+            item.className = "stream-item";
+            item.innerText = channel;
+            item.setAttribute("title", channel);
+            grid.appendChild(item);
         });
+        panel.appendChild(grid);
+        div.appendChild(panel);
     });
-    // showElement("loading", false)
     div.className = "visible";
     return;
 }
