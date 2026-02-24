@@ -190,24 +190,7 @@ function selectAllChannels(table_name = "content_table") {
     }
     return;
 }
-function bulkEdit() {
-    BULK_EDIT = !BULK_EDIT;
-    var className;
-    var rows = document.getElementsByClassName("bulk");
-    switch (BULK_EDIT) {
-        case true:
-            className = "bulk showBulk";
-            break;
-        case false:
-            className = "bulk hideBulk";
-            break;
-    }
-    for (var i = 0; i < rows.length; i++) {
-        rows[i].className = className;
-        rows[i].checked = false;
-    }
-    return;
-}
+// bulkEdit() moved to toggleBulkEdit() in menu_ts.js
 function sortTable(column, table_name = "content_table") {
     // console.log("COLUMN: " + column);
     if ((column == COLUMN_TO_SORT && table_name == "content_table") || (column == INACTIVE_COLUMN_TO_SORT && table_name == "inactive_content_table")) {
@@ -345,23 +328,7 @@ function enableGroupSelection(selector) {
         });
     });
 }
-function searchInMapping() {
-    var searchValue = document.getElementById("searchMapping").value;
-    var trs = document.getElementById("content_table").getElementsByTagName("TR");
-    for (var i = 1; i < trs.length; ++i) {
-        var id = trs[i].getAttribute("id");
-        var element = SEARCH_MAPPING[id];
-        switch (element.toLowerCase().includes(searchValue.toLowerCase())) {
-            case true:
-                document.getElementById(id).style.display = "";
-                break;
-            case false:
-                document.getElementById(id).style.display = "none";
-                break;
-        }
-    }
-    return;
-}
+// searchInMapping() removed - replaced by per-column filters in menu_ts.js
 function changeChannelNumbers(elements) {
     var starting_number_element = document.getElementsByName("x-channels-start")[0];
     var elems = elements.split(",");

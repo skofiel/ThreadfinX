@@ -64,7 +64,19 @@
     "uploadLogo": "Upload Logo",
     "probeChannel": "Probe Channel",
     "sortChannelsAlpha": "Sort Channels Alphabetically",
-    "sortChannelNumbers": "Sort Channels"
+    "sortChannelNumbers": "Sort Channels",
+    "columns": "Columns",
+    "clearFilters": "Clear Filters",
+    "filterPlaceholder": "Filter..."
+  },
+  "grid": {
+    "activeChannels": "Active Channels",
+    "inactiveChannels": "Inactive Channels",
+    "bulkEditHint": "Select channels using checkboxes, then click a channel to edit all selected at once.",
+    "noResults": "No results match the current filters.",
+    "of": "of",
+    "channels": "channels",
+    "showing": "Showing"
   },
   "filter": {
     "table": {

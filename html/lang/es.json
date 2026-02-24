@@ -64,7 +64,19 @@
     "uploadLogo": "Subir logotipo",
     "probeChannel": "Analizar canal",
     "sortChannelsAlpha": "Ordenar canales alfabéticamente",
-    "sortChannelNumbers": "Ordenar canales"
+    "sortChannelNumbers": "Ordenar canales",
+    "columns": "Columnas",
+    "clearFilters": "Limpiar filtros",
+    "filterPlaceholder": "Filtrar..."
+  },
+  "grid": {
+    "activeChannels": "Canales activos",
+    "inactiveChannels": "Canales inactivos",
+    "bulkEditHint": "Seleccione canales con las casillas, luego haga clic en un canal para editar todos los seleccionados a la vez.",
+    "noResults": "Ningún resultado coincide con los filtros actuales.",
+    "of": "de",
+    "channels": "canales",
+    "showing": "Mostrando"
   },
   "filter": {
     "table": {

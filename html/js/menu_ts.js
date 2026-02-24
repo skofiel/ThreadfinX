@@ -720,18 +720,12 @@ class ShowContent extends Content {
                 interaction.appendChild(input);
                 break;
             case "mapping":
-                // showElement("loading", true)
                 var input = this.createInput("button", menuKey, "{{.button.save}}");
                 input.setAttribute("onclick", 'javascript: savePopupData("mapping", "", "")');
                 interaction.appendChild(input);
                 var input = this.createInput("button", menuKey, "{{.button.bulkEdit}}");
-                input.setAttribute("onclick", 'javascript: bulkEdit()');
-                interaction.appendChild(input);
-                var input = this.createInput("search", "search", "");
-                input.setAttribute("id", "searchMapping");
-                input.setAttribute("placeholder", "{{.button.search}}");
-                input.className = "search";
-                input.setAttribute("onchange", 'javascript: searchInMapping()');
+                input.setAttribute("onclick", 'javascript: toggleBulkEdit()');
+                input.setAttribute("id", "bulkEditBtn");
                 interaction.appendChild(input);
                 break;
             case "settings":
@@ -776,18 +770,35 @@ class ShowContent extends Content {
                 console.log("Show content (menuKey):", menuKey);
                 break;
         }
-        // Create table (if needed)
+        // Build table(s)
         var tableHeader = menuItems[this.menuID].tableHeader;
         if (tableHeader.length > 0) {
             var wrapper = document.createElement("DIV");
             doc.appendChild(wrapper);
             wrapper.setAttribute("id", "box-wrapper");
-            var table = this.createTABLE();
-            wrapper.appendChild(table);
+            // Sortable columns for mapping
+            var sortableColumns = {};
+            if (menuKey == "mapping") {
+                sortableColumns = {
+                    "{{.mapping.table.chNo}}": 1,
+                    "{{.mapping.table.channelName}}": 3,
+                    "{{.mapping.table.playlist}}": 4,
+                    "{{.mapping.table.groupTitle}}": 5,
+                    "{{.mapping.table.xmltvFile}}": 6,
+                    "{{.mapping.table.xmltvID}}": 7
+                };
+            }
+            // Panel title
+            var panelTitle = menuItems[this.menuID].headline;
+            if (menuKey == "mapping") panelTitle = "{{.grid.activeChannels}}";
+            // Build active grid panel
+            var panel = buildGridPanel(panelTitle, menuKey == "mapping" ? "active-panel" : "", "content_table");
+            wrapper.appendChild(panel);
+            var table = panel.querySelector("#content_table");
             var header = this.createTableRow();
             table.appendChild(header);
-            // Table header
-            tableHeader.forEach(element => {
+            // Header cells
+            tableHeader.forEach(function(element) {
                 var cell = new Cell();
                 cell.child = true;
                 cell.childType = "P";
@@ -797,43 +808,29 @@ class ShowContent extends Content {
                     cell.active = true;
                     cell.value = false;
                 }
-                if (menuKey == "mapping") {
-                    if (element == "{{.mapping.table.chNo}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(1);";
-                        cell.tdClassName = "sortThis";
-                    }
-                    if (element == "{{.mapping.table.channelName}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(3);";
-                    }
-                    if (element == "{{.mapping.table.playlist}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(4);";
-                    }
-                    if (element == "{{.mapping.table.groupTitle}}") {
-                        cell.onclick = true;
-                        cell.onclickFunktion = "javascript: sortTable(5);";
-                    }
+                if (sortableColumns[element] !== undefined) {
+                    cell.onclick = true;
+                    cell.onclickFunktion = "javascript: sortTable(" + sortableColumns[element] + ");";
+                    if (sortableColumns[element] == 1) cell.tdClassName = "sortThis";
                 }
                 header.appendChild(cell.createCell());
             });
-            table.appendChild(header);
-            // Inhalt der Tabelle
+            // Column filter row
+            var filterRow = buildFilterRow(tableHeader, "content_table");
+            table.appendChild(filterRow);
+            // Table rows
             var rows = this.createTableContent(menuKey);
-            rows.forEach(tr => {
-                table.appendChild(tr);
-            });
-            var br = this.createBR();
-            doc.appendChild(br);
-            // Create inactive channels for mapping
+            rows.forEach(function(tr) { table.appendChild(tr); });
+            updateGridStatus(panel, rows.length);
+            buildColumnVisibility(panel, tableHeader, "content_table");
+            // Inactive table for mapping
             if (menuKey == "mapping") {
-                var inactivetable = this.createInactiveTABLE();
-                wrapper.appendChild(inactivetable);
-                var header = this.createInactiveTableRow();
-                inactivetable.appendChild(header);
-                // Kopfzeile der Tablle
-                tableHeader.forEach(element => {
+                var inactivePanel = buildGridPanel("{{.grid.inactiveChannels}}", "inactive-panel", "inactive_content_table");
+                wrapper.appendChild(inactivePanel);
+                var inactivetable = inactivePanel.querySelector("#inactive_content_table");
+                var iheader = this.createInactiveTableRow();
+                inactivetable.appendChild(iheader);
+                tableHeader.forEach(function(element) {
                     var cell = new Cell();
                     cell.child = true;
                     cell.childType = "P";
@@ -843,33 +840,19 @@ class ShowContent extends Content {
                         cell.active = false;
                         cell.value = false;
                     }
-                    if (menuKey == "mapping") {
-                        if (element == "{{.mapping.table.chNo}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(1, 'inactive_content_table');";
-                            cell.tdClassName = "sortThis";
-                        }
-                        if (element == "{{.mapping.table.channelName}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(3, 'inactive_content_table');";
-                        }
-                        if (element == "{{.mapping.table.playlist}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(4, 'inactive_content_table');";
-                        }
-                        if (element == "{{.mapping.table.groupTitle}}") {
-                            cell.onclick = true;
-                            cell.onclickFunktion = "javascript: sortTable(5, 'inactive_content_table');";
-                        }
+                    if (sortableColumns[element] !== undefined) {
+                        cell.onclick = true;
+                        cell.onclickFunktion = "javascript: sortTable(" + sortableColumns[element] + ", 'inactive_content_table');";
+                        if (sortableColumns[element] == 1) cell.tdClassName = "sortThis";
                     }
-                    header.appendChild(cell.createCell());
+                    iheader.appendChild(cell.createCell());
                 });
-                inactivetable.appendChild(header);
-                // Inhalt der Tabelle
-                var rows = this.createInactiveTableContent(menuKey);
-                rows.forEach(tr => {
-                    inactivetable.appendChild(tr);
-                });
+                var iFilterRow = buildFilterRow(tableHeader, "inactive_content_table");
+                inactivetable.appendChild(iFilterRow);
+                var irows = this.createInactiveTableContent(menuKey);
+                irows.forEach(function(tr) { inactivetable.appendChild(tr); });
+                updateGridStatus(inactivePanel, irows.length);
+                buildColumnVisibility(inactivePanel, tableHeader, "inactive_content_table");
             }
         }
         switch (menuKey) {
@@ -887,6 +870,232 @@ class ShowContent extends Content {
                 break;
         }
         showElement("loading", false);
+    }
+}
+// --- Grid Panel Helper Functions ---
+function buildGridPanel(title, headerClass, tableId) {
+    var panel = document.createElement("DIV");
+    panel.className = "grid-panel";
+    panel.setAttribute("data-table-id", tableId);
+    var panelHeader = document.createElement("DIV");
+    panelHeader.className = "grid-panel-header" + (headerClass ? " " + headerClass : "");
+    var h4 = document.createElement("H4");
+    h4.innerText = title;
+    panelHeader.appendChild(h4);
+    var status = document.createElement("SPAN");
+    status.className = "grid-status";
+    panelHeader.appendChild(status);
+    var controls = document.createElement("DIV");
+    controls.className = "grid-controls";
+    var clearBtn = document.createElement("BUTTON");
+    clearBtn.className = "col-visibility-btn";
+    clearBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">filter_alt_off</span> {{.button.clearFilters}}';
+    clearBtn.setAttribute("onclick", "javascript: clearColumnFilters('" + tableId + "')");
+    controls.appendChild(clearBtn);
+    var colBtnWrap = document.createElement("DIV");
+    colBtnWrap.style.position = "relative";
+    var colBtn = document.createElement("BUTTON");
+    colBtn.className = "col-visibility-btn";
+    colBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px;">view_column</span> {{.button.columns}}';
+    colBtn.setAttribute("onclick", "javascript: toggleColumnDropdown(this)");
+    colBtnWrap.appendChild(colBtn);
+    var dropdown = document.createElement("DIV");
+    dropdown.className = "col-visibility-dropdown";
+    colBtnWrap.appendChild(dropdown);
+    controls.appendChild(colBtnWrap);
+    panelHeader.appendChild(controls);
+    panel.appendChild(panelHeader);
+    var hint = document.createElement("DIV");
+    hint.className = "bulk-edit-hint";
+    hint.innerHTML = '<span class="material-symbols-outlined">info</span> {{.grid.bulkEditHint}}';
+    panel.appendChild(hint);
+    var table = document.createElement("TABLE");
+    table.id = tableId;
+    table.className = "table";
+    panel.appendChild(table);
+    var noResults = document.createElement("DIV");
+    noResults.className = "grid-no-results";
+    noResults.innerText = "{{.grid.noResults}}";
+    panel.appendChild(noResults);
+    return panel;
+}
+function buildFilterRow(tableHeader, tableId) {
+    var filterRow = document.createElement("TR");
+    filterRow.className = "column-filter-row";
+    tableHeader.forEach(function(element, idx) {
+        var td = document.createElement("TD");
+        if (element == "BULK" || element == "{{.mapping.table.logo}}") {
+            td.innerHTML = "";
+        } else {
+            var inp = document.createElement("INPUT");
+            inp.type = "text";
+            inp.placeholder = "{{.button.filterPlaceholder}}";
+            inp.setAttribute("data-col-idx", idx);
+            inp.setAttribute("data-table-id", tableId);
+            inp.setAttribute("oninput", "javascript: filterColumn(this)");
+            td.appendChild(inp);
+        }
+        filterRow.appendChild(td);
+    });
+    return filterRow;
+}
+function updateGridStatus(panel, visibleCount, totalCount) {
+    var status = panel.querySelector(".grid-status");
+    if (status) {
+        if (totalCount !== undefined && totalCount != visibleCount) {
+            status.innerText = "{{.grid.showing}} " + visibleCount + " {{.grid.of}} " + totalCount + " {{.grid.channels}}";
+        } else {
+            status.innerText = visibleCount + " {{.grid.channels}}";
+        }
+        status.setAttribute("data-total", totalCount !== undefined ? totalCount : visibleCount);
+    }
+}
+function buildColumnVisibility(panel, tableHeader, tableId) {
+    var dropdown = panel.querySelector(".col-visibility-dropdown");
+    if (!dropdown) return;
+    tableHeader.forEach(function(element, idx) {
+        if (element == "BULK") return;
+        var label = document.createElement("LABEL");
+        var cb = document.createElement("INPUT");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.setAttribute("data-col-idx", idx);
+        cb.setAttribute("data-table-id", tableId);
+        cb.setAttribute("onchange", "javascript: toggleColumnVisibility(this)");
+        label.appendChild(cb);
+        var span = document.createElement("SPAN");
+        span.innerText = element;
+        label.appendChild(span);
+        dropdown.appendChild(label);
+    });
+}
+function toggleColumnDropdown(btn) {
+    var dropdown = btn.parentNode.querySelector(".col-visibility-dropdown");
+    if (dropdown) {
+        dropdown.classList.toggle("show");
+        // Close on outside click
+        if (dropdown.classList.contains("show")) {
+            setTimeout(function() {
+                document.addEventListener("click", function closeDropdown(e) {
+                    if (!btn.parentNode.contains(e.target)) {
+                        dropdown.classList.remove("show");
+                        document.removeEventListener("click", closeDropdown);
+                    }
+                });
+            }, 0);
+        }
+    }
+}
+function toggleColumnVisibility(cb) {
+    var colIdx = parseInt(cb.getAttribute("data-col-idx"));
+    var tableId = cb.getAttribute("data-table-id");
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var rows = table.getElementsByTagName("TR");
+    var display = cb.checked ? "" : "none";
+    for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i].getElementsByTagName("TD");
+        if (cells[colIdx]) {
+            cells[colIdx].style.display = display;
+        }
+    }
+}
+function filterColumn(inp) {
+    var colIdx = parseInt(inp.getAttribute("data-col-idx"));
+    var tableId = inp.getAttribute("data-table-id");
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    // Collect all filter values for this table
+    var filterRow = table.querySelector(".column-filter-row");
+    var filters = {};
+    if (filterRow) {
+        var filterInputs = filterRow.querySelectorAll("input[type='text']");
+        filterInputs.forEach(function(fi) {
+            var idx = parseInt(fi.getAttribute("data-col-idx"));
+            var val = fi.value.toLowerCase().trim();
+            if (val) filters[idx] = val;
+        });
+    }
+    var rows = table.getElementsByTagName("TR");
+    var visibleCount = 0;
+    var totalCount = 0;
+    for (var i = 0; i < rows.length; i++) {
+        // Skip header and filter rows
+        if (rows[i].className.indexOf("content_table_header") !== -1 ||
+            rows[i].className.indexOf("inactive_content_table_header") !== -1 ||
+            rows[i].className.indexOf("column-filter-row") !== -1) continue;
+        totalCount++;
+        var show = true;
+        var cells = rows[i].getElementsByTagName("TD");
+        for (var fIdx in filters) {
+            var cell = cells[fIdx];
+            if (cell) {
+                var text = cell.innerText.toLowerCase();
+                if (text.indexOf(filters[fIdx]) === -1) {
+                    show = false;
+                    break;
+                }
+            }
+        }
+        rows[i].style.display = show ? "" : "none";
+        if (show) visibleCount++;
+    }
+    // Update status
+    var panel = table.closest(".grid-panel");
+    if (panel) {
+        updateGridStatus(panel, visibleCount, totalCount);
+        var noResults = panel.querySelector(".grid-no-results");
+        if (noResults) {
+            noResults.style.display = (visibleCount === 0 && totalCount > 0) ? "block" : "none";
+        }
+    }
+}
+function clearColumnFilters(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var filterRow = table.querySelector(".column-filter-row");
+    if (filterRow) {
+        var inputs = filterRow.querySelectorAll("input[type='text']");
+        inputs.forEach(function(inp) { inp.value = ""; });
+    }
+    // Show all rows
+    var rows = table.getElementsByTagName("TR");
+    var count = 0;
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].className.indexOf("content_table_header") !== -1 ||
+            rows[i].className.indexOf("inactive_content_table_header") !== -1 ||
+            rows[i].className.indexOf("column-filter-row") !== -1) continue;
+        rows[i].style.display = "";
+        count++;
+    }
+    var panel = table.closest(".grid-panel");
+    if (panel) {
+        updateGridStatus(panel, count);
+        var noResults = panel.querySelector(".grid-no-results");
+        if (noResults) noResults.style.display = "none";
+    }
+}
+function toggleBulkEdit() {
+    BULK_EDIT = !BULK_EDIT;
+    var className = BULK_EDIT ? "bulk showBulk" : "bulk hideBulk";
+    var rows = document.getElementsByClassName("bulk");
+    for (var i = 0; i < rows.length; i++) {
+        rows[i].className = className;
+        rows[i].checked = false;
+    }
+    // Toggle hint banners
+    var panels = document.querySelectorAll(".grid-panel");
+    panels.forEach(function(p) {
+        if (BULK_EDIT) {
+            p.classList.add("bulk-edit-active");
+        } else {
+            p.classList.remove("bulk-edit-active");
+        }
+    });
+    // Toggle button active state
+    var btn = document.getElementById("bulkEditBtn");
+    if (btn) {
+        btn.className = BULK_EDIT ? "active-bulk" : "";
     }
 }
 function PageReady() {
