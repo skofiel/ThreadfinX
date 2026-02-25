@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -178,5 +179,102 @@ func addLanguage(langCode string) error {
 	}
 
 	showInfo(fmt.Sprintf("Translations:Created new language file: %s", newFile))
+	return nil
+}
+
+// getAvailableLangCodes returns just the list of available language codes (lightweight, no content loading)
+func getAvailableLangCodes() []string {
+	langSet := make(map[string]bool)
+
+	langDir := "html/lang/"
+	if System.Dev {
+		files, err := os.ReadDir(langDir)
+		if err == nil {
+			for _, f := range files {
+				if strings.HasSuffix(f.Name(), ".json") {
+					langSet[strings.TrimSuffix(f.Name(), ".json")] = true
+				}
+			}
+		}
+	} else {
+		for key := range webUI {
+			if strings.HasPrefix(key, "html/lang/") && strings.HasSuffix(key, ".json") {
+				langSet[strings.TrimSuffix(filepath.Base(key), ".json")] = true
+			}
+		}
+	}
+
+	// Check override directory
+	overrideDir := getLangOverrideDir()
+	if _, err := os.Stat(overrideDir); err == nil {
+		files, err := os.ReadDir(overrideDir)
+		if err == nil {
+			for _, f := range files {
+				if strings.HasSuffix(f.Name(), ".json") {
+					langSet[strings.TrimSuffix(f.Name(), ".json")] = true
+				}
+			}
+		}
+	}
+
+	langs := make([]string, 0, len(langSet))
+	for lang := range langSet {
+		langs = append(langs, lang)
+	}
+	sort.Strings(langs)
+	return langs
+}
+
+// deleteLanguage removes a custom language file from the config override directory
+func deleteLanguage(langCode string) error {
+	if langCode == "" {
+		return errors.New("language code is required")
+	}
+
+	// Never allow deleting English - it's the base language
+	if langCode == "en" {
+		return errors.New("cannot delete the default language (en)")
+	}
+
+	// Validate language code
+	validLang := regexp.MustCompile(`^[a-zA-Z]{2}(-[a-zA-Z]{2})?$`)
+	if !validLang.MatchString(langCode) {
+		return errors.New("invalid language code")
+	}
+
+	overrideDir := getLangOverrideDir()
+	file := overrideDir + langCode + ".json"
+
+	// Check if override file exists
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		// Check if it's a built-in language (can't delete those)
+		isBuiltin := false
+		if System.Dev {
+			if _, statErr := os.Stat("html/lang/" + langCode + ".json"); statErr == nil {
+				isBuiltin = true
+			}
+		} else {
+			if _, ok := webUI["html/lang/"+langCode+".json"]; ok {
+				isBuiltin = true
+			}
+		}
+		if isBuiltin {
+			return fmt.Errorf("cannot delete built-in language: %s", langCode)
+		}
+		return fmt.Errorf("language file not found: %s", langCode)
+	}
+
+	// Delete the override file
+	if err := os.Remove(file); err != nil {
+		return err
+	}
+
+	// If the current language was deleted, fall back to English
+	if Settings.Language == langCode {
+		Settings.Language = "en"
+		saveSettings(Settings)
+	}
+
+	showInfo(fmt.Sprintf("Translations:Deleted language file: %s", file))
 	return nil
 }

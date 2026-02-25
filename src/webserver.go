@@ -713,6 +713,12 @@ func WS(w http.ResponseWriter, r *http.Request) {
 				response.Translations, response.AvailableLangs, err = getTranslations()
 			}
 
+		case "deleteLanguage":
+			err = deleteLanguage(request.DeleteLanguage)
+			if err == nil {
+				response.Translations, response.AvailableLangs, err = getTranslations()
+			}
+
 		case "startTestChannels":
 			err = StartTestChannels()
 
@@ -792,10 +798,10 @@ func Web(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check for translation overrides in config directory
+	// Check for translation overrides in config directory (merge with base, don't replace)
 	overrideFile := getLangOverrideDir() + Settings.Language + ".json"
 	if overrideLang, loadErr := loadJSONFileToMap(overrideFile); loadErr == nil {
-		lang = overrideLang
+		lang = deepMergeMap(lang, overrideLang)
 	}
 
 	err = json.Unmarshal([]byte(mapToJSON(lang)), &language)
@@ -1259,6 +1265,7 @@ func setDefaultResponseData(response ResponseStruct, data bool) (defaults Respon
 		}
 
 		defaults.Settings = Settings
+		defaults.AvailableLangs = getAvailableLangCodes()
 
 		defaults.Data.Playlist.M3U.Groups.Text = Data.Playlist.M3U.Groups.Text
 		defaults.Data.Playlist.M3U.Groups.Value = Data.Playlist.M3U.Groups.Value

@@ -259,6 +259,23 @@ func jsonToMap(content string) map[string]interface{} {
 	return (tmpMap)
 }
 
+// deepMergeMap merges src into dst recursively. Keys in src override keys in dst.
+// Nested maps are merged rather than replaced.
+func deepMergeMap(dst, src map[string]interface{}) map[string]interface{} {
+	for key, srcVal := range src {
+		if dstVal, ok := dst[key]; ok {
+			srcMap, srcIsMap := srcVal.(map[string]interface{})
+			dstMap, dstIsMap := dstVal.(map[string]interface{})
+			if srcIsMap && dstIsMap {
+				dst[key] = deepMergeMap(dstMap, srcMap)
+				continue
+			}
+		}
+		dst[key] = srcVal
+	}
+	return dst
+}
+
 func jsonToMapInt64(content string) map[int64]interface{} {
 
 	var tmpMap = make(map[int64]interface{})
