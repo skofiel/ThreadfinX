@@ -415,7 +415,7 @@ func randomString(n int) string {
 
 func parseTemplate(content string, tmpMap map[string]interface{}) (result string) {
 
-	t := template.Must(template.New("template").Parse(content))
+	t := template.Must(template.New("template").Option("missingkey=zero").Parse(content))
 
 	var tpl bytes.Buffer
 
