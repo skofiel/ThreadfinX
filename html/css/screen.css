@@ -819,14 +819,12 @@ tbody {
 
 #content_table .logo-cell .imgWrap:hover,
 #inactive_content_table .logo-cell .imgWrap:hover {
-  height: auto;
   overflow: visible;
   z-index: 10;
 }
 
 #content_table .logo-cell .imgWrap:hover img,
 #inactive_content_table .logo-cell .imgWrap:hover img {
-  max-height: none;
   width: 60px;
 }
 

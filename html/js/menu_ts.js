@@ -1537,10 +1537,10 @@ class PopupContent extends PopupWindow {
             option.innerText = text[i];
             select.appendChild(option);
         }
-        if (set != "") {
-            select.value = set;
+        if (set != null && set !== "") {
+            select.value = String(set);
         }
-        if (set == undefined) {
+        else if (set == null) {
             select.value = values[0];
         }
         return select;
