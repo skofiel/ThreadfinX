@@ -1276,6 +1276,21 @@ tbody {
   background-color: var(--bg-card);
 }
 
+/* Copy-to-clipboard button integrated into input */
+.input-group .copy-btn.input-group-text {
+  background-color: var(--bg-elevated);
+  border-left: 1px solid var(--border-light);
+  color: var(--text-tertiary);
+  padding: 0 10px;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.input-group .copy-btn.input-group-text:hover {
+  background-color: var(--bg-elevated);
+  color: var(--accent);
+}
+
 /* Close Button */
 .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
