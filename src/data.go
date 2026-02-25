@@ -116,6 +116,19 @@ func updateServerSettings(request RequestStruct) (settings SettingsStruct, err e
 			case "scheme.m3u", "scheme.xml":
 				createXEPGFiles = true
 
+			case "debugLevel":
+				// Validate debug level 0-3
+				if v, ok := value.(float64); ok {
+					intVal := int(v)
+					if intVal < 0 {
+						intVal = 0
+					}
+					if intVal > 3 {
+						intVal = 3
+					}
+					value = intVal
+				}
+
 			}
 
 			oldSettings[key] = value
@@ -149,6 +162,9 @@ func updateServerSettings(request RequestStruct) (settings SettingsStruct, err e
 	if err != nil {
 		return
 	}
+
+	// Apply debug level to runtime flag
+	System.Flag.Debug = Settings.DebugLevel
 
 	if Settings.AuthenticationWEB == false {
 

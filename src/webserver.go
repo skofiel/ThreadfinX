@@ -549,7 +549,7 @@ func WS(w http.ResponseWriter, r *http.Request) {
 		case "saveSettings":
 			var authenticationUpdate = Settings.AuthenticationWEB
 			var previousLanguage = Settings.Language
-			// var previousStoreBufferInRAM = Settings.StoreBufferInRAM
+			var previousStoreBufferInRAM = Settings.StoreBufferInRAM
 			response.Settings, err = updateServerSettings(request)
 			if err == nil {
 				if Settings.AuthenticationWEB == true && authenticationUpdate == false {
@@ -560,9 +560,9 @@ func WS(w http.ResponseWriter, r *http.Request) {
 					response.Reload = true
 				}
 
-				// if Settings.StoreBufferInRAM != previousStoreBufferInRAM {
-				initBufferVFS()
-				// }
+				if Settings.StoreBufferInRAM != previousStoreBufferInRAM {
+					initBufferVFS()
+				}
 			}
 
 		case "saveFilesM3U":
@@ -698,6 +698,30 @@ func WS(w http.ResponseWriter, r *http.Request) {
 			resolution, frameRate, audioChannels, _ := probeChannel(request)
 			response.ProbeInfo = ProbeInfoStruct{Resolution: resolution, FrameRate: frameRate, AudioChannel: audioChannels}
 
+		case "getTranslations":
+			response.Translations, response.AvailableLangs, err = getTranslations()
+
+		case "saveTranslations":
+			err = saveTranslation(request.TranslationLang, request.Translations)
+			if err == nil {
+				response.Reload = true
+			}
+
+		case "addLanguage":
+			err = addLanguage(request.NewLanguage)
+			if err == nil {
+				response.Translations, response.AvailableLangs, err = getTranslations()
+			}
+
+		case "startTestChannels":
+			err = StartTestChannels()
+
+		case "stopTestChannels":
+			StopTestChannels()
+
+		case "getTestChannelsProgress":
+			response.TestProgress = GetTestChannelsProgress()
+
 		default:
 			showDebug(fmt.Sprintf("Unknown WebSocket command: %s", request.Cmd), 1)
 		}
@@ -766,6 +790,12 @@ func Web(w http.ResponseWriter, r *http.Request) {
 				lang = jsonToMap(content)
 			}
 		}
+	}
+
+	// Check for translation overrides in config directory
+	overrideFile := getLangOverrideDir() + Settings.Language + ".json"
+	if overrideLang, loadErr := loadJSONFileToMap(overrideFile); loadErr == nil {
+		lang = overrideLang
 	}
 
 	err = json.Unmarshal([]byte(mapToJSON(lang)), &language)

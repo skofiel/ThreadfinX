@@ -266,6 +266,26 @@ select option {
   color: var(--text-primary);
 }
 
+select option:checked {
+  background: var(--bg-card) linear-gradient(0deg, var(--bg-card) 0%, var(--bg-card) 100%);
+  color: var(--text-primary);
+}
+
+select:focus option:checked {
+  background: var(--bg-card) linear-gradient(0deg, var(--bg-card) 0%, var(--bg-card) 100%);
+  color: var(--text-primary);
+}
+
+select option:hover {
+  background: var(--accent) linear-gradient(0deg, var(--accent) 0%, var(--accent) 100%);
+  color: #fff;
+}
+
+/* Accent color for native browser controls (select hover, checkbox, range, etc.) */
+html, select, input {
+  accent-color: var(--accent);
+}
+
 input {
   -webkit-appearance: none;
   margin: 0;
@@ -326,7 +346,7 @@ input[type=text],
 input[type=search],
 input[type=password] {
   color: var(--text-primary);
-  width: calc(100%);
+  width: 100%;
   outline: none;
   border: 1px solid var(--border);
   background-color: var(--bg-elevated);
@@ -334,6 +354,13 @@ input[type=password] {
   padding: 10px 12px;
   font-family: var(--font-family);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Inside Bootstrap input-groups, let flex handle width */
+.input-group input[type=text],
+.input-group input[type=password] {
+  width: auto;
+  flex: 1 1 0%;
 }
 
 input[type=text]:focus,
@@ -374,17 +401,21 @@ input[type="checkbox"]:checked {
 }
 
 input[type="checkbox"]:before {
-  position: initial;
-  left: 0;
-  margin-left: -4px;
-  content: " ";
+  content: "\00a0";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  text-align: center;
+  line-height: 14px;
 }
 
 input[type="checkbox"]:checked:before {
-  position: initial;
-  left: 0;
-  margin-left: -3px;
   content: "\2713";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  text-align: center;
+  line-height: 14px;
   color: #fff;
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-sm);
@@ -697,4 +728,170 @@ nav .material-symbols-outlined,
 #popup-interaction input[type=button].delete,
 #popup-interaction input[type=button][name="delete"] {
   margin-right: auto;
+}
+
+/* ============================================
+   Log Table Styles
+   ============================================ */
+
+.log-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.log-filter-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.log-filter-btn {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.log-filter-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.log-filter-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.log-search-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+}
+
+.log-search-icon {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  margin-right: 4px;
+}
+
+.log-search {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 6px 4px;
+  width: 200px;
+  outline: none;
+}
+
+.log-search::placeholder {
+  color: var(--text-tertiary);
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+
+.log-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.log-th {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.log-th:hover {
+  color: var(--text-primary);
+}
+
+.log-th-sorted {
+  color: var(--accent);
+}
+
+.log-sort-arrow {
+  font-size: 10px;
+  color: var(--accent);
+}
+
+/* Column widths */
+.log-td-date { width: 160px; }
+.log-td-type { width: 90px; }
+.log-td-source { width: 160px; }
+.log-td-message { width: auto; }
+
+.log-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-td-message {
+  white-space: normal !important;
+  word-break: break-word;
+}
+
+.log-table tbody tr:hover {
+  background: var(--bg-elevated);
+}
+
+/* Log type badges */
+.log-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.log-badge-error {
+  background: rgba(224, 82, 82, 0.2);
+  color: var(--danger);
+}
+
+.log-badge-warning {
+  background: rgba(240, 173, 78, 0.2);
+  color: var(--warning);
+}
+
+.log-badge-debug {
+  background: rgba(199, 146, 234, 0.2);
+  color: #c792ea;
+}
+
+.log-badge-info {
+  background: rgba(100, 181, 246, 0.2);
+  color: #64b5f6;
 }

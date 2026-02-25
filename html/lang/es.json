@@ -43,7 +43,31 @@
     "mappedChannels": "Canales asignados",
     "activeStreams": "Streams activos",
     "inactiveStreams": "Streams inactivos",
-    "websocketError": "No se pudo establecer conexión WebSocket con Threadfin. Compruebe su configuración de red."
+    "websocketError": "No se pudo establecer conexión WebSocket con Threadfin. Compruebe su configuración de red.",
+    "threadfinVersion": "Versión de Threadfin",
+    "threadfinBranch": "Rama de Threadfin",
+    "errors": "Errores",
+    "warnings": "Avisos",
+    "dvrIP": "DVR IP",
+    "m3uUrlLabel": "URL M3U",
+    "m3uUrlHint": "Grupos específicos: [http://...?group-title=foo,bar]",
+    "xmltvUrlLabel": "URL XMLTV"
+  },
+  "log": {
+    "filter": {
+      "all": "Todos",
+      "error": "Errores",
+      "warning": "Avisos",
+      "debug": "Depuración",
+      "info": "Info"
+    },
+    "column": {
+      "date": "Fecha / Hora",
+      "type": "Tipo",
+      "source": "Origen",
+      "message": "Mensaje"
+    },
+    "search": "Buscar en logs..."
   },
   "button": {
     "back": "Atrás",
@@ -51,6 +75,7 @@
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "done": "Hecho",
+    "close": "Cerrar",
     "login": "Iniciar sesión",
     "new": "Nuevo",
     "next": "Siguiente",
@@ -62,6 +87,8 @@
     "resetLogs": "Borrar registros",
     "uploadLogo": "Subir logotipo",
     "probeChannel": "Analizar canal",
+    "testChannels": "Probar Canales",
+    "stopTest": "Detener Prueba",
     "sortChannelsAlpha": "Ordenar canales alfabéticamente",
     "sortChannelNumbers": "Ordenar canales",
     "columns": "Columnas",
@@ -353,6 +380,11 @@
       "title": "Detalles del análisis",
       "placeholder": "",
       "description": ""
+    },
+    "channelUrl": {
+      "title": "URL del Canal",
+      "placeholder": "",
+      "description": ""
     }
   },
   "users": {
@@ -441,6 +473,14 @@
     "ignoreFilters": {
       "title": "Ignorar filtros",
       "description": "Si está marcado, el filtrado se ignora completamente."
+    },
+    "debugLevel": {
+      "title": "Nivel de depuración",
+      "description": "Establece el nivel de detalle de los mensajes de depuración en el log.<br>0: Desactivado - Sin mensajes de depuración<br>1: Básico - Operaciones de archivos, backups, info EPG<br>2: Intermedio - Detalles de buffer, errores de análisis<br>3: Detallado - Trazas HTTP completas, logger SSDP, contenido M3U8",
+      "off": "0 - Desactivado",
+      "level1": "1 - Básico",
+      "level2": "2 - Intermedio",
+      "level3": "3 - Detallado"
     },
     "epgSource": {
       "title": "Fuente EPG",
@@ -575,6 +615,16 @@
     {
       "title": "Idioma",
       "description": "Seleccione el idioma de la interfaz. Los cambios requieren recargar la página."
+    },
+    "translationEditor":
+    {
+      "title": "Editor de Traducciones",
+      "key": "Clave",
+      "value": "Valor",
+      "addLanguage": "Añadir Idioma",
+      "editTranslations": "Editar Traducciones",
+      "newLanguagePrompt": "Introduzca el código del idioma (ej. fr, de, it):",
+      "search": "Buscar traducciones..."
     },
     "bufferTimeout": {
       "title": "Tiempo de espera para nuevas conexiones",

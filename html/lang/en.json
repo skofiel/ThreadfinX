@@ -43,7 +43,31 @@
     "mappedChannels": "Mapped Channels",
     "activeStreams": "Active Streams",
     "inactiveStreams": "Inactive Streams",
-    "websocketError": "No websocket connection to Threadfin could be established. Check your network configuration."
+    "websocketError": "No websocket connection to Threadfin could be established. Check your network configuration.",
+    "threadfinVersion": "Threadfin Version",
+    "threadfinBranch": "Threadfin Branch",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "dvrIP": "DVR IP",
+    "m3uUrlLabel": "M3U URL",
+    "m3uUrlHint": "Specific groups: [http://...?group-title=foo,bar]",
+    "xmltvUrlLabel": "XMLTV URL"
+  },
+  "log": {
+    "filter": {
+      "all": "All",
+      "error": "Errors",
+      "warning": "Warnings",
+      "debug": "Debug",
+      "info": "Info"
+    },
+    "column": {
+      "date": "Date / Time",
+      "type": "Type",
+      "source": "Source",
+      "message": "Message"
+    },
+    "search": "Search logs..."
   },
   "button": {
     "back": "Back",
@@ -51,6 +75,7 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "done": "Done",
+    "close": "Close",
     "login": "Login",
     "new": "New",
     "next": "Next",
@@ -62,6 +87,8 @@
     "resetLogs": "Reset Logs",
     "uploadLogo": "Upload Logo",
     "probeChannel": "Probe Channel",
+    "testChannels": "Test Channels",
+    "stopTest": "Stop Test",
     "sortChannelsAlpha": "Sort Channels Alphabetically",
     "sortChannelNumbers": "Sort Channels",
     "columns": "Columns",
@@ -353,6 +380,11 @@
       "title": "Probe Details",
       "placeholder": "",
       "description": ""
+    },
+    "channelUrl": {
+      "title": "Channel URL",
+      "placeholder": "",
+      "description": ""
     }
   },
   "users": {
@@ -441,6 +473,14 @@
     "ignoreFilters": {
       "title": "Ignore Filters",
       "description": "If checked, filtering is completely ignored."
+    },
+    "debugLevel": {
+      "title": "Debug Level",
+      "description": "Set the verbosity of debug messages in the log.<br>0: Off - No debug output<br>1: Basic - File operations, backups, EPG info<br>2: Intermediate - Buffer details, parsing errors<br>3: Verbose - Full HTTP traces, SSDP logger, M3U8 content",
+      "off": "0 - Off",
+      "level1": "1 - Basic",
+      "level2": "2 - Intermediate",
+      "level3": "3 - Verbose"
     },
     "epgSource": {
       "title": "EPG Source",
@@ -575,6 +615,16 @@
     {
       "title": "Language",
       "description": "Select the interface language. Changes require a page reload."
+    },
+    "translationEditor":
+    {
+      "title": "Translation Editor",
+      "key": "Key",
+      "value": "Value",
+      "addLanguage": "Add Language",
+      "editTranslations": "Edit Translations",
+      "newLanguagePrompt": "Enter language code (e.g. fr, de, it):",
+      "search": "Search translations..."
     },
     "bufferTimeout": {
       "title": "Timeout for new client connections",

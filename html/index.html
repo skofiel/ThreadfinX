@@ -41,7 +41,7 @@
     </div>
   </div>
 
-  <div class="modal fade" id="server_information" role="dialog" aria-label="Server Information">
+  <div class="modal fade" id="server_information" role="dialog" aria-label="{{.status.serverInformation}}">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
@@ -49,56 +49,115 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="container-fluid">
-            <div class="row">
-              <div class="card text-bg-dark mb-3">
-                <div class="card-header">{{.status.serverInformation}}</div>
-                <div class="card-body">
-                  <label for="version" class="form-label">Threadfin Version</label>
-                  <input type="text" class="form-control" id="version" aria-describedby="basic-addon3" readonly disabled>
-                  <label for="branch" class="form-label">Threadfin Branch</label>
-                  <input type="text" class="form-control" id="branch" aria-describedby="basic-addon3" readonly disabled>
-                  <label for="errors" class="form-label">Errors</label>
-                  <input type="text" class="form-control" id="errors" aria-describedby="basic-addon3" readonly disabled>
-                  <label for="warnings" class="form-label">Warnings</label>
-                  <input type="text" class="form-control" id="warnings" aria-describedby="basic-addon3" readonly disabled>
-                </div>
-              </div>
-              <div class="card text-bg-dark mb-3">
-                <div class="card-header">{{.status.streamInformation}}</div>
-                <div class="card-body">
-                  <label for="DVR" class="form-label">DVR IP</label>
-                  <input type="text" class="form-control" id="DVR" aria-describedby="basic-addon3" readonly disabled>
-                  <label for="m3u-url" class="form-label">M3U URL (Specific groups: [http://...?group-title=foo,bar])</label>
+          <div id="popup-custom">
+            <h3>{{.status.serverInformation}}</h3>
+            <table>
+              <tr>
+                <td class="left">{{.status.threadfinVersion}}</td>
+                <td><input type="text" class="form-control" id="version" readonly disabled></td>
+              </tr>
+              <tr>
+                <td class="left">{{.status.threadfinBranch}}</td>
+                <td><input type="text" class="form-control" id="branch" readonly disabled></td>
+              </tr>
+              <tr>
+                <td class="left">{{.status.errors}}</td>
+                <td><input type="text" class="form-control" id="errors" readonly disabled></td>
+              </tr>
+              <tr>
+                <td class="left">{{.status.warnings}}</td>
+                <td><input type="text" class="form-control" id="warnings" readonly disabled></td>
+              </tr>
+            </table>
+            <h3>{{.status.streamInformation}}</h3>
+            <table>
+              <tr>
+                <td class="left">{{.status.dvrIP}}</td>
+                <td>
                   <div class="input-group">
-                    <input type="text" class="form-control" id="m3u-url" aria-describedby="basic-addon3" readonly>
+                    <input type="text" class="form-control" id="DVR" readonly>
+                    <button class="input-group-text copy-btn" data-clipboard-target="#DVR" data-bs-title="Copy to clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="left">{{.status.m3uUrlLabel}}</td>
+                <td>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="m3u-url" readonly>
                     <button class="input-group-text copy-btn" data-clipboard-target="#m3u-url" data-bs-title="Copy to clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
                   </div>
-                  <label for="xepg-url" class="form-label">XMLTV URL</label>
+                  <pre>{{.status.m3uUrlHint}}</pre>
+                </td>
+              </tr>
+              <tr>
+                <td class="left">{{.status.xmltvUrlLabel}}</td>
+                <td>
                   <div class="input-group">
-                    <input type="text" class="form-control" id="xepg-url" aria-describedby="basic-addon3" readonly>
+                    <input type="text" class="form-control" id="xepg-url" readonly>
                     <button class="input-group-text copy-btn" data-clipboard-target="#xepg-url" data-bs-title="Copy to clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
                   </div>
-                  <label for="streams" class="form-label">{{.status.filteredChannels}}</label>
-                  <input type="text" class="form-control" id="streams" aria-describedby="basic-addon3" readonly disabled>
-                  <label for="xepg" class="form-label">{{.status.mappedChannels}}</label>
-                  <input type="text" class="form-control" id="xepg" aria-describedby="basic-addon3" readonly disabled>
-                </div>
-              </div>
-            </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="left">{{.status.filteredChannels}}</td>
+                <td><input type="text" class="form-control" id="streams" readonly disabled></td>
+              </tr>
+              <tr>
+                <td class="left">{{.status.mappedChannels}}</td>
+                <td><input type="text" class="form-control" id="xepg" readonly disabled></td>
+              </tr>
+            </table>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <div class="modal fade" id="translation_editor" role="dialog" aria-label="Translation Editor">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title" id="translation-editor-title">{{.settings.translationEditor.title}}</h3>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="popup-custom">
+            <div class="translation-toolbar">
+              <select id="translation-lang-select" onchange="javascript: loadTranslationLang(this.value)"></select>
+              <div class="log-search-wrap">
+                <span class="material-symbols-outlined log-search-icon">search</span>
+                <input type="text" class="log-search" id="translation-search" placeholder="{{.settings.translationEditor.search}}" oninput="javascript: filterTranslations(this.value)">
+              </div>
+            </div>
+            <div id="translation-table-container" style="max-height: 60vh; overflow-y: auto; margin-top: var(--space-md);">
+              <table id="translation-table" class="log-table">
+                <thead>
+                  <tr>
+                    <th class="log-th" style="width: 40%;">{{.settings.translationEditor.key}}</th>
+                    <th class="log-th" style="width: 60%;">{{.settings.translationEditor.value}}</th>
+                  </tr>
+                </thead>
+                <tbody id="translation-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: var(--space-sm); padding: var(--space-md);">
+          <input type="button" name="cancel" value="{{.button.cancel}}" onclick="javascript: var modal = bootstrap.Modal.getInstance(document.getElementById('translation_editor')); if(modal) modal.hide();">
+          <input type="button" name="save" value="{{.button.save}}" onclick="javascript: saveTranslations();">
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-shell">
 
     <!-- Header -->
     <header class="app-header" role="banner">
       <div class="header-left">
-        <a href="/web" class="header-logo-link">
+        <span class="header-logo-link">
           <span id="logo"></span>
-        </a>
+        </span>
       </div>
       <div class="header-right">
         <div class="header-connections">
@@ -130,8 +189,10 @@
 
       <!-- Content -->
       <main class="app-content">
-        <div id="content" role="main"></div>
-        <div id="myStreamsBox" class="notVisible"></div>
+        <div class="app-content-scroll">
+          <div id="content" role="main"></div>
+          <div id="myStreamsBox" class="notVisible"></div>
+        </div>
       </main>
 
     </div>

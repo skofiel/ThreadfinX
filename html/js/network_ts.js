@@ -137,6 +137,25 @@ class Server {
                         location.reload();
                     }
                     return;
+                case "getTranslations":
+                case "addLanguage":
+                    if (typeof handleTranslationResponse === "function") {
+                        handleTranslationResponse(response);
+                    }
+                    return;
+                case "saveTranslations":
+                    if (response.hasOwnProperty("reload")) {
+                        location.reload();
+                    }
+                    return;
+                case "getTestChannelsProgress":
+                    if (response.testProgress && typeof handleTestChannelsProgress === "function") {
+                        handleTestChannelsProgress(response.testProgress);
+                    }
+                    return;
+                case "startTestChannels":
+                case "stopTestChannels":
+                    return;
                 default:
                     SERVER = new Object();
                     SERVER = response;
