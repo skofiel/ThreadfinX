@@ -81,6 +81,12 @@ func ThreadfinAutoBackup() (err error) {
 
 		sourceFiles = append(sourceFiles, System.Folder.ImagesUpload)
 
+		// Include translation overrides if they exist
+		langOverrideDir := getLangOverrideDir()
+		if _, statErr := os.Stat(langOverrideDir); statErr == nil {
+			sourceFiles = append(sourceFiles, langOverrideDir)
+		}
+
 		err = zipFiles(sourceFiles, target)
 
 		if err == nil {
@@ -114,6 +120,12 @@ func ThreadfinBackup() (archiv string, err error) {
 	}
 
 	sourceFiles = append(sourceFiles, System.Folder.Data)
+
+	// Include translation overrides if they exist
+	langOverrideDir := getLangOverrideDir()
+	if _, statErr := os.Stat(langOverrideDir); statErr == nil {
+		sourceFiles = append(sourceFiles, langOverrideDir)
+	}
 
 	err = zipFiles(sourceFiles, target)
 	if err != nil {

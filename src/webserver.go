@@ -792,6 +792,12 @@ func Web(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Check for translation overrides in config directory
+	overrideFile := getLangOverrideDir() + Settings.Language + ".json"
+	if overrideLang, loadErr := loadJSONFileToMap(overrideFile); loadErr == nil {
+		lang = overrideLang
+	}
+
 	err = json.Unmarshal([]byte(mapToJSON(lang)), &language)
 	if err != nil {
 		ShowError(err, 000)

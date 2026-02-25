@@ -267,11 +267,16 @@ select option {
 }
 
 select option:checked {
-  background: var(--accent) linear-gradient(0deg, var(--accent) 0%, var(--accent) 100%);
-  color: #fff;
+  background: var(--bg-card) linear-gradient(0deg, var(--bg-card) 0%, var(--bg-card) 100%);
+  color: var(--text-primary);
 }
 
 select:focus option:checked {
+  background: var(--bg-card) linear-gradient(0deg, var(--bg-card) 0%, var(--bg-card) 100%);
+  color: var(--text-primary);
+}
+
+select option:hover {
   background: var(--accent) linear-gradient(0deg, var(--accent) 0%, var(--accent) 100%);
   color: #fff;
 }

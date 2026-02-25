@@ -10,12 +10,19 @@ import (
 	"strings"
 )
 
+// getLangOverrideDir returns the config-based directory for translation overrides
+func getLangOverrideDir() string {
+	return System.Folder.Config + "lang" + string(os.PathSeparator)
+}
+
 // getTranslations reads all language files and returns them as a map
 func getTranslations() (translations map[string]map[string]interface{}, langs []string, err error) {
 	translations = make(map[string]map[string]interface{})
 	langs = make([]string, 0)
 
 	langDir := "html/lang/"
+	overrideDir := getLangOverrideDir()
+
 	if System.Dev {
 		// In dev mode, read from filesystem
 		files, readErr := os.ReadDir(langDir)
@@ -46,29 +53,30 @@ func getTranslations() (translations map[string]map[string]interface{}, langs []
 				translations[lang] = langMap
 			}
 		}
-		// Also check if there are override files on disk
-		if _, statErr := os.Stat(langDir); statErr == nil {
-			files, readErr := os.ReadDir(langDir)
-			if readErr == nil {
-				for _, f := range files {
-					if strings.HasSuffix(f.Name(), ".json") {
-						lang := strings.TrimSuffix(f.Name(), ".json")
-						langMap, loadErr := loadJSONFileToMap(langDir + f.Name())
-						if loadErr != nil {
-							continue
+	}
+
+	// Check for override files in config directory (both dev and production)
+	if _, statErr := os.Stat(overrideDir); statErr == nil {
+		files, readErr := os.ReadDir(overrideDir)
+		if readErr == nil {
+			for _, f := range files {
+				if strings.HasSuffix(f.Name(), ".json") {
+					lang := strings.TrimSuffix(f.Name(), ".json")
+					langMap, loadErr := loadJSONFileToMap(overrideDir + f.Name())
+					if loadErr != nil {
+						continue
+					}
+					translations[lang] = langMap
+					// Add to langs list if not already there
+					found := false
+					for _, l := range langs {
+						if l == lang {
+							found = true
+							break
 						}
-						translations[lang] = langMap
-						// Add to langs list if not already there
-						found := false
-						for _, l := range langs {
-							if l == lang {
-								found = true
-								break
-							}
-						}
-						if !found {
-							langs = append(langs, lang)
-						}
+					}
+					if !found {
+						langs = append(langs, lang)
 					}
 				}
 			}
@@ -78,7 +86,7 @@ func getTranslations() (translations map[string]map[string]interface{}, langs []
 	return
 }
 
-// saveTranslation saves a translation map to a language file
+// saveTranslation saves a translation map to a language file in config directory
 func saveTranslation(lang string, translations map[string]interface{}) error {
 	if lang == "" {
 		return errors.New("language code is required")
@@ -90,13 +98,13 @@ func saveTranslation(lang string, translations map[string]interface{}) error {
 		return errors.New("invalid language code")
 	}
 
-	langDir := "html/lang/"
+	overrideDir := getLangOverrideDir()
 	// Ensure directory exists
-	if err := os.MkdirAll(langDir, 0755); err != nil {
+	if err := os.MkdirAll(overrideDir, 0755); err != nil {
 		return err
 	}
 
-	file := langDir + lang + ".json"
+	file := overrideDir + lang + ".json"
 
 	// Pretty-print JSON
 	jsonData, err := json.MarshalIndent(translations, "", "  ")
@@ -125,8 +133,8 @@ func addLanguage(langCode string) error {
 		return errors.New("invalid language code format (use: xx or xx-XX)")
 	}
 
-	langDir := "html/lang/"
-	newFile := langDir + langCode + ".json"
+	overrideDir := getLangOverrideDir()
+	newFile := overrideDir + langCode + ".json"
 
 	// Check if file already exists
 	if _, err := os.Stat(newFile); err == nil {
@@ -138,7 +146,7 @@ func addLanguage(langCode string) error {
 	var err error
 
 	if System.Dev {
-		enMap, err = loadJSONFileToMap(langDir + "en.json")
+		enMap, err = loadJSONFileToMap("html/lang/en.json")
 	} else {
 		enFile := "html/lang/en.json"
 		if value, ok := webUI[enFile]; ok {
@@ -154,7 +162,7 @@ func addLanguage(langCode string) error {
 	}
 
 	// Ensure directory exists
-	if mkErr := os.MkdirAll(langDir, 0755); mkErr != nil {
+	if mkErr := os.MkdirAll(overrideDir, 0755); mkErr != nil {
 		return mkErr
 	}
 
