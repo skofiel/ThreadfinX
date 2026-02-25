@@ -613,6 +613,22 @@ class SettingsCategory {
         setting.appendChild(tdRight)
         break
 
+      case "debugLevel":
+        var tdLeft = document.createElement("TD")
+        tdLeft.innerHTML = "{{.settings.debugLevel.title}}" + ":"
+
+        var tdRight = document.createElement("TD")
+        var text: any[] = ["{{.settings.debugLevel.off}}", "{{.settings.debugLevel.level1}}", "{{.settings.debugLevel.level2}}", "{{.settings.debugLevel.level3}}"]
+        var values: any[] = ["0", "1", "2", "3"]
+
+        var select = content.createSelect(text, values, data, settingsKey)
+        select.setAttribute("onchange", "javascript: this.className = 'changed'")
+        tdRight.appendChild(select)
+
+        setting.appendChild(tdLeft)
+        setting.appendChild(tdRight)
+        break
+
     }
 
     return setting
@@ -778,6 +794,10 @@ class SettingsCategory {
 
       case "udpxy":
         text = "{{.settings.udpxy.description}}"
+        break
+
+      case "debugLevel":
+        text = "{{.settings.debugLevel.description}}"
         break
 
       default:

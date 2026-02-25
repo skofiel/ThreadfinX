@@ -1346,7 +1346,7 @@ class PopupContent extends PopupWindow {
     return input
   }
 
-  createSelect(text: string[], values: string[], set: string, dbKey: string): any {
+  createSelect(text: string[], values: string[], set: any, dbKey: string): any {
     var select = document.createElement("SELECT")
     select.setAttribute("name", dbKey)
     for (let i = 0; i < text.length; i++) {
@@ -1355,11 +1355,9 @@ class PopupContent extends PopupWindow {
       option.innerText = text[i]
       select.appendChild(option)
     }
-    if (set != "") {
-      (select as HTMLSelectElement).value = set
-    }
-
-    if (set == undefined) {
+    if (set != null && set !== "") {
+      (select as HTMLSelectElement).value = String(set)
+    } else if (set == null) {
       (select as HTMLSelectElement).value = values[0]
     }
 
