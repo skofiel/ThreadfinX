@@ -124,6 +124,9 @@
           <div id="popup-custom">
             <div class="translation-toolbar">
               <select id="translation-lang-select" onchange="javascript: loadTranslationLang(this.value)"></select>
+              <button id="translation-delete-btn" class="header-icon-btn" title="{{.settings.translationEditor.deleteLanguage}}" onclick="javascript: deleteLanguageFile()" disabled>
+                <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+              </button>
               <div class="log-search-wrap">
                 <span class="material-symbols-outlined log-search-icon">search</span>
                 <input type="text" class="log-search" id="translation-search" placeholder="{{.settings.translationEditor.search}}" oninput="javascript: filterTranslations(this.value)">

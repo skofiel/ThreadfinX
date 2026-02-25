@@ -622,8 +622,11 @@
       "key": "Key",
       "value": "Value",
       "addLanguage": "Add Language",
+      "deleteLanguage": "Delete Language",
       "editTranslations": "Edit Translations",
       "newLanguagePrompt": "Enter language code (e.g. fr, de, it):",
+      "confirmDelete": "Are you sure you want to delete this language?",
+      "cannotDeleteDefault": "Cannot delete the default language (English).",
       "search": "Search translations..."
     },
     "bufferTimeout": {

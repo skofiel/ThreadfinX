@@ -94,6 +94,7 @@ type RequestStruct struct {
 	TranslationLang string                 `json:"translationLang,omitempty"`
 	Translations    map[string]interface{} `json:"translations,omitempty"`
 	NewLanguage     string                 `json:"newLanguage,omitempty"`
+	DeleteLanguage  string                 `json:"deleteLanguage,omitempty"`
 }
 
 // ResponseStruct : Antworten an den Client (WEB)

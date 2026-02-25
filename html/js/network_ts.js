@@ -143,6 +143,19 @@ class Server {
                         handleTranslationResponse(response);
                     }
                     return;
+                case "deleteLanguage":
+                    if (response.hasOwnProperty("err") && response.err !== "") {
+                        alert(response.err);
+                    } else {
+                        // Update settings from response (language may have changed to fallback)
+                        if (response.settings) {
+                            SERVER["settings"] = response.settings;
+                        }
+                        if (typeof handleTranslationResponse === "function") {
+                            handleTranslationResponse(response);
+                        }
+                    }
+                    return;
                 case "saveTranslations":
                     if (response.hasOwnProperty("reload")) {
                         location.reload();

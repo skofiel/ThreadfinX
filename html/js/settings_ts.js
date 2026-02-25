@@ -345,9 +345,16 @@ class SettingsCategory {
                 langWrapper.style.display = "flex";
                 langWrapper.style.alignItems = "center";
                 langWrapper.style.gap = "var(--space-sm)";
-                var text = ["English", "Español"];
-                var values = ["en", "es"];
+                // Build language options dynamically from available languages
+                var availLangs = (SERVER["availableLangs"] && SERVER["availableLangs"].length > 0) ? SERVER["availableLangs"] : ["en"];
+                var text = [];
+                var values = [];
+                availLangs.forEach(function(code) {
+                    text.push(getLangDisplayName(code));
+                    values.push(code);
+                });
                 var select = content.createSelect(text, values, data, settingsKey);
+                select.setAttribute("id", "settings-language-select");
                 select.setAttribute("onchange", "javascript: this.className = 'changed'");
                 select.style.flex = "1";
                 langWrapper.appendChild(select);
@@ -830,6 +837,26 @@ function showSaveConfirmation(message) {
 var TRANSLATION_DATA = {};
 var CURRENT_TRANSLATION_LANG = "";
 
+// Language display name mapping
+var LANG_NAMES = {
+    "en": "English", "es": "Español", "fr": "Français", "de": "Deutsch",
+    "it": "Italiano", "pt": "Português", "nl": "Nederlands", "ru": "Русский",
+    "ja": "日本語", "zh": "中文", "ko": "한국어", "ar": "العربية",
+    "pl": "Polski", "sv": "Svenska", "da": "Dansk", "fi": "Suomi",
+    "no": "Norsk", "tr": "Türkçe", "ca": "Català", "eu": "Euskara",
+    "gl": "Galego", "cs": "Čeština", "hu": "Magyar", "ro": "Română",
+    "uk": "Українська", "el": "Ελληνικά", "he": "עברית", "th": "ไทย",
+    "vi": "Tiếng Việt", "id": "Bahasa Indonesia", "ms": "Bahasa Melayu",
+    "hi": "हिन्दी", "bn": "বাংলা", "hr": "Hrvatski", "sk": "Slovenčina",
+    "sl": "Slovenščina", "bg": "Български", "sr": "Српски", "lt": "Lietuvių",
+    "lv": "Latviešu", "et": "Eesti"
+};
+
+function getLangDisplayName(code) {
+    if (!code) return "";
+    return LANG_NAMES[code.toLowerCase()] || code.toUpperCase();
+}
+
 function openTranslationEditor() {
     var cmd = "getTranslations";
     var server = new Server(cmd);
@@ -841,13 +868,17 @@ function handleTranslationResponse(response) {
         TRANSLATION_DATA = response.translations;
     }
     if (response.availableLangs) {
+        // Update the global available langs
+        SERVER["availableLangs"] = response.availableLangs;
+
+        // Update the translation editor dropdown
         var select = document.getElementById("translation-lang-select");
         if (select) {
             select.innerHTML = "";
             response.availableLangs.forEach(function(lang) {
                 var option = document.createElement("OPTION");
                 option.value = lang;
-                option.innerText = lang.toUpperCase();
+                option.innerText = getLangDisplayName(lang);
                 select.appendChild(option);
             });
             // Default to current language
@@ -856,13 +887,60 @@ function handleTranslationResponse(response) {
             }
             CURRENT_TRANSLATION_LANG = select.value;
             renderTranslationTable(select.value);
+            // Update delete button state
+            updateDeleteLangButton();
         }
+
+        // Also update the settings language dropdown
+        updateSettingsLangDropdown(response.availableLangs);
     }
+}
+
+function updateSettingsLangDropdown(availLangs) {
+    var select = document.getElementById("settings-language-select");
+    if (!select) return;
+    var currentValue = select.value;
+    select.innerHTML = "";
+    availLangs.forEach(function(code) {
+        var option = document.createElement("OPTION");
+        option.value = code;
+        option.innerText = getLangDisplayName(code);
+        select.appendChild(option);
+    });
+    // Restore previous selection if it still exists, otherwise fall back to "en"
+    if (availLangs.indexOf(currentValue) !== -1) {
+        select.value = currentValue;
+    } else {
+        select.value = "en";
+        select.className = "changed";
+    }
+}
+
+function updateDeleteLangButton() {
+    var btn = document.getElementById("translation-delete-btn");
+    if (!btn) return;
+    // Disable delete for "en" and built-in languages that have no override
+    btn.disabled = (!CURRENT_TRANSLATION_LANG || CURRENT_TRANSLATION_LANG === "en");
+}
+
+function deleteLanguageFile() {
+    var lang = CURRENT_TRANSLATION_LANG;
+    if (!lang || lang === "en") {
+        alert("{{.settings.translationEditor.cannotDeleteDefault}}");
+        return;
+    }
+    if (!confirm("{{.settings.translationEditor.confirmDelete}}" + " (" + getLangDisplayName(lang) + ")")) {
+        return;
+    }
+    var data = { "deleteLanguage": lang };
+    var server = new Server("deleteLanguage");
+    server.request(data);
 }
 
 function loadTranslationLang(lang) {
     CURRENT_TRANSLATION_LANG = lang;
     renderTranslationTable(lang);
+    updateDeleteLangButton();
 }
 
 function flattenObject(obj, prefix) {

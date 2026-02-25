@@ -622,8 +622,11 @@
       "key": "Clave",
       "value": "Valor",
       "addLanguage": "Añadir Idioma",
+      "deleteLanguage": "Eliminar Idioma",
       "editTranslations": "Editar Traducciones",
       "newLanguagePrompt": "Introduzca el código del idioma (ej. fr, de, it):",
+      "confirmDelete": "¿Está seguro de que desea eliminar este idioma?",
+      "cannotDeleteDefault": "No se puede eliminar el idioma por defecto (Inglés).",
       "search": "Buscar traducciones..."
     },
     "bufferTimeout": {
