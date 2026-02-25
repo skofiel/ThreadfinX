@@ -1,6 +1,7 @@
 package src
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,10 +11,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"threadfin/src/internal/authentication"
@@ -89,11 +92,36 @@ func StartWebserver() (err error) {
 	}
 	systemMutex.Unlock()
 
-	if err = http.ListenAndServe(ipAddress+":"+port, nil); err != nil {
+	server := &http.Server{
+		Addr:              ipAddress + ":" + port,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1MB
+		// Note: WriteTimeout is intentionally omitted for long-lived streaming connections
+	}
+
+	// Graceful shutdown: listen for OS signals and shut down cleanly
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-stop
+		showInfo("Shutdown signal received, shutting down gracefully...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if shutdownErr := server.Shutdown(ctx); shutdownErr != nil {
+			ShowError(shutdownErr, 0)
+		}
+	}()
+
+	if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		ShowError(err, 1001)
 		return
 	}
 
+	showInfo("Server stopped")
 	return
 }
 
@@ -186,14 +214,13 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "HEAD" {
-		client := &http.Client{Timeout: 30 * time.Second}
 		req, err := http.NewRequest("HEAD", streamInfo.URL, nil)
 		if err != nil {
 			ShowError(err, 1501)
 			httpStatusError(w, r, 405)
 			return
 		}
-		resp, err := client.Do(req)
+		resp, err := SharedHTTPClient.Do(req)
 		if err != nil {
 			ShowError(err, 1502)
 			httpStatusError(w, r, 405)
@@ -385,18 +412,8 @@ func Images(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := readByteFromFile(filePath)
-	if err != nil {
-		httpStatusError(w, r, 404)
-		return
-	}
-
-	w.Header().Add("Content-Type", getContentType(filePath))
-	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(content)))
-	w.WriteHeader(200)
-	w.Write(content)
-
-	return
+	// Use http.ServeFile for efficient serving with range requests and caching headers
+	http.ServeFile(w, r, filePath)
 }
 
 // DataImages : Image Pfad für Logos / Bilder die hochgeladen wurden /data_images/
@@ -413,18 +430,8 @@ func DataImages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := readByteFromFile(filePath)
-	if err != nil {
-		httpStatusError(w, r, 404)
-		return
-	}
-
-	w.Header().Add("Content-Type", getContentType(filePath))
-	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(content)))
-	w.WriteHeader(200)
-	w.Write(content)
-
-	return
+	// Use http.ServeFile for efficient serving with range requests and caching headers
+	http.ServeFile(w, r, filePath)
 }
 
 // WS : Web Sockets /ws/
@@ -437,8 +444,8 @@ func WS(w http.ResponseWriter, r *http.Request) {
 	var newToken string
 
 	upgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+		ReadBufferSize:  8192,
+		WriteBufferSize: 8192,
 		CheckOrigin: func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")
 			if origin == "" {
@@ -471,6 +478,7 @@ func WS(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
 		return
 	}
+	defer conn.Close()
 
 	systemMutex.Lock()
 	if Settings.HttpThreadfinDomain != "" {

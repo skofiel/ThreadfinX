@@ -8,6 +8,7 @@ package src
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -20,11 +21,20 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/avfs/avfs/vfs/memfs"
 )
+
+// copyBufPool is a pool of reusable byte slices for io.CopyBuffer in segment streaming.
+var copyBufPool = sync.Pool{
+	New: func() interface{} {
+		buf := make([]byte, 128*1024) // 128KB
+		return &buf
+	},
+}
 
 type BackupStream struct {
 	PlaylistID string
@@ -150,14 +160,11 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 	var timeOut = 0
 	var newStream = true
 
-	//w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Connection", "close")
+	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Check whether the playlist is already in use
-	Lock.Lock()
 	if p, ok := BufferInformation.Load(playlistID); !ok {
-		Lock.Unlock() // Unlock early if not found
 		var playlistType string
 
 		// Playlist is not yet in use, create default values for the playlist
@@ -225,13 +232,10 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 		playlist.Streams[streamID] = stream
 		playlist.Clients[streamID] = client
 
-		Lock.Lock()
 		BufferInformation.Store(playlistID, playlist)
-		Lock.Unlock()
 
 	} else {
 		playlist = p.(Playlist)
-		Lock.Unlock()
 
 		// Playlist is already used for streaming
 		// Check if the URL is already streaming from another client.
@@ -254,9 +258,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 				playlist.Clients[streamID] = client
 
-				Lock.Lock()
 				BufferInformation.Store(playlistID, playlist)
-				Lock.Unlock()
 
 				debug = fmt.Sprintf("Restream Status:Playlist: %s - Channel: %s - Connections: %d", playlist.PlaylistName, stream.ChannelName, client.Connection)
 
@@ -298,9 +300,9 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 					content := GetHTMLString(value.(string))
 
+					w.Header().Set("Content-Type", "video/mpeg")
+					w.Header().Set("Content-Length", "0")
 					w.WriteHeader(200)
-					w.Header().Set("Content-type", "video/mpeg")
-					w.Header().Set("Content-Length:", "0")
 
 					for i := 1; i < 60; i++ {
 						_ = i
@@ -332,9 +334,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 			playlist.Streams[streamID] = stream
 			playlist.Clients[streamID] = client
 
-			Lock.Lock()
 			BufferInformation.Store(playlistID, playlist)
-			Lock.Unlock()
 
 		}
 
@@ -355,9 +355,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 		playlist.Streams[streamID] = stream
 
-		Lock.Lock()
 		BufferInformation.Store(playlistID, playlist)
-		Lock.Unlock()
 
 		switch playlist.Buffer {
 
@@ -461,79 +459,22 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 						var fileName = stream.Folder + f
 
-						file, err := bufferVFS.Open(fileName)
-						if err != nil {
-							debug = fmt.Sprintf("Buffer Open (%s)", fileName)
-							showDebug(debug, 2)
+						if err := sendSegmentToClient(fileName, w, &streaming, &debug); err != nil {
+							killClientConnection(streamID, playlistID, false)
 							return
 						}
-						defer file.Close()
 
-						if err == nil {
+						var n = indexOfString(f, oldSegments)
 
-							l, err := file.Stat()
-							if err == nil {
+						if n > 20 {
 
-								debug = fmt.Sprintf("Buffer Status:Send to client (%s)", fileName)
-								showDebug(debug, 2)
-
-								var buffer = make([]byte, int(l.Size()))
-								_, err = file.Read(buffer)
-
-								if err == nil {
-
-									file.Seek(0, 0)
-
-									if !streaming {
-
-										contentType := http.DetectContentType(buffer)
-										_ = contentType
-										//w.Header().Set("Content-type", "video/mpeg")
-										w.Header().Set("Content-type", contentType)
-										w.Header().Set("Content-Length", "0")
-										w.Header().Set("Connection", "close")
-
-									}
-
-									/*
-									   // HDHR Header
-									   w.Header().Set("Cache-Control", "no-cache")
-									   w.Header().Set("Pragma", "no-cache")
-									   w.Header().Set("transferMode.dlna.org", "Streaming")
-									*/
-
-									_, err := w.Write(buffer)
-
-									if err != nil {
-										file.Close()
-										killClientConnection(streamID, playlistID, false)
-										return
-									}
-
-									file.Close()
-									streaming = true
-
-								}
-
-								file.Close()
-
+							var fileToRemove = stream.Folder + oldSegments[0]
+							if err := bufferVFS.RemoveAll(getPlatformFile(fileToRemove)); err != nil {
+								ShowError(err, 4007)
 							}
-
-							var n = indexOfString(f, oldSegments)
-
-							if n > 20 {
-
-								var fileToRemove = stream.Folder + oldSegments[0]
-								if err = bufferVFS.RemoveAll(getPlatformFile(fileToRemove)); err != nil {
-									ShowError(err, 4007)
-								}
-								oldSegments = append(oldSegments[:0], oldSegments[0+1:]...)
-
-							}
+							oldSegments = append(oldSegments[:0], oldSegments[0+1:]...)
 
 						}
-
-						file.Close()
 
 					}
 
@@ -557,6 +498,52 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 	} // End Loop 1
 
+}
+
+// sendSegmentToClient opens a segment file, streams it to the client using a pooled buffer,
+// and properly closes the file when done. This avoids the defer-in-loop file descriptor leak
+// and reduces GC pressure by reusing buffers via sync.Pool.
+func sendSegmentToClient(fileName string, w http.ResponseWriter, streaming *bool, debug *string) error {
+	file, err := bufferVFS.Open(fileName)
+	if err != nil {
+		*debug = fmt.Sprintf("Buffer Open (%s)", fileName)
+		showDebug(*debug, 2)
+		return err
+	}
+	defer file.Close()
+
+	*debug = fmt.Sprintf("Buffer Status:Send to client (%s)", fileName)
+	showDebug(*debug, 2)
+
+	if !*streaming {
+		// Read a small header to detect content type
+		header := make([]byte, 512)
+		n, _ := file.Read(header)
+		if n > 0 {
+			contentType := http.DetectContentType(header[:n])
+			w.Header().Set("Content-Type", contentType)
+			w.Header().Set("Content-Length", "0")
+		}
+		// Seek back to beginning for the full copy
+		file.Seek(0, 0)
+	}
+
+	// Use pooled buffer for io.CopyBuffer to avoid per-segment allocation
+	bufPtr := copyBufPool.Get().(*[]byte)
+	_, err = io.CopyBuffer(w, file, *bufPtr)
+	copyBufPool.Put(bufPtr)
+
+	if err != nil {
+		return err
+	}
+
+	// Flush data to client immediately to reduce streaming latency
+	if flusher, ok := w.(http.Flusher); ok {
+		flusher.Flush()
+	}
+
+	*streaming = true
+	return nil
 }
 
 func getBufTmpFiles(stream *ThisStream) (tmpFiles []string) {
@@ -1276,51 +1263,39 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 		}
 		defer f.Close()
 
-		buffer := make([]byte, 1024*4)
+		buffer := make([]byte, 128*1024) // 128KB buffer for better throughput
 
 		reader := bufio.NewReader(stdOut)
 
-		t := make(chan int)
+		// Use context for timeout goroutine cancellation instead of raw channel
+		// to avoid panic on send-to-closed-channel and goroutine leaks.
+		timeoutCtx, timeoutCancel := context.WithCancel(context.Background())
+		defer timeoutCancel()
+
+		var timeoutSeconds int32
 
 		go func() {
-
-			var timeout = 0
 			for {
-				time.Sleep(time.Duration(1000) * time.Millisecond)
-				timeout++
-
 				select {
-				case <-t:
+				case <-timeoutCtx.Done():
 					return
-				default:
-					// Check if the channel is closed before sending
-					select {
-					case t <- timeout:
-					default:
-					}
+				case <-time.After(1 * time.Second):
+					timeoutSeconds++
 				}
-
 			}
-
 		}()
 
 		for {
 
-			select {
-			case timeout := <-t:
-				if timeout >= 20 && tmpSegment == 1 {
-					cmd.Process.Kill()
-					err = errors.New("Timeout")
-					ShowError(err, 4006)
-					killClientConnection(streamID, playlistID, false)
-					addErrorToStream(err)
-					cmd.Wait()
-					f.Close()
-					return
-				}
-
-			default:
-
+			if timeoutSeconds >= 20 && tmpSegment == 1 {
+				cmd.Process.Kill()
+				err = errors.New("Timeout")
+				ShowError(err, 4006)
+				killClientConnection(streamID, playlistID, false)
+				addErrorToStream(err)
+				cmd.Wait()
+				f.Close()
+				return
 			}
 
 			if fileSize == 0 && !stream.Status {
@@ -1353,7 +1328,7 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 			if fileSize >= bufferSize/2 {
 
 				if tmpSegment == 1 && !stream.Status {
-					close(t)
+					timeoutCancel()
 					close(streamStatus)
 					showInfo(fmt.Sprintf("Streaming Status:Buffering data from %s", bufferType))
 				}
@@ -1362,11 +1337,9 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 				tmpSegment++
 
 				if !stream.Status {
-					Lock.Lock()
 					stream.Status = true
 					playlist.Streams[streamID] = stream
 					BufferInformation.Store(playlistID, playlist)
-					Lock.Unlock()
 				}
 
 				tmpFile = fmt.Sprintf("%s%d.ts", tmpFolder, tmpSegment)

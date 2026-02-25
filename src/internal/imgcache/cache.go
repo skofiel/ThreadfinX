@@ -98,15 +98,27 @@ func New(path, cacheURL string, caching bool) (c *Cache, err error) {
 		return src
 	}
 
+	// httpClient is reused across all caching calls to benefit from connection pooling.
+	httpClient := &http.Client{Timeout: 30 * time.Second}
+
 	c.Image.Caching = func() {
 
+		// Copy the queue under lock, then release lock during downloads
+		// to avoid blocking GetURL calls for the entire download duration.
 		c.Lock()
-		defer c.Unlock()
+		queueCopy := make([]string, len(c.Queue))
+		copy(queueCopy, c.Queue)
+		c.Unlock()
 
-		httpClient := &http.Client{Timeout: 30 * time.Second}
-		var filename string
+		type cachedImage struct {
+			src      string
+			filename string
+			key      string
+			url      string
+		}
+		var results []cachedImage
 
-		for _, src := range c.Queue {
+		for _, src := range queueCopy {
 
 			resp, err := httpClient.Get(src)
 			if err != nil {
@@ -119,7 +131,7 @@ func New(path, cacheURL string, caching bool) (c *Cache, err error) {
 			}
 
 			src_filtered := strings.Split(src, "?")
-			filename = fmt.Sprintf("%s%s%s", c.path, strToMD5(src_filtered[0]), filepath.Ext(src_filtered[0]))
+			filename := fmt.Sprintf("%s%s%s", c.path, strToMD5(src_filtered[0]), filepath.Ext(src_filtered[0]))
 
 			file, err := os.Create(filename)
 			if err != nil {
@@ -136,16 +148,27 @@ func New(path, cacheURL string, caching bool) (c *Cache, err error) {
 
 			u, err := url.Parse(src_filtered[0])
 			if err == nil {
-				c.images[fmt.Sprintf("%s%s", strToMD5(src_filtered[0]), filepath.Ext(u.Path))] = c.cacheURL + filename
+				results = append(results, cachedImage{
+					src:      src_filtered[0],
+					filename: filename,
+					key:      fmt.Sprintf("%s%s", strToMD5(src_filtered[0]), filepath.Ext(u.Path)),
+					url:      c.cacheURL + filename,
+				})
 			}
 
 			queue = append(queue, src_filtered[0])
 
 		}
 
+		// Re-acquire lock to update the image map and clean the queue
+		c.Lock()
+		for _, r := range results {
+			c.images[r.key] = r.url
+		}
 		for _, q := range queue {
 			c.Queue = removeStringFromSlice(q, c.Queue)
 		}
+		c.Unlock()
 
 	}
 
