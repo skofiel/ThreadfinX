@@ -1,0 +1,14 @@
+# https://github.com/github/gitignore
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# temporary files
+tmp
+
+# editors
+.idea
+.vscode

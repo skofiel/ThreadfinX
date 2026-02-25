@@ -1,0 +1,13 @@
+project_name: avfs
+build:
+  skip: true
+release:
+  github:
+  prerelease: auto
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - Merge pull request
+      - Merge branch
+      - go mod tidy
