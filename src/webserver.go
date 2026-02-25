@@ -798,10 +798,10 @@ func Web(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check for translation overrides in config directory
+	// Check for translation overrides in config directory (merge with base, don't replace)
 	overrideFile := getLangOverrideDir() + Settings.Language + ".json"
 	if overrideLang, loadErr := loadJSONFileToMap(overrideFile); loadErr == nil {
-		lang = overrideLang
+		lang = deepMergeMap(lang, overrideLang)
 	}
 
 	err = json.Unmarshal([]byte(mapToJSON(lang)), &language)
