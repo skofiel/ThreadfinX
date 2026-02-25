@@ -1184,11 +1184,13 @@ function saveColumnVisibility(tableId) {
         var idx = cb.getAttribute("data-col-idx");
         state[idx] = cb.checked;
     });
-    var key = "colVisibility_" + tableId;
+    var menuKey = sessionStorage.getItem("threadfin_menu") || "";
+    var key = "colVisibility_" + menuKey + "_" + tableId;
     try { localStorage.setItem(key, JSON.stringify(state)); } catch(e) {}
 }
 function restoreColumnVisibility(tableId) {
-    var key = "colVisibility_" + tableId;
+    var menuKey = sessionStorage.getItem("threadfin_menu") || "";
+    var key = "colVisibility_" + menuKey + "_" + tableId;
     var saved;
     try { saved = JSON.parse(localStorage.getItem(key)); } catch(e) { return; }
     if (!saved) return;
