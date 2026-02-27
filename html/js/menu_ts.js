@@ -852,9 +852,11 @@ function buildGridPanel(title, headerClass, tableId) {
     var h4 = document.createElement("H4");
     h4.innerText = title;
     panelHeader.appendChild(h4);
-    var status = document.createElement("SPAN");
-    status.className = "grid-status";
-    panelHeader.appendChild(status);
+    if (headerClass === "active-panel" || headerClass === "inactive-panel") {
+        var status = document.createElement("SPAN");
+        status.className = "grid-status";
+        panelHeader.appendChild(status);
+    }
     var controls = document.createElement("DIV");
     controls.className = "grid-controls";
     var clearBtn = document.createElement("BUTTON");
@@ -2051,7 +2053,6 @@ function openPopUp(dataType, element) {
             var input = content.createInput("text", dbKey, data[dbKey]);
             input.setAttribute("onchange", "javascript: this.className = 'changed'");
             content.appendRow("{{.mapping.channelName.title}}", input);
-            content.description("<span class='text-danger'>" + data["tvg-id"] + "</span> <span class='text-primary'>(" + data["x-epg"] + ")</span>");
             // Channel URL (readonly with copy button)
             if (data["url"]) {
                 var urlContainer = document.createElement("DIV");
@@ -2066,42 +2067,47 @@ function openPopUp(dataType, element) {
                 var copyBtn = document.createElement("BUTTON");
                 copyBtn.className = "input-group-text copy-btn";
                 copyBtn.setAttribute("data-clipboard-target", "#channel-url-field");
-                copyBtn.setAttribute("data-bs-title", "Copy to clipboard");
-                copyBtn.setAttribute("data-bs-toggle", "tooltip");
-                copyBtn.setAttribute("data-bs-placement", "bottom");
                 copyBtn.innerHTML = "<span class='material-symbols-outlined' style='font-size:18px;'>content_copy</span>";
                 urlContainer.appendChild(copyBtn);
                 content.appendRow("{{.mapping.channelUrl.title}}", urlContainer);
             }
-            // Beschreibung
-            var dbKey = "x-description";
-            var input = content.createInput("text", dbKey, data[dbKey]);
-            input.setAttribute("placeholder", "{{.mapping.description.placeholder}}");
-            input.setAttribute("onchange", "javascript: this.className = 'changed'");
-            content.appendRow("{{.mapping.description.title}}", input);
-            // Aktualisierung des Kanalnamens
-            if (data.hasOwnProperty("_uuid.key")) {
-                if (data["_uuid.key"] != "") {
-                    var dbKey = "x-update-channel-name";
-                    var input = content.createCheckbox(dbKey);
-                    input.setAttribute("onchange", "javascript: this.className = 'changed'");
-                    input.checked = data[dbKey];
-                    content.appendRow("{{.mapping.updateChannelName.title}}", input);
-                }
-            }
-            // Logo URL (Kanal) 
+            // Logo URL - inline preview + input + upload button
             var dbKey = "tvg-logo";
+            var logoContainer = document.createElement("DIV");
+            logoContainer.className = "logo-inline-container";
+            var logoPreview = document.createElement("DIV");
+            logoPreview.className = "logo-inline-preview";
+            logoPreview.id = "logo-preview";
+            if (data[dbKey] && data[dbKey] !== "") {
+                var logoImg = document.createElement("IMG");
+                logoImg.src = data[dbKey];
+                logoImg.onerror = function() { this.style.display = 'none'; };
+                logoPreview.appendChild(logoImg);
+            }
+            var logoInputWrap = document.createElement("DIV");
+            logoInputWrap.className = "logo-inline-input-wrap";
             var input = content.createInput("text", dbKey, data[dbKey]);
-            input.setAttribute("onchange", "javascript: this.className = 'changed'");
+            input.setAttribute("onchange", "javascript: this.className = 'changed'; var p = document.getElementById('logo-preview'); if(p){ p.textContent=''; var im=document.createElement('IMG'); im.src=this.value; im.onerror=function(){this.style.display='none'}; p.appendChild(im); }");
             input.setAttribute("id", "channel-icon");
-            content.appendRow("{{.mapping.channelLogo.title}}", input);
-            // Aktualisierung des Kanallogos
-            var dbKey = "x-update-channel-icon";
-            var input = content.createCheckbox(dbKey);
-            input.checked = data[dbKey];
-            input.setAttribute("id", "update-icon");
-            input.setAttribute("onchange", "javascript: this.className = 'changed'; changeChannelLogo('" + id + "');");
-            content.appendRow("{{.mapping.updateChannelLogo.title}}", input);
+            input.setAttribute("placeholder", "{{.mapping.channelLogo.title}}");
+            logoInputWrap.appendChild(input);
+            var uploadBtn = document.createElement("BUTTON");
+            uploadBtn.type = "button";
+            uploadBtn.className = "logo-upload-btn";
+            uploadBtn.setAttribute("onclick", "javascript: uploadLogo();");
+            uploadBtn.innerHTML = '<span class="material-symbols-outlined">upload</span>';
+            logoInputWrap.appendChild(uploadBtn);
+            logoContainer.appendChild(logoPreview);
+            logoContainer.appendChild(logoInputWrap);
+            // Hidden update-icon checkbox (needed by changeChannelLogo)
+            var hiddenIcon = document.createElement("INPUT");
+            hiddenIcon.type = "checkbox";
+            hiddenIcon.id = "update-icon";
+            hiddenIcon.name = "x-update-channel-icon";
+            hiddenIcon.checked = data["x-update-channel-icon"];
+            hiddenIcon.style.display = "none";
+            logoContainer.appendChild(hiddenIcon);
+            content.appendRow("{{.mapping.channelLogo.title}}", logoContainer);
             // Erweitern der EPG Kategorie
             var dbKey = "x-category";
             var text = ["-"];
@@ -2119,14 +2125,6 @@ function openPopUp(dataType, element) {
             var select = content.createSelect(text, values, data[dbKey], dbKey);
             select.setAttribute("onchange", "javascript: this.className = 'changed'");
             content.appendRow("{{.mapping.epgCategory.title}}", select);
-            // M3U Gruppentitel
-            var dbKey = "x-group-title";
-            var input = content.createInput("text", dbKey, data[dbKey]);
-            input.setAttribute("onchange", "javascript: this.className = 'changed'");
-            content.appendRow("{{.mapping.m3uGroupTitle.title}}", input);
-            if (data["group-title"] != undefined) {
-                content.description(data["group-title"]);
-            }
             // XMLTV Datei
             var dbKey = "x-xmltv-file";
             var xmlFile = data[dbKey];
@@ -2202,11 +2200,6 @@ function openPopUp(dataType, element) {
             var spacer = document.createElement("span");
             spacer.style.flex = "1";
             document.getElementById("popup-interaction").appendChild(spacer);
-            // Logo hochladen (moved to right side)
-            var input = content.createInput("button", "upload", "{{.button.uploadLogo}}");
-            input.setAttribute("onclick", 'javascript: uploadLogo();');
-            input.className = "black";
-            content.addInteraction(input);
             // Abbrechen
             var input = content.createInput("button", "cancel", "{{.button.cancel}}");
             input.setAttribute("onclick", 'javascript: showElement("popup", false);');
@@ -2290,6 +2283,11 @@ class XMLTVFile {
         const epg = SERVER['xepg']['xmltvMap'][xmlTvFile];
         if (epg) {
             const programIds = getOwnObjProps(epg);
+            programIds.sort((a, b) => {
+                const nameA = (epg[a]['display-name'] || '').toLowerCase();
+                const nameB = (epg[b]['display-name'] || '').toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
             programIds.forEach((programId) => {
                 const program = epg[programId];
                 if (program.hasOwnProperty('display-name')) {
@@ -2336,18 +2334,17 @@ class XMLTVFile {
         const m3u = SERVER['xepg']['epgMapping'];
         if (m3u) {
             const programIds = getOwnObjProps(m3u);
+            programIds.sort((a, b) => {
+                const nameA = (m3u[a]['tvg-name'] || '').toLowerCase();
+                const nameB = (m3u[b]['tvg-name'] || '').toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
             programIds.forEach((programId) => {
                 const chanel = m3u[programId];
-                if (chanel.hasOwnProperty('tvg-name')) {
+                if (chanel.hasOwnProperty('tvg-name') && chanel['tvg-name'] && chanel['tvg-name'].trim() !== '') {
                     const option = document.createElement('option');
                     option.setAttribute('value', chanel["tvg-name"]);
                     option.innerText = programId;
-                    datalist.appendChild(option);
-                }
-                else {
-                    const option = document.createElement('option');
-                    option.setAttribute('value', chanel["tvg-name"]);
-                    option.innerText = '-';
                     datalist.appendChild(option);
                 }
             });
@@ -2538,7 +2535,6 @@ function savePopupData(dataType, id, remove, option) {
         var server = new Server(cmd);
         server.request(data);
         delete UNDO["epgMapping"];
-        showElement("loading", false);
         return;
     }
     console.log("Save popup data");

@@ -617,7 +617,8 @@ table {
 /* --- Category Indicators --- */
 .category {
   border-left: solid 3px;
-  padding-left: 6px;
+  padding-left: 10px;
+  margin-left: 2px;
 }
 
 .news {

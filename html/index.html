@@ -76,7 +76,7 @@
                 <td>
                   <div class="input-group">
                     <input type="text" class="form-control" id="DVR" readonly>
-                    <button class="input-group-text copy-btn" data-clipboard-target="#DVR" data-bs-title="Copy to clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
+                    <button class="input-group-text copy-btn" data-clipboard-target="#DVR"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
                   </div>
                 </td>
               </tr>
@@ -85,7 +85,7 @@
                 <td>
                   <div class="input-group">
                     <input type="text" class="form-control" id="m3u-url" readonly>
-                    <button class="input-group-text copy-btn" data-clipboard-target="#m3u-url" data-bs-title="Copy to clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
+                    <button class="input-group-text copy-btn" data-clipboard-target="#m3u-url"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
                   </div>
                   <pre>{{.status.m3uUrlHint}}</pre>
                 </td>
@@ -95,7 +95,7 @@
                 <td>
                   <div class="input-group">
                     <input type="text" class="form-control" id="xepg-url" readonly>
-                    <button class="input-group-text copy-btn" data-clipboard-target="#xepg-url" data-bs-title="Copy to clipboard" data-bs-toggle="tooltip" data-bs-placement="bottom"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
+                    <button class="input-group-text copy-btn" data-clipboard-target="#xepg-url"><span class="material-symbols-outlined" style="font-size:18px;">content_copy</span></button>
                   </div>
                 </td>
               </tr>
@@ -127,9 +127,9 @@
               <button id="translation-delete-btn" class="header-icon-btn" title="{{.settings.translationEditor.deleteLanguage}}" onclick="javascript: deleteLanguageFile()" disabled>
                 <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
               </button>
-              <div class="log-search-wrap">
-                <span class="material-symbols-outlined log-search-icon">search</span>
-                <input type="text" class="log-search" id="translation-search" placeholder="{{.settings.translationEditor.search}}" oninput="javascript: filterTranslations(this.value)">
+              <div class="search-container">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" class="search" id="translation-search" placeholder="{{.settings.translationEditor.search}}" oninput="javascript: filterTranslations(this.value)">
               </div>
             </div>
             <div id="translation-table-container" style="max-height: 60vh; overflow-y: auto; margin-top: var(--space-md);">

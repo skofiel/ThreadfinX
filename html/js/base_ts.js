@@ -25,11 +25,18 @@ var SERVER_CONNECTION = false;
 var WS_AVAILABLE = false;
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-// new ClipboardJS('.copy-btn');
 var clipboard = new ClipboardJS('.copy-btn');
 clipboard.on('success', function (e) {
-    const tooltip = bootstrap.Tooltip.getInstance(e.trigger);
-    tooltip.setContent({ '.tooltip-inner': 'Copied!' });
+    var icon = e.trigger.querySelector('.material-symbols-outlined');
+    if (icon) {
+        icon.textContent = 'check';
+        icon.style.color = 'var(--success)';
+        setTimeout(function() {
+            icon.textContent = 'content_copy';
+            icon.style.color = '';
+        }, 1500);
+    }
+    e.clearSelection();
 });
 clipboard.on('error', function (e) {
     // clipboard error handled silently

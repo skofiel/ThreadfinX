@@ -91,6 +91,11 @@ class Server {
                 var div = document.getElementById("channel-icon");
                 div.value = response["logoURL"];
                 div.className = "changed";
+                var preview = document.getElementById("logo-preview");
+                if (preview) {
+                    preview.src = response["logoURL"];
+                    preview.style.display = response["logoURL"] ? "block" : "none";
+                }
                 return;
             }
             switch (data["cmd"]) {

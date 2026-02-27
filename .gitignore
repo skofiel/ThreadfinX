@@ -1,5 +1,6 @@
 
 threadfin
+threadfin_*
 vendor/
 .DS_Store
 threadfin.exe
