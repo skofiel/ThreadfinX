@@ -406,6 +406,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 				}
 
 				var oldSegments []string
+				var segmentsSinceSync int
 
 				for { // Loop 2: Temporary files are present, data can be sent to the client
 
@@ -446,7 +447,6 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 					}
 
 					var tmpFiles = getBufTmpFiles(&stream)
-					//fmt.Println("Buffer Loop:", stream.Connection)
 
 					for _, f := range tmpFiles {
 
@@ -476,10 +476,26 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 						}
 
+						segmentsSinceSync++
+
+					}
+
+					// Periodically sync OldSegments back to BufferInformation so
+					// reconnecting clients have up-to-date segment history
+					if segmentsSinceSync >= 5 {
+						segmentsSinceSync = 0
+						if p, ok := BufferInformation.Load(playlistID); ok {
+							var pl = p.(Playlist)
+							if s, ok := pl.Streams[streamID]; ok {
+								s.OldSegments = stream.OldSegments
+								pl.Streams[streamID] = s
+								BufferInformation.Store(playlistID, pl)
+							}
+						}
 					}
 
 					if len(tmpFiles) == 0 {
-						time.Sleep(time.Duration(100) * time.Millisecond)
+						time.Sleep(time.Duration(25) * time.Millisecond)
 					}
 
 				} // End Loop 2
@@ -574,6 +590,18 @@ func getBufTmpFiles(stream *ThisStream) (tmpFiles []string) {
 
 			sort.Float64s(fileIDs)
 			fileIDs = fileIDs[:len(fileIDs)-1]
+
+			// When OldSegments is empty (new or reconnecting client) and there are
+			// many segments on disk, skip to near the live edge. This prevents
+			// replaying the entire buffer when a player reconnects.
+			if len(stream.OldSegments) == 0 && len(fileIDs) > 2 {
+				// Mark all but the last 2 segments as already seen
+				for _, file := range fileIDs[:len(fileIDs)-2] {
+					var fileName = fmt.Sprintf("%d.ts", int64(file))
+					stream.OldSegments = append(stream.OldSegments, fileName)
+				}
+				fileIDs = fileIDs[len(fileIDs)-2:]
+			}
 
 			for _, file := range fileIDs {
 
