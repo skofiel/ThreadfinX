@@ -1276,18 +1276,39 @@ tbody {
   background-color: var(--bg-card);
 }
 
-/* Copy-to-clipboard button integrated into input */
-.input-group .copy-btn.input-group-text {
+/* Copy-to-clipboard unified input group */
+.input-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
   background-color: var(--bg-elevated);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input-group:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+.input-group .form-control {
+  border: none;
+  background-color: transparent;
+  box-shadow: none !important;
+}
+
+.input-group .form-control:focus {
+  box-shadow: none !important;
+}
+
+.input-group .copy-btn.input-group-text {
+  background-color: transparent;
+  border: none;
   border-left: 1px solid var(--border-light);
   color: var(--text-tertiary);
   padding: 0 10px;
-  border-top-right-radius: var(--radius-md);
-  border-bottom-right-radius: var(--radius-md);
 }
 
 .input-group .copy-btn.input-group-text:hover {
-  background-color: var(--bg-elevated);
   color: var(--accent);
 }
 
@@ -1454,7 +1475,7 @@ tbody {
   z-index: 100;
   background-color: var(--bg-dark);
   border-bottom: 1px solid var(--border);
-  margin: 0;
+  margin: 0 0 var(--space-md) 0;
   padding: var(--space-xs) var(--space-lg);
   display: flex;
   align-items: center;
@@ -1542,6 +1563,118 @@ tbody {
 
 .save-toast.save-toast-info {
   background-color: var(--text-tertiary);
+}
+
+/* ============================================
+   Integrated Search Box
+   ============================================ */
+.search-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-elevated);
+  padding: 0 var(--space-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  margin: var(--space-md);
+  float: right;
+}
+
+.search-container:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+.search-container .search-icon {
+  font-size: 20px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.search-container:focus-within .search-icon {
+  color: var(--accent);
+}
+
+.search-container .search {
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 9px 8px !important;
+  width: 180px;
+  float: none !important;
+}
+
+.search-container .search:focus {
+  box-shadow: none !important;
+}
+
+/* ============================================
+   Logo Inline Editor
+   ============================================ */
+.logo-inline-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.logo-inline-preview {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-inline-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.logo-inline-input-wrap {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.logo-inline-input-wrap input[type=text] {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
+  flex: 1;
+  min-width: 0;
+}
+
+.logo-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.logo-upload-btn:hover {
+  color: var(--accent);
+  background-color: var(--bg-card);
+}
+
+.logo-upload-btn .material-symbols-outlined {
+  font-size: 20px;
 }
 
 /* ============================================

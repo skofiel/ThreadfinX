@@ -629,6 +629,9 @@ func WS(w http.ResponseWriter, r *http.Request) {
 
 		case "saveEpgMapping":
 			err = saveXEpgMapping(request)
+			if err == nil {
+				response.OpenMenu = strconv.Itoa(indexOfString("mapping", System.WEB.Menu))
+			}
 
 		case "saveUserData":
 			err = saveUserData(request)
