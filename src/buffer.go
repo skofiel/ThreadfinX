@@ -588,6 +588,11 @@ func getBufTmpFiles(stream *ThisStream) (tmpFiles []string) {
 
 		}
 
+		// Prevent unbounded growth of OldSegments for long-running streams
+		if len(stream.OldSegments) > 100 {
+			stream.OldSegments = stream.OldSegments[len(stream.OldSegments)-100:]
+		}
+
 	}
 
 	return
