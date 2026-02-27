@@ -699,19 +699,6 @@ class ShowContent extends Content {
                 var input = this.createInput("button", menuKey, "{{.button.save}}");
                 input.setAttribute("onclick", 'javascript: savePopupData("mapping", "", "")');
                 interaction.appendChild(input);
-                var searchWrap = document.createElement("DIV");
-                searchWrap.className = "search-container";
-                var searchIcon = document.createElement("SPAN");
-                searchIcon.className = "material-symbols-outlined search-icon";
-                searchIcon.textContent = "search";
-                searchWrap.appendChild(searchIcon);
-                var searchInput = this.createInput("search", "search", "");
-                searchInput.setAttribute("id", "searchMapping");
-                searchInput.setAttribute("placeholder", "{{.button.search}}");
-                searchInput.className = "search";
-                searchInput.setAttribute("onchange", "javascript: searchInMapping()");
-                searchWrap.appendChild(searchInput);
-                interaction.appendChild(searchWrap);
                 break;
             case "settings":
                 var input = this.createInput("button", menuKey, "{{.button.backup}}");
@@ -865,9 +852,11 @@ function buildGridPanel(title, headerClass, tableId) {
     var h4 = document.createElement("H4");
     h4.innerText = title;
     panelHeader.appendChild(h4);
-    var status = document.createElement("SPAN");
-    status.className = "grid-status";
-    panelHeader.appendChild(status);
+    if (headerClass === "active-panel" || headerClass === "inactive-panel") {
+        var status = document.createElement("SPAN");
+        status.className = "grid-status";
+        panelHeader.appendChild(status);
+    }
     var controls = document.createElement("DIV");
     controls.className = "grid-controls";
     var clearBtn = document.createElement("BUTTON");
@@ -2078,9 +2067,6 @@ function openPopUp(dataType, element) {
                 var copyBtn = document.createElement("BUTTON");
                 copyBtn.className = "input-group-text copy-btn";
                 copyBtn.setAttribute("data-clipboard-target", "#channel-url-field");
-                copyBtn.setAttribute("data-bs-title", "Copy to clipboard");
-                copyBtn.setAttribute("data-bs-toggle", "tooltip");
-                copyBtn.setAttribute("data-bs-placement", "bottom");
                 copyBtn.innerHTML = "<span class='material-symbols-outlined' style='font-size:18px;'>content_copy</span>";
                 urlContainer.appendChild(copyBtn);
                 content.appendRow("{{.mapping.channelUrl.title}}", urlContainer);

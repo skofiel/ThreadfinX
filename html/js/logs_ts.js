@@ -114,14 +114,14 @@ function showLogs(bottom) {
 
     // Search input
     var searchWrap = document.createElement("DIV");
-    searchWrap.className = "log-search-wrap";
+    searchWrap.className = "search-container";
     var searchIcon = document.createElement("SPAN");
-    searchIcon.className = "material-symbols-outlined log-search-icon";
+    searchIcon.className = "material-symbols-outlined search-icon";
     searchIcon.textContent = "search";
     searchWrap.appendChild(searchIcon);
     var searchInput = document.createElement("INPUT");
     searchInput.type = "text";
-    searchInput.className = "log-search";
+    searchInput.className = "search";
     searchInput.placeholder = "{{.log.search}}";
     searchInput.id = "log-search-input";
     // Restore previous search value

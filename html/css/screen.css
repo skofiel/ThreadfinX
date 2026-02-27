@@ -400,6 +400,8 @@
   padding: var(--space-sm) var(--space-lg);
   background-color: var(--bg-dark);
   border-bottom: 1px solid var(--border);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
 }
 
 #myStreamsBox .stream-panel-header h4 {
@@ -553,6 +555,8 @@ caption {
 
 .grid-panel > table {
   overflow: hidden;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
 }
 
 .grid-panel-header {
@@ -562,6 +566,8 @@ caption {
   padding: var(--space-sm) var(--space-lg);
   background-color: var(--bg-dark);
   border-bottom: 1px solid var(--border);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
   gap: var(--space-md);
   flex-wrap: wrap;
 }
@@ -1113,7 +1119,7 @@ tbody {
   flex-shrink: 0;
 }
 
-.translation-toolbar .log-search-wrap {
+.translation-toolbar .search-container {
   margin-left: auto;
 }
 
@@ -1576,8 +1582,6 @@ tbody {
   background-color: var(--bg-elevated);
   padding: 0 var(--space-sm);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  margin: var(--space-md);
-  float: right;
 }
 
 .search-container:focus-within {
@@ -1602,7 +1606,8 @@ tbody {
   box-shadow: none !important;
   margin: 0 !important;
   padding: 9px 8px !important;
-  width: 180px;
+  min-width: 120px;
+  flex: 1;
   float: none !important;
 }
 
@@ -1643,14 +1648,29 @@ tbody {
   display: flex;
   flex: 1;
   min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-elevated);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.logo-inline-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
 }
 
 .logo-inline-input-wrap input[type=text] {
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  border-right: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
   flex: 1;
   min-width: 0;
+}
+
+.logo-inline-input-wrap input[type=text]:focus {
+  box-shadow: none !important;
 }
 
 .logo-upload-btn {
@@ -1658,11 +1678,9 @@ tbody {
   align-items: center;
   justify-content: center;
   padding: 0 12px;
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-left: none;
-  border-top-right-radius: var(--radius-md);
-  border-bottom-right-radius: var(--radius-md);
+  background-color: transparent;
+  border: none;
+  border-left: 1px solid var(--border-light);
   color: var(--text-secondary);
   cursor: pointer;
   transition: color var(--transition-fast), background-color var(--transition-fast);
