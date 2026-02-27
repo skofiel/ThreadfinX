@@ -16,7 +16,7 @@ class Server {
 
     console.log(data)
     if (this.cmd != "updateLog") {
-      showElement("loading", true)
+      // showElement("loading", true)
       UNDO = new Object()
     }
 
@@ -33,14 +33,6 @@ class Server {
 
     data["cmd"] = this.cmd
     var ws = new WebSocket(url)
-
-    // Timeout fallback: hide loading after 30 seconds if no response
-    var loadingTimeout = setTimeout(function() {
-      showElement("loading", false)
-      SERVER_CONNECTION = false
-      console.log("Request timed out after 30 seconds")
-    }, 30000)
-
     ws.onopen = function () {
 
       WS_AVAILABLE = true
@@ -57,8 +49,6 @@ class Server {
 
     ws.onerror = function (e) {
 
-      clearTimeout(loadingTimeout)
-      showElement("loading", false)
       console.log("No websocket connection to Threadfin could be established. Check your network configuration.")
       SERVER_CONNECTION = false
 
@@ -71,7 +61,6 @@ class Server {
 
     ws.onmessage = function (e) {
 
-      clearTimeout(loadingTimeout)
       SERVER_CONNECTION = false
       showElement("loading", false)
 
@@ -98,12 +87,7 @@ class Server {
       if (response.hasOwnProperty("probeInfo")) {
         if (document.getElementById("probeDetails")) {
           if (response["probeInfo"]["resolution"] !== undefined) {
-            document.getElementById("probeDetails").innerHTML =
-              "<div class='probe-details-card'>" +
-              "<div class='probe-detail-item'><span class='material-symbols-outlined'>aspect_ratio</span><span>Resolution:</span> <span class='probe-detail-value'>" + response["probeInfo"]["resolution"] + "</span></div>" +
-              "<div class='probe-detail-item'><span class='material-symbols-outlined'>speed</span><span>Frame Rate:</span> <span class='probe-detail-value'>" + response["probeInfo"]["frameRate"] + " FPS</span></div>" +
-              "<div class='probe-detail-item'><span class='material-symbols-outlined'>volume_up</span><span>Audio:</span> <span class='probe-detail-value'>" + response["probeInfo"]["audioChannel"] + "</span></div>" +
-              "</div>"
+            document.getElementById("probeDetails").innerHTML = "<p>Resolution: <span class='text-primary'>" + response["probeInfo"]["resolution"] + "</span></p><p>Frame Rate: <span class='text-primary'>" + response["probeInfo"]["frameRate"] + " FPS</span></p><p>Audio: <span class='text-primary'>" + response["probeInfo"]["audioChannel"] + "</span></p>"
           }
         }
       }
@@ -113,11 +97,6 @@ class Server {
         var div = (document.getElementById("channel-icon") as HTMLInputElement)
         div.value = response["logoURL"]
         div.className = "changed"
-        var logoPreview = document.getElementById("logo-preview-img") as HTMLImageElement
-        if (logoPreview) {
-          logoPreview.setAttribute("src", response["logoURL"])
-          logoPreview.style.display = ""
-        }
         return
       }
 
