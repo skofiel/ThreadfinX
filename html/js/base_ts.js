@@ -348,29 +348,10 @@ function changeChannelNumbers(elements) {
 function changeChannelNumber(element) {
     var dbID = element.parentNode.parentNode.id;
     var newNumber = parseFloat(element.value);
-    var channelNumbers = [];
     var data = SERVER["xepg"]["epgMapping"];
-    var channels = getObjKeys(data);
     if (isNaN(newNumber)) {
         alert("{{.alert.invalidChannelNumber}}");
         return;
-    }
-    channels.forEach(id => {
-        var channelNumber = parseFloat(data[id]["x-channelID"]);
-        channelNumbers.push(channelNumber);
-    });
-    for (var i = 0; i < channelNumbers.length; i++) {
-        if (channelNumbers.indexOf(newNumber) === -1) {
-            break;
-        }
-        if (Math.floor(newNumber) === newNumber) {
-            newNumber = newNumber + 1;
-        }
-        else {
-            newNumber = newNumber + 0.1;
-            newNumber.toFixed(1);
-            newNumber = Math.round(newNumber * 10) / 10;
-        }
     }
     data[dbID]["x-channelID"] = newNumber.toString();
     element.value = newNumber;

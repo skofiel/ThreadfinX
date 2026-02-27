@@ -1043,26 +1043,6 @@ function arrangeTable(elm) {
           return;
         }
 
-        for (var j = keys.length - 1; j >= 0; j--) {
-          var channel = xEPG["epgMapping"][keys[j]];
-          if (keys[j] != x_channelID) {
-            if (newPosition == channel["x-channelID"]) { // If position exist, set next free position.
-              newPosition++;
-              elm.value = newPosition;
-              arrangeTable(elm);
-              return;
-              /*
-              var newError = new Object();
-              newError["err"] = "Duplicate ID";
-              checkErr(newError);
-              sortTable();
-              mappingError = true;
-              document.getElementById(x_channelID).getElementsByTagName("INPUT")[0].focus();
-              return;
-              */
-            }
-          }
-        }
 
       }
 
