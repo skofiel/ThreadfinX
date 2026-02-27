@@ -4,7 +4,7 @@ class WizardCategory {
     }
     createCategoryHeadline(value) {
         var element = document.createElement("H4");
-        element.textContent = value;
+        element.innerHTML = value;
         return element;
     }
 }
@@ -20,7 +20,7 @@ class WizardItem extends WizardCategory {
         var content = new PopupContent();
         var description;
         var doc = document.getElementById(this.DocumentID);
-        doc.textContent = "";
+        doc.innerHTML = "";
         doc.appendChild(headline);
         switch (key) {
             case "tuner":
@@ -62,11 +62,13 @@ class WizardItem extends WizardCategory {
                 description = "{{.wizard.xmltv.description}}";
                 break;
             default:
+                console.log(key);
                 break;
         }
         var pre = document.createElement("PRE");
-        pre.textContent = description;
+        pre.innerHTML = description;
         doc.appendChild(pre);
+        console.log(headline, key);
     }
 }
 function readyForConfiguration(wizard) {
@@ -87,6 +89,7 @@ function saveWizard() {
             case "SELECT":
                 name = config[i].name;
                 value = config[i].value;
+                // Wenn der Wert eine Zahl ist, wird dieser als Zahl gespeichert
                 if (isNaN(value)) {
                     wizard[name] = value;
                 }
@@ -99,7 +102,7 @@ function saveWizard() {
                     case "text":
                         name = config[i].name;
                         value = config[i].value;
-                        if (value.length === 0) {
+                        if (value.length == 0) {
                             var msg = name.toUpperCase() + ": " + "{{.alert.missingInput}}";
                             alert(msg);
                             return;
@@ -109,6 +112,7 @@ function saveWizard() {
                 }
                 break;
             default:
+                // code...
                 break;
         }
     }
@@ -116,6 +120,7 @@ function saveWizard() {
     data["wizard"] = wizard;
     var server = new Server(cmd);
     server.request(data);
+    console.log(data);
 }
 // Wizard
 var configurationWizard = new Array();

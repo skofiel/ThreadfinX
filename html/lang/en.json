@@ -348,7 +348,7 @@
     },
     "xmltvChannel": {
       "title": "XMLTV Channel",
-      "placeholder": "",
+      "placeholder": "Search XMLTV channel...",
       "description": ""
     },
     "ppvextra": {
@@ -358,17 +358,17 @@
     },
     "backupChannel1": {
       "title": "Backup Channel 1",
-      "placeholder": "",
+      "placeholder": "Search backup channel...",
       "description": ""
     },
     "backupChannel2": {
       "title": "Backup Channel 2",
-      "placeholder": "",
+      "placeholder": "Search backup channel...",
       "description": ""
     },
     "backupChannel3": {
       "title": "Backup Channel 3",
-      "placeholder": "",
+      "placeholder": "Search backup channel...",
       "description": ""
     },
     "hideChannel": {
