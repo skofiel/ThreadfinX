@@ -288,47 +288,23 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* --- Search Input (mapping) --- */
-.mapping-search-wrap {
-  display: flex;
-  align-items: center;
-  background: var(--bg-elevated);
+/* --- Search Input --- */
+#content-interaction .search {
+  width: 200px;
   border: 1px solid var(--border);
+  padding: 9px 12px;
+  background-color: var(--bg-elevated);
+  margin: var(--space-md);
+  float: right;
   border-radius: var(--radius-md);
-  padding: 0 10px;
-  margin-left: auto;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.mapping-search-wrap:focus-within {
+#content-interaction .search:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-subtle);
-}
-
-.mapping-search-icon {
-  font-size: 22px;
-  color: var(--text-tertiary);
-  margin-right: 6px;
-  flex-shrink: 0;
-}
-
-.mapping-search-input {
-  background: transparent;
-  border: none !important;
-  color: var(--text-primary);
-  font-size: var(--font-size-base);
-  padding: 8px 4px;
-  width: 200px;
-  outline: none;
-  box-shadow: none !important;
-}
-
-.mapping-search-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.mapping-search-input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
 }
 
 /* --- Stream Panels --- */
@@ -1301,43 +1277,17 @@ tbody {
 }
 
 /* Copy-to-clipboard button integrated into input */
-.input-group {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  display: flex;
-  align-items: stretch;
-}
-
-.input-group .form-control {
-  border: none;
-  border-radius: 0;
-  box-shadow: none !important;
-}
-
-.input-group .form-control:focus {
-  border: none;
-  box-shadow: none !important;
-}
-
-.input-group:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-subtle);
-}
-
 .input-group .copy-btn.input-group-text {
   background-color: var(--bg-elevated);
-  border: none;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--border-light);
   color: var(--text-tertiary);
   padding: 0 10px;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
 }
 
 .input-group .copy-btn.input-group-text:hover {
-  background-color: var(--bg-card);
+  background-color: var(--bg-elevated);
   color: var(--accent);
 }
 
@@ -1506,7 +1456,6 @@ tbody {
   border-bottom: 1px solid var(--border);
   margin: 0;
   padding: var(--space-xs) var(--space-lg);
-  margin-bottom: var(--space-md);
   display: flex;
   align-items: center;
   justify-content: flex-end;

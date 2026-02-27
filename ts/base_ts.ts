@@ -28,9 +28,8 @@ var popupModal = new bootstrap.Modal(document.getElementById("popup"), {
 })
 
 var loadingModal = new bootstrap.Modal(document.getElementById("loading"), {
-  keyboard: false,
-  focus: false,
-  backdrop: "static"
+  keyboard: true,
+  focus: true
 })
 
 // Menü

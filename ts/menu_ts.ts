@@ -902,21 +902,12 @@ class ShowContent extends Content {
         input.setAttribute("onclick", 'javascript: bulkEdit()')
         interaction.appendChild(input)
 
-        var searchWrap = document.createElement("DIV")
-        searchWrap.className = "mapping-search-wrap"
-
-        var searchIcon = document.createElement("SPAN")
-        searchIcon.className = "material-symbols-outlined mapping-search-icon"
-        searchIcon.textContent = "search"
-        searchWrap.appendChild(searchIcon)
-
         var input = this.createInput("search", "search", "")
         input.setAttribute("id", "searchMapping")
         input.setAttribute("placeholder", "{{.button.search}}")
-        input.className = "mapping-search-input"
+        input.className = "search"
         input.setAttribute("onchange", 'javascript: searchInMapping()')
-        searchWrap.appendChild(input)
-        interaction.appendChild(searchWrap)
+        interaction.appendChild(input)
         break;
 
       case "settings":
@@ -1999,36 +1990,40 @@ function openPopUp(dataType, element) {
         input.setAttribute("readonly", "true")
       }
       content.appendRow("{{.mapping.channelName.title}}", input)
+      content.description("<span class='text-danger'>" + data["tvg-id"] + "</span> <span class='text-primary'>(" + data["x-epg"] + ")</span>")
 
-      // Logo (inline: preview + upload button)
-      var dbKey: string = "tvg-logo"
-      var hiddenLogoInput = content.createInput("hidden", dbKey, data[dbKey])
-      hiddenLogoInput.setAttribute("id", "channel-icon")
-      hiddenLogoInput.setAttribute("onchange", "javascript: this.className = 'changed'")
+      // Beschreibung 
+      var dbKey: string = "x-description"
+      var input = content.createInput("text", dbKey, data[dbKey])
+      input.setAttribute("placeholder", "{{.mapping.description.placeholder}}")
+      input.setAttribute("onchange", "javascript: this.className = 'changed'")
+      content.appendRow("{{.mapping.description.title}}", input)
 
-      var logoContainer = document.createElement("DIV")
-      logoContainer.className = "logo-inline-container"
-
-      var logoPreview = document.createElement("IMG")
-      logoPreview.className = "logo-inline-preview"
-      logoPreview.setAttribute("id", "logo-preview-img")
-      if (data[dbKey] && data[dbKey] !== "") {
-        logoPreview.setAttribute("src", data[dbKey])
-        logoPreview.setAttribute("onerror", "javascript: this.style.display='none'")
-      } else {
-        logoPreview.style.display = "none"
+      // Aktualisierung des Kanalnamens
+      if (data.hasOwnProperty("_uuid.key")) {
+        if (data["_uuid.key"] != "") {
+          var dbKey: string = "x-update-channel-name"
+          var input = content.createCheckbox(dbKey)
+          input.setAttribute("onchange", "javascript: this.className = 'changed'")
+          input.checked = data[dbKey]
+          content.appendRow("{{.mapping.updateChannelName.title}}", input)
+        }
       }
-      logoContainer.appendChild(logoPreview)
 
-      var uploadBtn = document.createElement("INPUT")
-      uploadBtn.setAttribute("type", "button")
-      uploadBtn.setAttribute("value", "{{.button.uploadLogo}}")
-      uploadBtn.setAttribute("onclick", "javascript: uploadLogo();")
-      uploadBtn.className = "logo-inline-upload-btn"
-      logoContainer.appendChild(uploadBtn)
+      // Logo URL (Kanal) 
+      var dbKey: string = "tvg-logo"
+      var input = content.createInput("text", dbKey, data[dbKey])
+      input.setAttribute("onchange", "javascript: this.className = 'changed'")
+      input.setAttribute("id", "channel-icon")
+      content.appendRow("{{.mapping.channelLogo.title}}", input)
 
-      logoContainer.appendChild(hiddenLogoInput)
-      content.appendRow("{{.mapping.channelLogo.title}}", logoContainer)
+      // Aktualisierung des Kanallogos
+      var dbKey: string = "x-update-channel-icon"
+      var input = content.createCheckbox(dbKey)
+      input.checked = data[dbKey]
+      input.setAttribute("id", "update-icon")
+      input.setAttribute("onchange", "javascript: this.className = 'changed'; changeChannelLogo('" + id + "');")
+      content.appendRow("{{.mapping.updateChannelLogo.title}}", input)
 
       // Erweitern der EPG Kategorie
       var dbKey: string = "x-category"
@@ -2049,6 +2044,16 @@ function openPopUp(dataType, element) {
       var select = content.createSelect(text, values, data[dbKey], dbKey)
       select.setAttribute("onchange", "javascript: this.className = 'changed'")
       content.appendRow("{{.mapping.epgCategory.title}}", select)
+
+      // M3U Gruppentitel
+      var dbKey: string = "x-group-title"
+      var input = content.createInput("text", dbKey, data[dbKey])
+      input.setAttribute("onchange", "javascript: this.className = 'changed'")
+      content.appendRow("{{.mapping.m3uGroupTitle.title}}", input)
+
+      if (data["group-title"] != undefined) {
+        content.description(data["group-title"])
+      }
 
       // XMLTV Datei
       var dbKey: string = "x-xmltv-file"
@@ -2087,7 +2092,7 @@ function openPopUp(dataType, element) {
       var dbKey: string = "x-backup-channel-1"
       var xmltv: XMLTVFile = new XMLTVFile()
       const backup1XmlTvId: string = data[dbKey];
-      const [xmlTvBackup1IdContainer, xmlTvBackup1IdInput, xmlTvBackup1IdDatalist] = xmltv.newM3uPicker(xmlFile, backup1XmlTvId, "{{.mapping.backupChannel1.placeholder}}");
+      const [xmlTvBackup1IdContainer, xmlTvBackup1IdInput, xmlTvBackup1IdDatalist] = xmltv.newM3uPicker(xmlFile, backup1XmlTvId);
       xmlTvBackup1IdContainer.setAttribute('id', 'm3u-id-picker-container-1');
       xmlTvBackup1IdInput.setAttribute('list', 'm3u-id-picker-datalist');
       xmlTvBackup1IdInput.setAttribute('name', dbKey); // Should stay x-mapping as it will be used in donePopupData to make a server request
@@ -2100,7 +2105,7 @@ function openPopUp(dataType, element) {
       var dbKey: string = "x-backup-channel-2"
       var xmltv: XMLTVFile = new XMLTVFile()
       const backup2XmlTvId: string = data[dbKey];
-      const [xmlTvBackup2IdContainer, xmlTvBackup2IdInput, xmlTvBackup2IdDatalist] = xmltv.newM3uPicker(xmlFile, backup2XmlTvId, "{{.mapping.backupChannel2.placeholder}}");
+      const [xmlTvBackup2IdContainer, xmlTvBackup2IdInput, xmlTvBackup2IdDatalist] = xmltv.newM3uPicker(xmlFile, backup2XmlTvId);
       xmlTvBackup2IdContainer.setAttribute('id', 'xmltv-id-picker-container-2');
       xmlTvBackup2IdInput.setAttribute('list', 'm3u-id-picker-datalist');
       xmlTvBackup2IdInput.setAttribute('name', dbKey); // Should stay x-mapping as it will be used in donePopupData to make a server request
@@ -2112,7 +2117,7 @@ function openPopUp(dataType, element) {
       var dbKey: string = "x-backup-channel-3"
       var xmltv: XMLTVFile = new XMLTVFile()
       const backup3XmlTvId: string = data[dbKey];
-      const [xmlTvBackup3IdContainer, xmlTvBackup3IdInput, xmlTvBackup3IdDatalist] = xmltv.newM3uPicker(xmlFile, backup3XmlTvId, "{{.mapping.backupChannel3.placeholder}}");
+      const [xmlTvBackup3IdContainer, xmlTvBackup3IdInput, xmlTvBackup3IdDatalist] = xmltv.newM3uPicker(xmlFile, backup3XmlTvId);
       xmlTvBackup3IdContainer.setAttribute('id', 'xmltv-id-picker-container-3');
       xmlTvBackup3IdInput.setAttribute('list', 'm3u-id-picker-datalist');
       xmlTvBackup3IdInput.setAttribute('name', dbKey); // Should stay x-mapping as it will be used in donePopupData to make a server request
@@ -2126,6 +2131,11 @@ function openPopUp(dataType, element) {
 
       var input = content.createInput("button", "cancel", "{{.button.probeChannel}}")
       input.setAttribute("onclick", 'javascript: probeChannel("' + data["url"] + '");')
+      content.addInteraction(input)
+
+      // Logo hochladen
+      var input = content.createInput("button", "cancel", "{{.button.uploadLogo}}")
+      input.setAttribute("onclick", 'javascript: uploadLogo();')
       content.addInteraction(input)
 
       // Abbrechen
@@ -2205,17 +2215,8 @@ class XMLTVFile {
    */
   newXmlTvIdPicker(xmlTvFile: string, currentXmlTvId: string): [HTMLDivElement, HTMLInputElement, HTMLDataListElement] {
     const container = document.createElement('div');
-    container.className = 'picker-search-wrap';
-
-    const searchIcon = document.createElement('span');
-    searchIcon.className = 'material-symbols-outlined picker-search-icon';
-    searchIcon.textContent = 'search';
-    container.appendChild(searchIcon);
-
     const input = document.createElement('input');
     input.setAttribute('type', 'text');
-    input.className = 'picker-search-input';
-    input.setAttribute('placeholder', '{{.mapping.xmltvChannel.placeholder}}');
 
     // Initially, set value to '-' if input is empty
     input.value = (currentXmlTvId) ? currentXmlTvId : '-';
@@ -2250,11 +2251,17 @@ class XMLTVFile {
 
       programIds.forEach((programId) => {
         const program: Object = epg[programId];
-        const displayName = program.hasOwnProperty('display-name') ? program["display-name"] : programId;
-        const option = document.createElement('option');
-        option.setAttribute('value', programId);
-        option.innerText = displayName + ' (' + programId + ')';
-        datalist.appendChild(option);
+        if (program.hasOwnProperty('display-name')) {
+            const option = document.createElement('option');
+            option.setAttribute('value', programId);
+            option.innerText = program["display-name"];
+            datalist.appendChild(option);
+        } else {
+          const option = document.createElement('option');
+          option.setAttribute('value', programId);
+          option.innerText = '-';
+          datalist.appendChild(option);
+        }
       });
     }
 
@@ -2263,21 +2270,10 @@ class XMLTVFile {
     return [container, input, datalist];
   }
 
-  newM3uPicker(xmlTvFile: string, currentXmlTvId: string, placeholder?: string): [HTMLDivElement, HTMLInputElement, HTMLDataListElement] {
+  newM3uPicker(xmlTvFile: string, currentXmlTvId: string): [HTMLDivElement, HTMLInputElement, HTMLDataListElement] {
     const container = document.createElement('div');
-    container.className = 'picker-search-wrap';
-
-    const searchIcon = document.createElement('span');
-    searchIcon.className = 'material-symbols-outlined picker-search-icon';
-    searchIcon.textContent = 'search';
-    container.appendChild(searchIcon);
-
     const input = document.createElement('input');
     input.setAttribute('type', 'text');
-    input.className = 'picker-search-input';
-    if (placeholder) {
-      input.setAttribute('placeholder', placeholder);
-    }
 
     // Initially, set value to '-' if input is empty
     input.value = (currentXmlTvId) ? currentXmlTvId : '-';
@@ -2312,11 +2308,17 @@ class XMLTVFile {
 
       programIds.forEach((programId) => {
         const chanel: Object = m3u[programId];
-        const channelName = chanel.hasOwnProperty('tvg-name') ? chanel["tvg-name"] : '-';
-        const option = document.createElement('option');
-        option.setAttribute('value', channelName);
-        option.innerText = channelName;
-        datalist.appendChild(option);
+        if (chanel.hasOwnProperty('tvg-name')) {
+            const option = document.createElement('option');
+            option.setAttribute('value', chanel["tvg-name"]);
+            option.innerText = programId;
+            datalist.appendChild(option);
+        } else {
+          const option = document.createElement('option');
+          option.setAttribute('value', chanel["tvg-name"]);
+          option.innerText = '-';
+          datalist.appendChild(option);
+        }
       });
     }
 

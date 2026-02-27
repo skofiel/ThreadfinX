@@ -19,7 +19,7 @@ class SettingsCategory {
             // Texteingaben
             case "update":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.update.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.update.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "update", data.toString());
                 input.setAttribute("placeholder", "{{.settings.update.placeholder}}");
@@ -30,7 +30,7 @@ class SettingsCategory {
                 break;
             case "backup.path":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.backupPath.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.backupPath.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "backup.path", data);
                 input.setAttribute("placeholder", "{{.settings.backupPath.placeholder}}");
@@ -41,7 +41,7 @@ class SettingsCategory {
                 break;
             case "temp.path":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.tempPath.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.tempPath.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "temp.path", data);
                 input.setAttribute("placeholder", "{{.settings.tmpPath.placeholder}}");
@@ -52,7 +52,7 @@ class SettingsCategory {
                 break;
             case "user.agent":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.userAgent.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.userAgent.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "user.agent", data);
                 input.setAttribute("placeholder", "{{.settings.userAgent.placeholder}}");
@@ -63,7 +63,7 @@ class SettingsCategory {
                 break;
             case "buffer.timeout":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.bufferTimeout.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.bufferTimeout.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "buffer.timeout", data);
                 input.setAttribute("placeholder", "{{.settings.bufferTimeout.placeholder}}");
@@ -74,7 +74,7 @@ class SettingsCategory {
                 break;
             case "ffmpeg.path":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.ffmpegPath.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.ffmpegPath.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "ffmpeg.path", data);
                 input.setAttribute("placeholder", "{{.settings.ffmpegPath.placeholder}}");
@@ -85,7 +85,7 @@ class SettingsCategory {
                 break;
             case "ffmpeg.options":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.ffmpegOptions.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.ffmpegOptions.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "ffmpeg.options", data);
                 input.setAttribute("placeholder", "{{.settings.ffmpegOptions.placeholder}}");
@@ -96,7 +96,7 @@ class SettingsCategory {
                 break;
             case "ffmpeg.forceHttp":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.ffmpegForceHttp.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.ffmpegForceHttp.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -107,7 +107,7 @@ class SettingsCategory {
                 break;
             case "vlc.path":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.vlcPath.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.vlcPath.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "vlc.path", data);
                 input.setAttribute("placeholder", "{{.settings.vlcPath.placeholder}}");
@@ -118,7 +118,7 @@ class SettingsCategory {
                 break;
             case "vlc.options":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.vlcOptions.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.vlcOptions.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "vlc.options", data);
                 input.setAttribute("placeholder", "{{.settings.vlcOptions.placeholder}}");
@@ -130,7 +130,7 @@ class SettingsCategory {
             // Checkboxen
             case "authentication.web":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.authenticationWEB.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.authenticationWEB.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -141,7 +141,7 @@ class SettingsCategory {
                 break;
             case "authentication.pms":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.authenticationPMS.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.authenticationPMS.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -152,7 +152,7 @@ class SettingsCategory {
                 break;
             case "authentication.m3u":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.authenticationM3U.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.authenticationM3U.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -163,7 +163,7 @@ class SettingsCategory {
                 break;
             case "authentication.xml":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.authenticationXML.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.authenticationXML.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -174,7 +174,7 @@ class SettingsCategory {
                 break;
             case "authentication.api":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.authenticationAPI.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.authenticationAPI.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -185,7 +185,7 @@ class SettingsCategory {
                 break;
             case "files.update":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.filesUpdate.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.filesUpdate.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -196,7 +196,7 @@ class SettingsCategory {
                 break;
             case "cache.images":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.cacheImages.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.cacheImages.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -207,7 +207,7 @@ class SettingsCategory {
                 break;
             case "xepg.replace.missing.images":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.replaceEmptyImages.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.replaceEmptyImages.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -218,7 +218,7 @@ class SettingsCategory {
                 break;
             case "xepg.replace.channel.title":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.replaceChannelTitle.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.replaceChannelTitle.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -229,7 +229,7 @@ class SettingsCategory {
                 break;
             case "storeBufferInRAM":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.storeBufferInRAM.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.storeBufferInRAM.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -240,7 +240,7 @@ class SettingsCategory {
                 break;
             case "forceHttps":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.forceHttps.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.forceHttps.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -251,7 +251,7 @@ class SettingsCategory {
                 break;
             case "excludeStreamHttps":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.excludeStreamHttps.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.excludeStreamHttps.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -262,7 +262,7 @@ class SettingsCategory {
                 break;
             case "httpsPort":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.httpsPort.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.httpsPort.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "httpsPort", data.toString());
                 input.setAttribute("placeholder", "{{.settings.httpsPort.placeholder}}");
@@ -273,7 +273,7 @@ class SettingsCategory {
                 break;
             case "httpsThreadfinDomain":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.httpsThreadfinDomain.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.httpsThreadfinDomain.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "httpsThreadfinDomain", data.toString());
                 input.setAttribute("placeholder", "{{.settings.httpsThreadfinDomain.placeholder}}");
@@ -284,7 +284,7 @@ class SettingsCategory {
                 break;
             case "bindIpAddress":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.bindIpAddress.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.bindIpAddress.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "bindIpAddress", data.toString());
                 input.setAttribute("placeholder", "{{.settings.bindIpAddress.placeholder}}");
@@ -295,7 +295,7 @@ class SettingsCategory {
                 break;
             case "httpThreadfinDomain":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.httpThreadfinDomain.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.httpThreadfinDomain.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "httpThreadfinDomain", data.toString());
                 input.setAttribute("placeholder", "{{.settings.httpThreadfinDomain.placeholder}}");
@@ -306,7 +306,7 @@ class SettingsCategory {
                 break;
             case "enableNonAscii":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.enableNonAscii.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.enableNonAscii.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -317,7 +317,7 @@ class SettingsCategory {
                 break;
             case "epgCategories":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.epgCategories.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.epgCategories.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "epgCategories", data.toString());
                 input.setAttribute("placeholder", "{{.settings.epgCategories.placeholder}}");
@@ -328,7 +328,7 @@ class SettingsCategory {
                 break;
             case "epgCategoriesColors":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.epgCategoriesColors.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.epgCategoriesColors.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "epgCategoriesColors", data.toString());
                 input.setAttribute("placeholder", "{{.settings.epgCategoriesColors.placeholder}}");
@@ -337,9 +337,84 @@ class SettingsCategory {
                 setting.appendChild(tdLeft);
                 setting.appendChild(tdRight);
                 break;
+            case "language":
+                var tdLeft = document.createElement("TD");
+                tdLeft.innerHTML = "{{.settings.language.title}}" + ": ";
+                var tdRight = document.createElement("TD");
+                var langWrapper = document.createElement("DIV");
+                langWrapper.style.display = "flex";
+                langWrapper.style.alignItems = "center";
+                langWrapper.style.gap = "var(--space-sm)";
+                // Build language options dynamically from available languages
+                var availLangs = (SERVER["availableLangs"] && SERVER["availableLangs"].length > 0) ? SERVER["availableLangs"] : ["en"];
+                var text = [];
+                var values = [];
+                availLangs.forEach(function(code) {
+                    text.push(getLangDisplayName(code));
+                    values.push(code);
+                });
+                var select = content.createSelect(text, values, data, settingsKey);
+                select.setAttribute("id", "settings-language-select");
+                select.setAttribute("onchange", "javascript: this.className = 'changed'");
+                select.style.flex = "1";
+                langWrapper.appendChild(select);
+                // Edit translations button
+                var editBtn = document.createElement("BUTTON");
+                editBtn.className = "header-icon-btn";
+                editBtn.setAttribute("title", "{{.settings.translationEditor.editTranslations}}");
+                editBtn.setAttribute("data-bs-toggle", "modal");
+                editBtn.setAttribute("data-bs-target", "#translation_editor");
+                editBtn.setAttribute("onclick", "javascript: openTranslationEditor()");
+                editBtn.innerHTML = "<span class='material-symbols-outlined' style='font-size:18px;'>edit</span>";
+                langWrapper.appendChild(editBtn);
+                // Add language button
+                var addBtn = document.createElement("BUTTON");
+                addBtn.className = "header-icon-btn";
+                addBtn.setAttribute("title", "{{.settings.translationEditor.addLanguage}}");
+                addBtn.setAttribute("onclick", "javascript: addNewLanguage()");
+                addBtn.innerHTML = "<span class='material-symbols-outlined' style='font-size:18px;'>add</span>";
+                langWrapper.appendChild(addBtn);
+                tdRight.appendChild(langWrapper);
+                setting.appendChild(tdLeft);
+                setting.appendChild(tdRight);
+                break;
+            case "accentColor":
+                var tdLeft = document.createElement("TD");
+                tdLeft.innerHTML = "{{.settings.accentColor.title}}" + ": ";
+                var tdRight = document.createElement("TD");
+                var colorWrapper = document.createElement("DIV");
+                colorWrapper.className = "accent-color-picker";
+                var colorInput = document.createElement("INPUT");
+                colorInput.setAttribute("type", "color");
+                colorInput.setAttribute("name", "accentColor_picker");
+                colorInput.setAttribute("value", data.toString() || "#d46c4a");
+                colorInput.className = "color-wheel";
+                colorInput.setAttribute("oninput", "javascript: var hex=document.getElementsByName('accentColor')[0]; hex.value=this.value; hex.className='changed'; this.className='color-wheel changed'; document.documentElement.style.setProperty('--accent', this.value);");
+                colorWrapper.appendChild(colorInput);
+                var hexInput = content.createInput("text", "accentColor", data.toString());
+                hexInput.setAttribute("placeholder", "{{.settings.accentColor.placeholder}}");
+                hexInput.setAttribute("oninput", "javascript: this.className = 'hex-input changed'; var picker=document.getElementsByName('accentColor_picker')[0]; if(this.value.match(/^#[0-9a-fA-F]{6}$/)){picker.value=this.value; document.documentElement.style.setProperty('--accent', this.value);}");
+                hexInput.className = "hex-input";
+                colorWrapper.appendChild(hexInput);
+                tdRight.appendChild(colorWrapper);
+                setting.appendChild(tdLeft);
+                setting.appendChild(tdRight);
+                break;
+            case "fontSize":
+                var tdLeft = document.createElement("TD");
+                tdLeft.innerHTML = "{{.settings.fontSize.title}}" + ": ";
+                var tdRight = document.createElement("TD");
+                var text = ["12px", "13px", "14px", "15px", "16px", "17px", "18px"];
+                var values = ["12px", "13px", "14px", "15px", "16px", "17px", "18px"];
+                var select = content.createSelect(text, values, data || "14px", settingsKey);
+                select.setAttribute("onchange", "javascript: this.className = 'changed'; document.documentElement.style.setProperty('--font-size-base', this.value);");
+                tdRight.appendChild(select);
+                setting.appendChild(tdLeft);
+                setting.appendChild(tdRight);
+                break;
             case "ThreadfinAutoUpdate":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.ThreadfinAutoUpdate.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.ThreadfinAutoUpdate.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -350,7 +425,7 @@ class SettingsCategory {
                 break;
             case "ssdp":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.ssdp.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.ssdp.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -361,7 +436,7 @@ class SettingsCategory {
                 break;
             case "dummy":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.dummy.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.dummy.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -372,7 +447,7 @@ class SettingsCategory {
                 break;
             case "dummyChannel":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.dummyChannel.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.dummyChannel.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var text = ["PPV", "30 Minutes", "60 Minutes", "90 Minutes", "120 Minutes", "180 Minutes", "240 Minutes", "360 Minutes"];
                 var values = ["PPV", "30_Minutes", "60_Minutes", "90_Minutes", "120_Minutes", "180_Minutes", "240_Minutes", "360_Minutes"];
@@ -384,7 +459,7 @@ class SettingsCategory {
                 break;
             case "ignoreFilters":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.ignoreFilters.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.ignoreFilters.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -395,7 +470,7 @@ class SettingsCategory {
                 break;
             case "api":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.api.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.api.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createCheckbox(settingsKey);
                 input.checked = data;
@@ -407,7 +482,7 @@ class SettingsCategory {
             // Select
             case "tuner":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.tuner.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.tuner.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var text = new Array();
                 var values = new Array();
@@ -423,7 +498,7 @@ class SettingsCategory {
                 break;
             case "epgSource":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.epgSource.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.epgSource.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var text = ["PMS", "XEPG"];
                 var values = ["PMS", "XEPG"];
@@ -435,7 +510,7 @@ class SettingsCategory {
                 break;
             case "backup.keep":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.backupKeep.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.backupKeep.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var text = ["5", "10", "20", "30", "40", "50"];
                 var values = ["5", "10", "20", "30", "40", "50"];
@@ -447,7 +522,7 @@ class SettingsCategory {
                 break;
             case "buffer.size.kb":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.bufferSize.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.bufferSize.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var text = ["0.5 MB", "1 MB", "2 MB", "3 MB", "4 MB", "5 MB", "6 MB", "7 MB", "8 MB"];
                 var values = ["512", "1024", "2048", "3072", "4096", "5120", "6144", "7168", "8192"];
@@ -459,7 +534,7 @@ class SettingsCategory {
                 break;
             case "buffer":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.streamBuffering.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.streamBuffering.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var text = ["{{.settings.streamBuffering.info_false}}", "FFmpeg: ({{.settings.streamBuffering.info_ffmpeg}})", "VLC: ({{.settings.streamBuffering.info_vlc}})"];
                 var values = ["-", "ffmpeg", "vlc"];
@@ -471,7 +546,7 @@ class SettingsCategory {
                 break;
             case "udpxy":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.udpxy.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.udpxy.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var input = content.createInput("text", "udpxy", data);
                 input.setAttribute("placeholder", "{{.settings.udpxy.placeholder}}");
@@ -482,7 +557,7 @@ class SettingsCategory {
                 break;
             case "debugLevel":
                 var tdLeft = document.createElement("TD");
-                tdLeft.innerHTML = "{{.settings.debugLevel.title}}" + ":";
+                tdLeft.innerHTML = "{{.settings.debugLevel.title}}" + ": ";
                 var tdRight = document.createElement("TD");
                 var text = ["{{.settings.debugLevel.off}}", "{{.settings.debugLevel.level1}}", "{{.settings.debugLevel.level2}}", "{{.settings.debugLevel.level3}}"];
                 var values = ["0", "1", "2", "3"];
@@ -563,6 +638,15 @@ class SettingsCategory {
                 break;
             case "epgCategoriesColors":
                 text = "{{.settings.epgCategoriesColors.description}}";
+                break;
+            case "accentColor":
+                text = "{{.settings.accentColor.description}}";
+                break;
+            case "fontSize":
+                text = "{{.settings.fontSize.description}}";
+                break;
+            case "language":
+                text = "{{.settings.language.description}}";
                 break;
             case "buffer.timeout":
                 text = "{{.settings.bufferTimeout.description}}";
@@ -701,15 +785,18 @@ function saveSettings() {
                                 break;
                             case "buffer.timeout":
                                 value = parseFloat(value);
+                                break;
                         }
                         newSettings[name] = value;
+                        break;
+                    case "color":
+                        // Skip color picker inputs (we use the text hex input)
                         break;
                 }
                 break;
             case "SELECT":
                 name = settings[i].name;
                 value = settings[i].value;
-                // Wenn der Wert eine Zahl ist, wird dieser als Zahl gespeichert
                 if (isNaN(value)) {
                     newSettings[name] = value;
                 }
@@ -719,8 +806,257 @@ function saveSettings() {
                 break;
         }
     }
+    if (Object.keys(newSettings).length === 0) {
+        showSaveConfirmation("{{.settings.noChanges}}");
+        return;
+    }
     var data = new Object();
     data["settings"] = newSettings;
     var server = new Server(cmd);
+    server.request(data);
+    // Show success toast
+    showSaveConfirmation();
+}
+function showSaveConfirmation(message) {
+    var existing = document.getElementById("save-toast");
+    if (existing) existing.remove();
+    var toast = document.createElement("DIV");
+    toast.id = "save-toast";
+    toast.className = message ? "save-toast save-toast-info" : "save-toast";
+    toast.innerHTML = message || "{{.settings.savedSuccess}}";
+    document.body.appendChild(toast);
+    // Trigger animation
+    setTimeout(function() { toast.classList.add("show"); }, 10);
+    setTimeout(function() {
+        toast.classList.remove("show");
+        setTimeout(function() { toast.remove(); }, 300);
+    }, 3000);
+}
+
+// --- Translation Editor ---
+var TRANSLATION_DATA = {};
+var CURRENT_TRANSLATION_LANG = "";
+
+// Language display name mapping
+var LANG_NAMES = {
+    "en": "English", "es": "Español", "fr": "Français", "de": "Deutsch",
+    "it": "Italiano", "pt": "Português", "nl": "Nederlands", "ru": "Русский",
+    "ja": "日本語", "zh": "中文", "ko": "한국어", "ar": "العربية",
+    "pl": "Polski", "sv": "Svenska", "da": "Dansk", "fi": "Suomi",
+    "no": "Norsk", "tr": "Türkçe", "ca": "Català", "eu": "Euskara",
+    "gl": "Galego", "cs": "Čeština", "hu": "Magyar", "ro": "Română",
+    "uk": "Українська", "el": "Ελληνικά", "he": "עברית", "th": "ไทย",
+    "vi": "Tiếng Việt", "id": "Bahasa Indonesia", "ms": "Bahasa Melayu",
+    "hi": "हिन्दी", "bn": "বাংলা", "hr": "Hrvatski", "sk": "Slovenčina",
+    "sl": "Slovenščina", "bg": "Български", "sr": "Српски", "lt": "Lietuvių",
+    "lv": "Latviešu", "et": "Eesti"
+};
+
+function getLangDisplayName(code) {
+    if (!code) return "";
+    return LANG_NAMES[code.toLowerCase()] || code.toUpperCase();
+}
+
+function openTranslationEditor() {
+    var cmd = "getTranslations";
+    var server = new Server(cmd);
+    server.request({});
+}
+
+function handleTranslationResponse(response) {
+    if (response.translations) {
+        TRANSLATION_DATA = response.translations;
+    }
+    if (response.availableLangs) {
+        // Update the global available langs
+        SERVER["availableLangs"] = response.availableLangs;
+
+        // Update the translation editor dropdown
+        var select = document.getElementById("translation-lang-select");
+        if (select) {
+            select.innerHTML = "";
+            response.availableLangs.forEach(function(lang) {
+                var option = document.createElement("OPTION");
+                option.value = lang;
+                option.innerText = getLangDisplayName(lang);
+                select.appendChild(option);
+            });
+            // Default to current language
+            if (SERVER["settings"] && SERVER["settings"]["language"]) {
+                select.value = SERVER["settings"]["language"];
+            }
+            CURRENT_TRANSLATION_LANG = select.value;
+            renderTranslationTable(select.value);
+            // Update delete button state
+            updateDeleteLangButton();
+        }
+
+        // Also update the settings language dropdown
+        updateSettingsLangDropdown(response.availableLangs);
+    }
+}
+
+function updateSettingsLangDropdown(availLangs) {
+    var select = document.getElementById("settings-language-select");
+    if (!select) return;
+    var currentValue = select.value;
+    select.innerHTML = "";
+    availLangs.forEach(function(code) {
+        var option = document.createElement("OPTION");
+        option.value = code;
+        option.innerText = getLangDisplayName(code);
+        select.appendChild(option);
+    });
+    // Restore previous selection if it still exists, otherwise fall back to "en"
+    if (availLangs.indexOf(currentValue) !== -1) {
+        select.value = currentValue;
+    } else {
+        select.value = "en";
+        select.className = "changed";
+    }
+}
+
+function updateDeleteLangButton() {
+    var btn = document.getElementById("translation-delete-btn");
+    if (!btn) return;
+    // Disable delete for "en" and built-in languages that have no override
+    btn.disabled = (!CURRENT_TRANSLATION_LANG || CURRENT_TRANSLATION_LANG === "en");
+}
+
+function deleteLanguageFile() {
+    var lang = CURRENT_TRANSLATION_LANG;
+    if (!lang || lang === "en") {
+        alert("{{.settings.translationEditor.cannotDeleteDefault}}");
+        return;
+    }
+    if (!confirm("{{.settings.translationEditor.confirmDelete}}" + " (" + getLangDisplayName(lang) + ")")) {
+        return;
+    }
+    var data = { "deleteLanguage": lang };
+    var server = new Server("deleteLanguage");
+    server.request(data);
+}
+
+function loadTranslationLang(lang) {
+    CURRENT_TRANSLATION_LANG = lang;
+    renderTranslationTable(lang);
+    updateDeleteLangButton();
+}
+
+function flattenObject(obj, prefix) {
+    var result = {};
+    for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        var fullKey = prefix ? prefix + "." + key : key;
+        if (typeof obj[key] === "object" && obj[key] !== null && !Array.isArray(obj[key])) {
+            var nested = flattenObject(obj[key], fullKey);
+            for (var nk in nested) {
+                result[nk] = nested[nk];
+            }
+        } else {
+            result[fullKey] = obj[key];
+        }
+    }
+    return result;
+}
+
+function unflattenObject(obj) {
+    var result = {};
+    for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        var parts = key.split(".");
+        var current = result;
+        for (var i = 0; i < parts.length - 1; i++) {
+            if (!current[parts[i]]) current[parts[i]] = {};
+            current = current[parts[i]];
+        }
+        current[parts[parts.length - 1]] = obj[key];
+    }
+    return result;
+}
+
+function renderTranslationTable(lang) {
+    var tbody = document.getElementById("translation-table-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    var langData = TRANSLATION_DATA[lang];
+    if (!langData) return;
+
+    var flat = flattenObject(langData, "");
+    var keys = Object.keys(flat).sort();
+
+    keys.forEach(function(key) {
+        var tr = document.createElement("TR");
+        var tdKey = document.createElement("TD");
+        tdKey.style.padding = "5px 10px";
+        tdKey.style.borderBottom = "1px solid var(--border)";
+        tdKey.style.fontSize = "var(--font-size-xs)";
+        tdKey.style.color = "var(--text-secondary)";
+        tdKey.style.wordBreak = "break-all";
+        tdKey.innerText = key;
+        tr.appendChild(tdKey);
+
+        var tdVal = document.createElement("TD");
+        tdVal.style.padding = "5px 10px";
+        tdVal.style.borderBottom = "1px solid var(--border)";
+        var input = document.createElement("INPUT");
+        input.type = "text";
+        input.value = flat[key] !== null && flat[key] !== undefined ? String(flat[key]) : "";
+        input.setAttribute("data-trans-key", key);
+        input.style.width = "100%";
+        input.style.padding = "4px 8px";
+        input.style.fontSize = "var(--font-size-sm)";
+        tdVal.appendChild(input);
+        tr.appendChild(tdVal);
+
+        tbody.appendChild(tr);
+    });
+}
+
+function filterTranslations(searchText) {
+    var tbody = document.getElementById("translation-table-body");
+    if (!tbody) return;
+    var rows = tbody.getElementsByTagName("TR");
+    var search = searchText.toLowerCase();
+    for (var i = 0; i < rows.length; i++) {
+        var key = rows[i].getElementsByTagName("TD")[0].innerText.toLowerCase();
+        var val = rows[i].getElementsByTagName("INPUT")[0].value.toLowerCase();
+        if (key.indexOf(search) !== -1 || val.indexOf(search) !== -1) {
+            rows[i].style.display = "";
+        } else {
+            rows[i].style.display = "none";
+        }
+    }
+}
+
+function saveTranslations() {
+    var tbody = document.getElementById("translation-table-body");
+    if (!tbody) return;
+    var inputs = tbody.getElementsByTagName("INPUT");
+    var flat = {};
+    for (var i = 0; i < inputs.length; i++) {
+        var key = inputs[i].getAttribute("data-trans-key");
+        flat[key] = inputs[i].value;
+    }
+    var nested = unflattenObject(flat);
+    var data = {
+        "translationLang": CURRENT_TRANSLATION_LANG,
+        "translations": nested
+    };
+    var server = new Server("saveTranslations");
+    server.request(data);
+}
+
+function addNewLanguage() {
+    var code = prompt("{{.settings.translationEditor.newLanguagePrompt}}");
+    if (!code) return;
+    code = code.trim().toLowerCase();
+    if (!/^[a-z]{2}(-[a-z]{2})?$/.test(code)) {
+        alert("Invalid language code format. Use: xx or xx-XX");
+        return;
+    }
+    var data = { "newLanguage": code };
+    var server = new Server("addLanguage");
     server.request(data);
 }
