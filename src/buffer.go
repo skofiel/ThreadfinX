@@ -1120,14 +1120,16 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 		}
 
 		var addErrorToStream = func(err error) {
-			if !useBackup || (useBackup && backupNumber >= 0 && backupNumber <= 3) {
+			// Try backup channels if available and not yet exhausted
+			if backupNumber < 3 && (stream.BackupChannel1 != nil || stream.BackupChannel2 != nil || stream.BackupChannel3 != nil) {
 				backupNumber = backupNumber + 1
-				if stream.BackupChannel1 != nil || stream.BackupChannel2 != nil || stream.BackupChannel3 != nil {
-					thirdPartyBuffer(streamID, playlistID, true, backupNumber)
-				}
+				thirdPartyBuffer(streamID, playlistID, true, backupNumber)
 				return
 			}
 
+			// No backups available or all backups exhausted: propagate error to
+			// BufferClients so the client's streaming loop (Loop 2) can detect
+			// it and disconnect cleanly instead of hanging forever without data.
 			var stream = playlist.Streams[streamID]
 
 			if c, ok := BufferClients.Load(playlistID + stream.MD5); ok {
@@ -1399,8 +1401,8 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 		cmd.Wait()
 
 		err = errors.New(bufferType + " error")
-		addErrorToStream(err)
 		ShowError(err, 1204)
+		addErrorToStream(err)
 
 		time.Sleep(time.Duration(500) * time.Millisecond)
 		clientConnection(stream)
