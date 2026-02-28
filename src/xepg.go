@@ -57,9 +57,11 @@ func buildXEPG(background bool) {
 	System.ScanInProgress = 1
 	// Enter maintenance during core steps
 
-	// Clear streaming URL cache
-	Data.Cache.StreamingURLS = make(map[string]StreamInfo)
-	saveMapToJSONFile(System.File.URLS, Data.Cache.StreamingURLS)
+	// NOTE: Do NOT clear streaming URL cache here. Clearing it while streams are
+	// active causes getStreamInfo() to return 404, which disconnects all active
+	// clients and causes buffer rewinds. The cache is rebuilt (and saved to disk)
+	// in createM3UFile() via createStreamingURL(), so existing entries remain
+	// valid throughout the rebuild process.
 
 	var err error
 
@@ -340,9 +342,10 @@ func createXEPGDatabase() (err error) {
 	Data.Cache.Streams.Active = make([]string, 0, System.UnfilteredChannelLimit)
 	Data.XEPG.Channels = make(map[string]interface{}, System.UnfilteredChannelLimit)
 
-	// Clear streaming URL cache
-	Data.Cache.StreamingURLS = make(map[string]StreamInfo)
-	saveMapToJSONFile(System.File.URLS, Data.Cache.StreamingURLS)
+	// NOTE: Do NOT clear streaming URL cache here. Clearing it creates a window
+	// where active streams get 404 errors (cache empty, disk JSON also empty),
+	// causing players to disconnect and rewind. The cache will be fully rebuilt
+	// when createM3UFile() calls createStreamingURL() for each active channel.
 
 	Data.Cache.Streams.Active = make([]string, 0, System.UnfilteredChannelLimit)
 	Settings = SettingsStruct{}
