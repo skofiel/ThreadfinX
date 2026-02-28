@@ -65,8 +65,8 @@ func Init() (err error) {
 	System.Compatibility = "0.1.0"
 
 	// FFmpeg Default Einstellungen
-	System.FFmpeg.DefaultOptions = "-hide_banner -loglevel error -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 -analyzeduration 1000000 -probesize 1000000 -i [URL] -map 0:v -map 0:a:0 -c:v copy -c:a aac -b:a 192k -ac 2 -c:s copy -f mpegts -mpegts_flags +resend_headers -fflags +genpts+discardcorrupt pipe:1"
-	System.VLC.DefaultOptions = "-I dummy [URL] --sout #std{mux=ts,access=file,dst=-}"
+	System.FFmpeg.DefaultOptions = "-hide_banner -loglevel error -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 4xx,5xx -reconnect_delay_max 20 -rw_timeout 15000000 -analyzeduration 5000000 -probesize 5000000 -i [URL] -map 0:v -map 0:a:0 -c:v copy -c:a aac -b:a 192k -ac 2 -c:s copy -f mpegts -mpegts_flags +resend_headers -fflags +genpts+discardcorrupt+nobuffer pipe:1"
+	System.VLC.DefaultOptions = "-I dummy [URL] --network-caching=3000 --http-reconnect --sout #std{mux=ts,access=file,dst=-}"
 
 	// Default Logeinträge, wird später von denen aus der settings.json überschrieben. Muss gemacht werden, damit die ersten Einträge auch im Log (webUI aangezeigt werden)
 	Settings.LogEntriesRAM = 500
