@@ -10,7 +10,6 @@ import (
 	"os"
 	"path"
 	"regexp"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -119,7 +118,6 @@ func buildXEPG(background bool) {
 
 				// Cache löschen
 				Data.Cache.XMLTV = make(map[string]XMLTV)
-				runtime.GC()
 
 			}()
 
@@ -166,7 +164,6 @@ func buildXEPG(background bool) {
 
 				// Cache löschen
 				Data.Cache.XMLTV = make(map[string]XMLTV)
-				runtime.GC()
 
 			}()
 
@@ -348,7 +345,6 @@ func createXEPGDatabase() (err error) {
 	// when createM3UFile() calls createStreamingURL() for each active channel.
 
 	Data.Cache.Streams.Active = make([]string, 0, System.UnfilteredChannelLimit)
-	Settings = SettingsStruct{}
 	Data.XEPG.Channels, err = loadJSONFileToMap(System.File.XEPG)
 	if err != nil {
 		ShowError(err, 1004)
@@ -360,7 +356,9 @@ func createXEPGDatabase() (err error) {
 		return
 	}
 	settings_json, _ := json.Marshal(settings)
-	json.Unmarshal(settings_json, &Settings)
+	var newSettings SettingsStruct
+	json.Unmarshal(settings_json, &newSettings)
+	Settings = newSettings
 
 	// Remove duplicate channels from existing XEPG database based on new hash logic
 	removeDuplicateChannels()
