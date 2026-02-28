@@ -1051,7 +1051,6 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 		var stream = playlist.Streams[streamID]
 		var buf bytes.Buffer
 		var fileSize = 0
-		var streamStatus = make(chan bool)
 
 		var tmpFolder = playlist.Streams[streamID].Folder
 		var url = playlist.Streams[streamID].URL
@@ -1142,8 +1141,12 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 		}
 
-		if err := bufferVFS.RemoveAll(getPlatformPath(tmpFolder)); err != nil {
-			ShowError(err, 4005)
+		// Only wipe buffer folder on first invocation, not on backup channel switches.
+		// This preserves existing segments so the client sees continuous playback.
+		if !useBackup {
+			if err := bufferVFS.RemoveAll(getPlatformPath(tmpFolder)); err != nil {
+				ShowError(err, 4005)
+			}
 		}
 
 		err := checkVFSFolder(tmpFolder, bufferVFS)
@@ -1165,20 +1168,7 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 		showInfo(fmt.Sprintf("%s path:%s", bufferType, path))
 		showInfo("Streaming URL:" + url)
 
-		var tmpFile = fmt.Sprintf("%s%d.ts", tmpFolder, tmpSegment)
-
-		f, err := bufferVFS.Create(tmpFile)
-		f.Close()
-		if err != nil {
-			ShowError(err, 0)
-			killClientConnection(streamID, playlistID, false)
-			addErrorToStream(err)
-			return
-		}
-
-		//args = strings.Replace(args, "[USER-AGENT]", Settings.UserAgent, -1)
-
-		// Set User-Agent
+		// Build command arguments once (reused across retries)
 		var args []string
 
 		for i, a := range strings.Split(options, " ") {
@@ -1234,171 +1224,215 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 		}
 
-		var cmd = exec.Command(path, args...)
-		// Set this explicitly to avoid issues with VLC
-		cmd.Env = append(os.Environ(), "DISPLAY=:0")
+		// Retry loop: when FFmpeg/VLC exits on a stream that was working,
+		// restart on the same URL before falling through to backup channels.
+		const maxSameURLRetries = 3
+		const retryDelaySec = 2
+		var retryCount int
 
-		debug = fmt.Sprintf("BUFFER DEBUG: %s:%s %s", bufferType, path, args)
-		showDebug(debug, 1)
+		for retryCount <= maxSameURLRetries {
 
-		// Byte data from the process
-		stdOut, err := cmd.StdoutPipe()
-		if err != nil {
-			ShowError(err, 0)
-			killClientConnection(streamID, playlistID, false)
-			addErrorToStream(err)
-			return
-		}
+			var tmpFile = fmt.Sprintf("%s%d.ts", tmpFolder, tmpSegment)
 
-		// Log data from the process
-		logOut, err := cmd.StderrPipe()
-		if err != nil {
-			ShowError(err, 0)
-			killClientConnection(streamID, playlistID, false)
-			addErrorToStream(err)
-			return
-		}
-
-		if len(buf.Bytes()) == 0 && !stream.Status {
-			showInfo(bufferType + ":Processing data")
-		}
-
-		cmd.Start()
-		defer cmd.Wait()
-
-		go func() {
-
-			// Display log data from the process in debug mode 1.
-			scanner := bufio.NewScanner(logOut)
-			scanner.Split(bufio.ScanLines)
-
-			for scanner.Scan() {
-
-				debug = fmt.Sprintf("%s log:%s", bufferType, strings.TrimSpace(scanner.Text()))
-
-				select {
-				case <-streamStatus:
-					showDebug(debug, 1)
-				default:
-					showInfo(debug)
-				}
-
-				time.Sleep(time.Duration(10) * time.Millisecond)
-
-			}
-
-		}()
-
-		f, err = bufferVFS.OpenFile(tmpFile, os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			ShowError(err, 0)
-			killClientConnection(streamID, playlistID, false)
-			addErrorToStream(err)
-			return
-		}
-		defer f.Close()
-
-		buffer := make([]byte, 128*1024) // 128KB buffer for better throughput
-
-		reader := bufio.NewReader(stdOut)
-
-		// Use context for timeout goroutine cancellation instead of raw channel
-		// to avoid panic on send-to-closed-channel and goroutine leaks.
-		timeoutCtx, timeoutCancel := context.WithCancel(context.Background())
-		defer timeoutCancel()
-
-		var timeoutSeconds int32
-
-		go func() {
-			for {
-				select {
-				case <-timeoutCtx.Done():
-					return
-				case <-time.After(1 * time.Second):
-					timeoutSeconds++
-				}
-			}
-		}()
-
-		for {
-
-			if timeoutSeconds >= 20 && tmpSegment == 1 {
-				cmd.Process.Kill()
-				err = errors.New("Timeout")
-				ShowError(err, 4006)
-				killClientConnection(streamID, playlistID, false)
-				addErrorToStream(err)
-				cmd.Wait()
-				f.Close()
-				return
-			}
-
-			if fileSize == 0 && !stream.Status {
-				showInfo("Streaming Status:Receive data from " + bufferType)
-			}
-
-			if !clientConnection(stream) {
-				cmd.Process.Kill()
-				f.Close()
-				cmd.Wait()
-				return
-			}
-
-			n, err := reader.Read(buffer)
-			if err == io.EOF {
-				break
-			}
-
-			fileSize = fileSize + len(buffer[:n])
-
-			if _, err := f.Write(buffer[:n]); err != nil {
-				cmd.Process.Kill()
+			f, err := bufferVFS.Create(tmpFile)
+			f.Close()
+			if err != nil {
 				ShowError(err, 0)
 				killClientConnection(streamID, playlistID, false)
 				addErrorToStream(err)
-				cmd.Wait()
 				return
 			}
 
-			if fileSize >= bufferSize/2 {
+			var cmd = exec.Command(path, args...)
+			cmd.Env = append(os.Environ(), "DISPLAY=:0")
 
-				if tmpSegment == 1 && !stream.Status {
+			debug = fmt.Sprintf("BUFFER DEBUG: %s:%s %s", bufferType, path, args)
+			showDebug(debug, 1)
+
+			stdOut, err := cmd.StdoutPipe()
+			if err != nil {
+				ShowError(err, 0)
+				killClientConnection(streamID, playlistID, false)
+				addErrorToStream(err)
+				return
+			}
+
+			logOut, err := cmd.StderrPipe()
+			if err != nil {
+				ShowError(err, 0)
+				killClientConnection(streamID, playlistID, false)
+				addErrorToStream(err)
+				return
+			}
+
+			if len(buf.Bytes()) == 0 && !stream.Status {
+				showInfo(bufferType + ":Processing data")
+			}
+
+			// Fresh channel per iteration to avoid double-close panic
+			var streamStatus = make(chan bool)
+			var streamStatusClosed bool
+
+			cmd.Start()
+
+			go func() {
+				scanner := bufio.NewScanner(logOut)
+				scanner.Split(bufio.ScanLines)
+				for scanner.Scan() {
+					debug = fmt.Sprintf("%s log:%s", bufferType, strings.TrimSpace(scanner.Text()))
+					select {
+					case <-streamStatus:
+						showDebug(debug, 1)
+					default:
+						showInfo(debug)
+					}
+					time.Sleep(time.Duration(10) * time.Millisecond)
+				}
+			}()
+
+			f, err = bufferVFS.OpenFile(tmpFile, os.O_APPEND|os.O_WRONLY, 0600)
+			if err != nil {
+				ShowError(err, 0)
+				cmd.Process.Kill()
+				cmd.Wait()
+				killClientConnection(streamID, playlistID, false)
+				addErrorToStream(err)
+				return
+			}
+
+			buffer := make([]byte, 128*1024) // 128KB buffer for better throughput
+			reader := bufio.NewReader(stdOut)
+
+			timeoutCtx, timeoutCancel := context.WithCancel(context.Background())
+			var timeoutSeconds int32
+
+			go func() {
+				for {
+					select {
+					case <-timeoutCtx.Done():
+						return
+					case <-time.After(1 * time.Second):
+						timeoutSeconds++
+					}
+				}
+			}()
+
+			// Inner read loop: read data from FFmpeg/VLC stdout and write to segment files
+			for {
+
+				if timeoutSeconds >= 20 && tmpSegment == 1 {
+					cmd.Process.Kill()
+					err = errors.New("Timeout")
+					ShowError(err, 4006)
+					killClientConnection(streamID, playlistID, false)
+					addErrorToStream(err)
+					cmd.Wait()
 					timeoutCancel()
-					close(streamStatus)
-					showInfo(fmt.Sprintf("Streaming Status:Buffering data from %s", bufferType))
+					f.Close()
+					return
 				}
 
-				f.Close()
-				tmpSegment++
-
-				if !stream.Status {
-					stream.Status = true
-					playlist.Streams[streamID] = stream
-					BufferInformation.Store(playlistID, playlist)
+				if fileSize == 0 && !stream.Status {
+					showInfo("Streaming Status:Receive data from " + bufferType)
 				}
 
-				tmpFile = fmt.Sprintf("%s%d.ts", tmpFolder, tmpSegment)
+				if !clientConnection(stream) {
+					cmd.Process.Kill()
+					f.Close()
+					cmd.Wait()
+					timeoutCancel()
+					return
+				}
 
-				fileSize = 0
+				n, err := reader.Read(buffer)
+				if err == io.EOF {
+					break
+				}
 
-				var errCreate, errOpen error
-				_, errCreate = bufferVFS.Create(tmpFile)
-				f, errOpen = bufferVFS.OpenFile(tmpFile, os.O_APPEND|os.O_WRONLY, 0600)
-				if errCreate != nil || errOpen != nil {
+				fileSize = fileSize + len(buffer[:n])
+
+				if _, err := f.Write(buffer[:n]); err != nil {
 					cmd.Process.Kill()
 					ShowError(err, 0)
 					killClientConnection(streamID, playlistID, false)
 					addErrorToStream(err)
 					cmd.Wait()
+					timeoutCancel()
+					f.Close()
 					return
 				}
 
+				if fileSize >= bufferSize/2 {
+
+					if tmpSegment == 1 && !stream.Status && !streamStatusClosed {
+						timeoutCancel()
+						close(streamStatus)
+						streamStatusClosed = true
+						showInfo(fmt.Sprintf("Streaming Status:Buffering data from %s", bufferType))
+					}
+
+					f.Close()
+					tmpSegment++
+
+					if !stream.Status {
+						stream.Status = true
+						playlist.Streams[streamID] = stream
+						BufferInformation.Store(playlistID, playlist)
+					}
+
+					tmpFile = fmt.Sprintf("%s%d.ts", tmpFolder, tmpSegment)
+
+					fileSize = 0
+
+					var errCreate, errOpen error
+					_, errCreate = bufferVFS.Create(tmpFile)
+					f, errOpen = bufferVFS.OpenFile(tmpFile, os.O_APPEND|os.O_WRONLY, 0600)
+					if errCreate != nil || errOpen != nil {
+						cmd.Process.Kill()
+						ShowError(err, 0)
+						killClientConnection(streamID, playlistID, false)
+						addErrorToStream(err)
+						cmd.Wait()
+						timeoutCancel()
+						return
+					}
+
+				}
+
+			} // End inner read loop
+
+			// FFmpeg/VLC exited (EOF). Clean up this iteration.
+			cmd.Process.Kill()
+			cmd.Wait()
+			timeoutCancel()
+			f.Close()
+
+			// Retry decision: only retry if stream was producing data (tmpSegment > 1).
+			// If it failed before the first segment, the stream is likely invalid.
+			if tmpSegment > 1 && retryCount < maxSameURLRetries {
+				retryCount++
+				showInfo(fmt.Sprintf("Streaming Status:%s exited after %d segments, retry %d/%d in %ds...",
+					bufferType, tmpSegment-1, retryCount, maxSameURLRetries, retryDelaySec))
+
+				if !clientConnection(stream) {
+					return
+				}
+
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
+
+				if !clientConnection(stream) {
+					return
+				}
+
+				// Reset fileSize for new segment but keep tmpSegment for continuous numbering
+				fileSize = 0
+				continue
 			}
 
-		}
+			// Stream never produced data or retries exhausted
+			break
 
-		cmd.Process.Kill()
-		cmd.Wait()
+		} // End retry loop
 
 		err = errors.New(bufferType + " error")
 		ShowError(err, 1204)
