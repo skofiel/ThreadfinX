@@ -322,14 +322,13 @@ func TestStreamGuardSurvivesTeardownDuringRead(t *testing.T) {
 			}()
 
 			var (
-				streaming bool
-				debug     string
-				w         = newRecordingWriter(time.Millisecond)
+				debug string
+				w     = newRecordingWriter(time.Millisecond)
 			)
 
 			for i := 1; i <= 40; i++ {
 				name := fmt.Sprintf("%s%d.ts", folder, i)
-				if err := sendSegmentToClient(folder, name, w, &streaming, &debug); err != nil {
+				if err := sendSegmentToClient(folder, name, w, &debug); err != nil {
 					// errStreamGone / "file does not exist" are the correct
 					// outcomes once teardown has happened.
 					break
@@ -385,15 +384,14 @@ func TestStreamGuardSurvivesSegmentRotation(t *testing.T) {
 		}()
 
 		var (
-			streaming bool
-			debug     string
-			w         = newRecordingWriter(0)
+			debug string
+			w     = newRecordingWriter(0)
 		)
 
 		for round := 0; round < 5; round++ {
 			for i := 1; i <= 30; i++ {
 				name := fmt.Sprintf("%s%d.ts", folder, i)
-				sendSegmentToClient(folder, name, w, &streaming, &debug)
+				sendSegmentToClient(folder, name, w, &debug)
 			}
 		}
 	}()
@@ -464,14 +462,13 @@ func TestBackendCutMidStreamDoesNotPanic(t *testing.T) {
 		}()
 
 		var (
-			streaming bool
-			debug     string
-			w         = newRecordingWriter(2 * time.Millisecond)
+			debug string
+			w     = newRecordingWriter(2 * time.Millisecond)
 		)
 
 		for i := 1; i <= 30; i++ {
 			name := fmt.Sprintf("%s%d.ts", folder, i)
-			if err := sendSegmentToClient(folder, name, w, &streaming, &debug); err != nil {
+			if err := sendSegmentToClient(folder, name, w, &debug); err != nil {
 				lastErr.Store(err.Error())
 				return
 			}

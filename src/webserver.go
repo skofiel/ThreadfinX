@@ -197,11 +197,11 @@ func Stream(w http.ResponseWriter, r *http.Request) {
 
 	systemMutex.Lock()
 	forceHttps := Settings.ForceHttps
-    noStreamHttps := Settings.ExcludeStreamHttps
+	noStreamHttps := Settings.ExcludeStreamHttps
 	systemMutex.Unlock()
 
 	// Dont Change Source M3Us to use HTTPs when forceHttps set and Exclude Streams from https
-    if forceHttps && noStreamHttps == false {
+	if forceHttps && noStreamHttps == false {
 		u, err := url.Parse(streamInfo.URL)
 		if err == nil {
 			u.Scheme = "https"
@@ -568,9 +568,11 @@ func WS(w http.ResponseWriter, r *http.Request) {
 					response.Reload = true
 				}
 
-				if Settings.StoreBufferInRAM != previousStoreBufferInRAM {
-					initBufferVFS()
-				}
+				// initBufferVFS() used to be re-run here. It replaces the
+				// global buffer filesystem outright, which vaporises every
+				// live stream's folder mid-playback, and it has no effect
+				// anyway: the buffer is always a memfs (see initBufferVFS).
+				_ = previousStoreBufferInRAM
 			}
 
 		case "saveFilesM3U":

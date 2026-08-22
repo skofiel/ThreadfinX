@@ -56,9 +56,11 @@ func StartTestChannels() error {
 
 	ffprobePath := strings.Replace(ffmpegPath, "ffmpeg", "ffprobe", 1)
 
-	// Collect all channels from mappings
+	// Collect all channels from mappings. Data.XEPG.Channels is rebuilt by the
+	// background XEPG goroutines, so the walk needs the same lock they take.
 	var channels []TestChannelResult
 
+	xepgMutex.Lock()
 	for id, xepgChannel := range Data.XEPG.Channels {
 		channelMap, ok := xepgChannel.(map[string]interface{})
 		if !ok {
@@ -81,6 +83,7 @@ func StartTestChannels() error {
 			Status:      "pending",
 		})
 	}
+	xepgMutex.Unlock()
 
 	if len(channels) == 0 {
 		testChannelsMutex.Unlock()
@@ -114,70 +117,110 @@ func StartTestChannels() error {
 			testChannelsMutex.Unlock()
 		}()
 
-		showInfo("Test Channels:Starting channel test process")
+		showInfo(fmt.Sprintf("Test Channels:Starting channel test process (%d channels, %d at a time)",
+			len(channels), testChannelsWorkers))
 
+		// One ffprobe at a time meant hours for a few hundred channels. Keep
+		// the pool small all the same: every probe is a connection to the
+		// provider, and providers count those.
+		var (
+			wg    sync.WaitGroup
+			queue = make(chan int)
+		)
+
+		for w := 0; w < testChannelsWorkers; w++ {
+			wg.Add(1)
+
+			go func() {
+				defer wg.Done()
+
+				for i := range queue {
+					testOneChannel(ctx, ffprobePath, i, channels[i].URL, channels[i].ChannelName)
+				}
+			}()
+		}
+
+	dispatch:
 		for i := range channels {
-			// Check for cancellation
 			select {
 			case <-ctx.Done():
 				showInfo("Test Channels:Process cancelled")
-				return
-			default:
+				break dispatch
+			case queue <- i:
 			}
-
-			channelURL := channels[i].URL
-
-			// Validate URL
-			parsedURL, err := url.Parse(channelURL)
-			if err != nil || parsedURL.Scheme == "" {
-				testChannelsMutex.Lock()
-				testChannelsProgress.Results[i].Status = "error"
-				testChannelsProgress.Results[i].Error = "Invalid URL"
-				testChannelsProgress.Failed++
-				testChannelsProgress.Tested++
-				testChannelsMutex.Unlock()
-				continue
-			}
-
-			allowedSchemes := map[string]bool{"http": true, "https": true, "rtsp": true, "rtp": true, "udp": true}
-			if !allowedSchemes[strings.ToLower(parsedURL.Scheme)] {
-				testChannelsMutex.Lock()
-				testChannelsProgress.Results[i].Status = "skipped"
-				testChannelsProgress.Results[i].Error = "Unsupported scheme"
-				testChannelsProgress.Skipped++
-				testChannelsProgress.Tested++
-				testChannelsMutex.Unlock()
-				continue
-			}
-
-			// Run ffprobe with timeout
-			probeCtx, probeCancel := context.WithTimeout(ctx, 10*time.Second)
-			cmd := exec.CommandContext(probeCtx, ffprobePath, "-v", "error", "-show_streams", "-of", "json", "-timeout", "5000000", parsedURL.String())
-			_, err = cmd.Output()
-			probeCancel()
-
-			testChannelsMutex.Lock()
-			testChannelsProgress.Tested++
-			if err != nil {
-				testChannelsProgress.Results[i].Status = "error"
-				testChannelsProgress.Results[i].Error = err.Error()
-				testChannelsProgress.Failed++
-			} else {
-				testChannelsProgress.Results[i].Status = "ok"
-				testChannelsProgress.OK++
-			}
-			testChannelsMutex.Unlock()
-
-			showInfo(fmt.Sprintf("Test Channels:Tested %d/%d - %s: %s",
-				testChannelsProgress.Tested, testChannelsProgress.Total,
-				channels[i].ChannelName, testChannelsProgress.Results[i].Status))
 		}
+
+		close(queue)
+		wg.Wait()
 
 		showInfo(fmt.Sprintf("Test Channels:Complete - OK: %d, Failed: %d, Skipped: %d",
 			testChannelsProgress.OK, testChannelsProgress.Failed, testChannelsProgress.Skipped))
 	}()
 
 	return nil
+}
+
+// testChannelsWorkers bounds how many ffprobe processes run at once. Each one
+// is a connection to the provider, so this stays deliberately low.
+const testChannelsWorkers = 4
+
+// testChannelProbeTimeout bounds a single probe. A channel that has not
+// answered in this long is not going to.
+const testChannelProbeTimeout = 5 * time.Second
+
+// testOneChannel probes a single channel and records the outcome.
+func testOneChannel(ctx context.Context, ffprobePath string, index int, channelURL, channelName string) {
+	select {
+	case <-ctx.Done():
+		return
+	default:
+	}
+
+	var record = func(status, message string) {
+		testChannelsMutex.Lock()
+		defer testChannelsMutex.Unlock()
+
+		testChannelsProgress.Results[index].Status = status
+		testChannelsProgress.Results[index].Error = message
+		testChannelsProgress.Tested++
+
+		switch status {
+		case "ok":
+			testChannelsProgress.OK++
+		case "skipped":
+			testChannelsProgress.Skipped++
+		default:
+			testChannelsProgress.Failed++
+		}
+
+		showInfo(fmt.Sprintf("Test Channels:Tested %d/%d - %s: %s",
+			testChannelsProgress.Tested, testChannelsProgress.Total, channelName, status))
+	}
+
+	parsedURL, err := url.Parse(channelURL)
+	if err != nil || parsedURL.Scheme == "" {
+		record("error", "Invalid URL")
+		return
+	}
+
+	allowedSchemes := map[string]bool{"http": true, "https": true, "rtsp": true, "rtp": true, "udp": true}
+	if !allowedSchemes[strings.ToLower(parsedURL.Scheme)] {
+		record("skipped", "Unsupported scheme")
+		return
+	}
+
+	probeCtx, probeCancel := context.WithTimeout(ctx, testChannelProbeTimeout)
+	defer probeCancel()
+
+	cmd := exec.CommandContext(probeCtx, ffprobePath, "-v", "error", "-show_streams", "-of", "json",
+		"-timeout", "5000000", parsedURL.String())
+
+	if _, err := cmd.Output(); err != nil {
+		record("error", err.Error())
+		return
+	}
+
+	record("ok", "")
 }
 
 // StopTestChannels cancels the running test

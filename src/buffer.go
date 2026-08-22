@@ -171,7 +171,6 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 	var playlist Playlist
 	var client ThisClient
 	var stream ThisStream
-	var streaming = false
 	var streamID int
 	var debug string
 	var timeOut = 0
@@ -390,6 +389,11 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 	}
 
+	// Headers have to be set before WriteHeader; anything set afterwards is
+	// silently discarded, which is what happened to the Content-Type the
+	// segment writer used to compute. This is the type Go's sniffer produced
+	// from MPEG-TS payload anyway, now stated rather than inferred.
+	w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(200)
 
 	for { //Loop 1: Wait until the first segment has been downloaded through the buffer
@@ -474,7 +478,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 						// client on a stream, each client deleting from its own
 						// private history means one client unlinks the segment
 						// another is still reading.
-						if err := sendSegmentToClient(stream.Folder, fileName, w, &streaming, &debug); err != nil {
+						if err := sendSegmentToClient(stream.Folder, fileName, w, &debug); err != nil {
 							killClientConnection(streamID, playlistID, false)
 							return
 						}
@@ -519,7 +523,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 // buffer_guard.go); the write to the client happens after the guard is
 // released, because a player that stops reading can block a write for a long
 // time and must never be able to stall the teardown of a dead stream.
-func sendSegmentToClient(folder, fileName string, w http.ResponseWriter, streaming *bool, debug *string) error {
+func sendSegmentToClient(folder, fileName string, w http.ResponseWriter, debug *string) error {
 	var guard = streamGuardFor(folder)
 
 	bufPtr := copyBufPool.Get().(*[]byte)
@@ -548,7 +552,6 @@ func sendSegmentToClient(folder, fileName string, w http.ResponseWriter, streami
 		flusher.Flush()
 	}
 
-	*streaming = true
 	return nil
 }
 
@@ -1455,8 +1458,15 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 					fileSize = 0
 
-					var errCreate, errOpen error
-					_, errCreate = bufferVFS.Create(tmpFile)
+					// Close the handle Create returns; it used to be
+					// discarded, which is harmless on memfs but a descriptor
+					// leak on any other filesystem.
+					created, errCreate := bufferVFS.Create(tmpFile)
+					if errCreate == nil {
+						created.Close()
+					}
+
+					var errOpen error
 					f, errOpen = bufferVFS.OpenFile(tmpFile, os.O_APPEND|os.O_WRONLY, 0600)
 					if errCreate != nil || errOpen != nil {
 						// Report the error that actually happened: this used to
@@ -1594,6 +1604,14 @@ func getTuner(id, playlistType string) (tuner int) {
 	return
 }
 
+// initBufferVFS creates the buffer filesystem. It is called once at startup and
+// must not be called again while streams are running: replacing the global
+// would strand every open handle and every live stream folder.
+//
+// The buffer is always in RAM. The storeBufferInRAM setting is inert - upstream
+// had an osfs branch, this fork does not - which is worth knowing before
+// reaching for that switch to reduce SD card wear: it is already not touching
+// the card.
 func initBufferVFS() {
 	bufferVFS = memfs.New()
 }

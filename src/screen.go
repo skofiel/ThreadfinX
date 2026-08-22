@@ -6,9 +6,21 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
+
+// appendToWebLog records a line for the web interface. WebScreenLog is read by
+// the WebUI handler while every logging call in the process appends to it, so
+// it needs real synchronisation - the mutexes these functions used to declare
+// were local variables, freshly created and locked on every call, which
+// synchronised nothing at all.
+func appendToWebLog(logMsg string) {
+	logMutex.Lock()
+	WebScreenLog.Log = append(WebScreenLog.Log, time.Now().Format("2006-01-02 15:04:05")+" "+logMsg)
+	logMutex.Unlock()
+
+	logCleanUp()
+}
 
 func showInfo(str string) {
 	infoMutex.Lock()
@@ -35,8 +47,7 @@ func showInfo(str string) {
 
 		printLogOnScreen(logMsg, "info")
 
-		WebScreenLog.Log = append(WebScreenLog.Log, time.Now().Format("2006-01-02 15:04:05")+" "+logMsg)
-		logCleanUp()
+		appendToWebLog(logMsg)
 
 	}
 
@@ -53,7 +64,6 @@ func showDebug(str string, level int) {
 	var msg = strings.SplitN(str, ":", 2)
 	var length = len(msg[0])
 	var space string
-	var mutex = sync.RWMutex{}
 
 	if len(msg) == 2 {
 
@@ -66,10 +76,7 @@ func showDebug(str string, level int) {
 
 		printLogOnScreen(logMsg, "debug")
 
-		mutex.Lock()
-		WebScreenLog.Log = append(WebScreenLog.Log, time.Now().Format("2006-01-02 15:04:05")+" "+logMsg)
-		logCleanUp()
-		mutex.Unlock()
+		appendToWebLog(logMsg)
 
 	}
 
@@ -118,14 +125,10 @@ func showWarning(errCode int) {
 
 	var errMsg = getErrMsg(errCode)
 	var logMsg = fmt.Sprintf("[%s] [WARNING] %s", System.Name, errMsg)
-	var mutex = sync.RWMutex{}
 
 	printLogOnScreen(logMsg, "warning")
 
-	mutex.Lock()
-	WebScreenLog.Log = append(WebScreenLog.Log, time.Now().Format("2006-01-02 15:04:05")+" "+logMsg)
-	WebScreenLog.Warnings++
-	mutex.Unlock()
+	appendToWebLog(logMsg)
 
 	return
 }
@@ -133,17 +136,12 @@ func showWarning(errCode int) {
 // ShowError : Zeigt die Fehlermeldungen in der Konsole
 func ShowError(err error, errCode int) {
 
-	var mutex = sync.RWMutex{}
-
 	var errMsg = getErrMsg(errCode)
 	var logMsg = fmt.Sprintf("[%s] [ERROR] %s (%s) - EC: %d", System.Name, err, errMsg, errCode)
 
 	printLogOnScreen(logMsg, "error")
 
-	mutex.Lock()
-	WebScreenLog.Log = append(WebScreenLog.Log, time.Now().Format("2006-01-02 15:04:05")+" "+logMsg)
-	WebScreenLog.Errors++
-	mutex.Unlock()
+	appendToWebLog(logMsg)
 
 	return
 }
@@ -189,20 +187,25 @@ func logCleanUp() {
 	logMutex.Lock()
 	defer logMutex.Unlock()
 
+	systemMutex.Lock()
 	var logEntriesRAM = Settings.LogEntriesRAM
+	systemMutex.Unlock()
+
+	if logEntriesRAM <= 0 {
+		logEntriesRAM = 500
+	}
+
 	var logs = WebScreenLog.Log
 
 	WebScreenLog.Warnings = 0
 	WebScreenLog.Errors = 0
 
+	// Keep the newest logEntriesRAM lines. The old loop ran from
+	// len(logs)-logEntriesRAM to logEntriesRAM, mixing an offset with a count:
+	// it dropped the newest entry in the normal case, and produced an empty
+	// slice - wiping the log - once the buffer had grown past twice the limit.
 	if len(logs) > logEntriesRAM {
-
-		var tmp = make([]string, 0)
-		for i := len(logs) - logEntriesRAM; i < logEntriesRAM; i++ {
-			tmp = append(tmp, logs[i])
-		}
-
-		logs = tmp
+		logs = append([]string(nil), logs[len(logs)-logEntriesRAM:]...)
 	}
 
 	for _, log := range logs {
