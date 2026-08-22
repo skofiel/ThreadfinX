@@ -49,9 +49,14 @@ type BackupStream struct {
 	URL        string
 }
 
+// getActiveClientCount is reached from the WebUI dashboard, so it runs on an
+// HTTP goroutine while streams are live. It both reads and repairs the client
+// maps, which is why it has to hold Lock for the whole walk.
 func getActiveClientCount() (count int) {
-	count = 0
-	cleanUpStaleClients() // Ensure stale clients are removed first
+	Lock.Lock()
+	defer Lock.Unlock()
+
+	cleanUpStaleClientsLocked()
 
 	BufferInformation.Range(func(key, value interface{}) bool {
 		playlist, ok := value.(Playlist)
@@ -84,6 +89,9 @@ func getActiveClientCount() (count int) {
 }
 
 func getActivePlaylistCount() (count int) {
+	Lock.RLock()
+	defer Lock.RUnlock()
+
 	count = 0
 	BufferInformation.Range(func(key, value interface{}) bool {
 		count++
@@ -92,7 +100,8 @@ func getActivePlaylistCount() (count int) {
 	return count
 }
 
-func cleanUpStaleClients() {
+// cleanUpStaleClientsLocked must be called with Lock held for writing.
+func cleanUpStaleClientsLocked() {
 	BufferInformation.Range(func(key, value interface{}) bool {
 		playlist, ok := value.(Playlist)
 		if !ok {
@@ -172,7 +181,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	// Check whether the playlist is already in use
-	if p, ok := BufferInformation.Load(playlistID); !ok {
+	if p, ok := getPlaylistSnapshot(playlistID); !ok {
 		var playlistType string
 
 		// Playlist is not yet in use, create default values for the playlist
@@ -240,50 +249,49 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 		playlist.Streams[streamID] = stream
 		playlist.Clients[streamID] = client
 
-		BufferInformation.Store(playlistID, playlist)
+		// Publish only now: until this point the maps are private to this
+		// goroutine, so building them needs no lock.
+		registerPlaylist(playlist)
 
 	} else {
-		playlist = p.(Playlist)
+		playlist = p
 
 		// Playlist is already used for streaming
 		// Check if the URL is already streaming from another client.
-		for id := range playlist.Streams {
+		if id, existing, found := findStreamByURL(playlistID, streamingURL); found {
 
-			stream = playlist.Streams[id]
-			client = playlist.Clients[id]
+			streamID = id
+			newStream = false
 
+			stream = existing
 			stream.BackupChannel1 = backupStream1
 			stream.BackupChannel2 = backupStream2
 			stream.BackupChannel3 = backupStream3
 			stream.ChannelName = channelName
 			stream.Status = false
 
-			if streamingURL == stream.URL {
+			connections, ok := joinStream(playlistID, streamID)
+			if !ok {
+				// The stream went away between the lookup and the join.
+				httpStatusError(w, r, 404)
+				return
+			}
 
-				streamID = id
-				newStream = false
-				client.Connection += 1
+			client.Connection = connections
 
-				playlist.Clients[streamID] = client
+			debug = fmt.Sprintf("Restream Status:Playlist: %s - Channel: %s - Connections: %d", playlist.PlaylistName, stream.ChannelName, connections)
 
-				BufferInformation.Store(playlistID, playlist)
+			showDebug(debug, 1)
 
-				debug = fmt.Sprintf("Restream Status:Playlist: %s - Channel: %s - Connections: %d", playlist.PlaylistName, stream.ChannelName, client.Connection)
+			if c, ok := BufferClients.Load(playlistID + stream.MD5); ok {
 
-				showDebug(debug, 1)
+				var clients = c.(ClientConnection)
+				clients.Connection = connections
 
-				if c, ok := BufferClients.Load(playlistID + stream.MD5); ok {
+				showInfo(fmt.Sprintf("Streaming Status:Channel: %s (Clients: %d)", stream.ChannelName, connections))
 
-					var clients = c.(ClientConnection)
-					clients.Connection = client.Connection
+				BufferClients.Store(playlistID+stream.MD5, clients)
 
-					showInfo(fmt.Sprintf("Streaming Status:Channel: %s (Clients: %d)", stream.ChannelName, clients.Connection))
-
-					BufferClients.Store(playlistID+stream.MD5, clients)
-
-				}
-
-				break
 			}
 
 		}
@@ -292,7 +300,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 		if newStream {
 
 			// Check if the playlist allows another stream (Tuner)
-			if len(playlist.Streams) >= playlist.Tuner {
+			if getStreamCount(playlistID) >= playlist.Tuner {
 				// If there are backup URLs, use them
 				if backupStream1 != nil {
 					bufferingStream(backupStream1.PlaylistID, backupStream1.URL, nil, backupStream2, backupStream3, channelName, w, r)
@@ -329,7 +337,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 			stream = ThisStream{}
 			client = ThisClient{}
 
-			streamID = createStreamID(playlist.Streams, getClientIP(r), r.UserAgent())
+			streamID = nextStreamID(playlistID)
 
 			client.Connection = 1
 			stream.URL = streamingURL
@@ -339,20 +347,17 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 			stream.BackupChannel2 = backupStream2
 			stream.BackupChannel3 = backupStream3
 
-			playlist.Streams[streamID] = stream
-			playlist.Clients[streamID] = client
-
-			BufferInformation.Store(playlistID, playlist)
+			addStream(playlistID, streamID, stream)
 
 		}
 
 	}
 
 	// Check whether the stream is already being played by another client
-	if !playlist.Streams[streamID].Status && newStream {
+	if current, ok := getStreamSnapshot(playlistID, streamID); ok && !current.Status && newStream {
 
 		// New buffer is needed
-		stream = playlist.Streams[streamID]
+		stream = current
 		stream.MD5 = getMD5(streamingURL)
 		stream.Folder = playlist.Folder + stream.MD5 + string(os.PathSeparator)
 		stream.PlaylistID = playlistID
@@ -361,9 +366,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 		stream.BackupChannel2 = backupStream2
 		stream.BackupChannel3 = backupStream3
 
-		playlist.Streams[streamID] = stream
-
-		BufferInformation.Store(playlistID, playlist)
+		putStream(playlistID, streamID, stream)
 
 		// Register the client before starting the producer. The producer's very
 		// first clientConnection() check looks this entry up and tears the
@@ -383,7 +386,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 		}
 
-		showInfo(fmt.Sprintf("Streaming Status 1:Playlist: %s - Tuner: %d / %d", playlist.PlaylistName, len(playlist.Streams), playlist.Tuner))
+		showInfo(fmt.Sprintf("Streaming Status 1:Playlist: %s - Tuner: %d / %d", playlist.PlaylistName, getStreamCount(playlistID), playlist.Tuner))
 
 	}
 
@@ -391,11 +394,9 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 	for { //Loop 1: Wait until the first segment has been downloaded through the buffer
 
-		if p, ok := BufferInformation.Load(playlistID); ok {
+		if playlist, ok := getPlaylistSnapshot(playlistID); ok {
 
-			var playlist = p.(Playlist)
-
-			if stream, ok := playlist.Streams[streamID]; ok {
+			if stream, ok := getStreamSnapshot(playlistID, streamID); ok {
 
 				if !stream.Status {
 
@@ -407,7 +408,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 
 						var clients = c.(ClientConnection)
 
-						if clients.Error != nil || (timeOut > 200 && (playlist.Streams[streamID].BackupChannel1 == nil && playlist.Streams[streamID].BackupChannel2 == nil && playlist.Streams[streamID].BackupChannel3 == nil)) {
+						if clients.Error != nil || (timeOut > 200 && (stream.BackupChannel1 == nil && stream.BackupChannel2 == nil && stream.BackupChannel3 == nil)) {
 							killClientConnection(streamID, stream.PlaylistID, false)
 							return
 						}
@@ -486,14 +487,7 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 					// reconnecting clients have up-to-date segment history
 					if segmentsSinceSync >= 5 {
 						segmentsSinceSync = 0
-						if p, ok := BufferInformation.Load(playlistID); ok {
-							var pl = p.(Playlist)
-							if s, ok := pl.Streams[streamID]; ok {
-								s.OldSegments = stream.OldSegments
-								pl.Streams[streamID] = s
-								BufferInformation.Store(playlistID, pl)
-							}
-						}
+						syncOldSegments(playlistID, streamID, stream.OldSegments)
 					}
 
 					if len(tmpFiles) == 0 {
@@ -1038,18 +1032,34 @@ func switchBandwidth(stream *ThisStream) (err error) {
 // Buffer with FFMPEG
 func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNumber int) {
 
-	if p, ok := BufferInformation.Load(playlistID); ok {
+	if playlist, ok := getPlaylistSnapshot(playlistID); ok {
 
-		var playlist = p.(Playlist)
 		var debug, path, options, bufferType string
 		var tmpSegment = 1
+
+		// Snapshot the settings this stream needs once. Settings is replaced
+		// wholesale by saveSettings, so reading its fields repeatedly from a
+		// long-lived goroutine races with every WebUI save.
+		systemMutex.Lock()
 		var bufferSize = Settings.BufferSize * 1024
-		var stream = playlist.Streams[streamID]
+		var ffmpegPath = Settings.FFmpegPath
+		var ffmpegOptions = Settings.FFmpegOptions
+		var vlcPath = Settings.VLCPath
+		var vlcOptions = Settings.VLCOptions
+		var userAgent = Settings.UserAgent
+		var forceHTTP = Settings.FFmpegForceHttp
+		systemMutex.Unlock()
+
+		stream, streamFound := getStreamSnapshot(playlistID, streamID)
+		if !streamFound {
+			return
+		}
+
 		var buf bytes.Buffer
 		var fileSize = 0
 
-		var tmpFolder = playlist.Streams[streamID].Folder
-		var url = playlist.Streams[streamID].URL
+		var tmpFolder = stream.Folder
+		var url = stream.URL
 		if useBackup {
 			if backupNumber >= 1 && backupNumber <= 3 {
 				switch backupNumber {
@@ -1088,7 +1098,10 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 			// No backups available or all backups exhausted: propagate error to
 			// BufferClients so the client's streaming loop (Loop 2) can detect
 			// it and disconnect cleanly instead of hanging forever without data.
-			var stream = playlist.Streams[streamID]
+			stream, ok := getStreamSnapshot(playlistID, streamID)
+			if !ok {
+				return
+			}
 
 			if c, ok := BufferClients.Load(playlistID + stream.MD5); ok {
 
@@ -1121,17 +1134,17 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 		case "ffmpeg":
 
-			if Settings.FFmpegForceHttp {
+			if forceHTTP {
 				url = strings.Replace(url, "https://", "http://", -1)
 				showInfo("Forcing URL to HTTP for FFMPEG: " + url)
 			}
 
-			path = Settings.FFmpegPath
-			options = Settings.FFmpegOptions
+			path = ffmpegPath
+			options = ffmpegOptions
 
 		case "vlc":
-			path = Settings.VLCPath
-			options = Settings.VLCOptions
+			path = vlcPath
+			options = vlcOptions
 
 		default:
 			return
@@ -1171,8 +1184,8 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 			case "FFMPEG":
 				a = strings.Replace(a, "[URL]", url, -1)
 				if i == 0 {
-					if len(Settings.UserAgent) != 0 {
-						args = []string{"-user_agent", Settings.UserAgent}
+					if len(userAgent) != 0 {
+						args = []string{"-user_agent", userAgent}
 					}
 
 					if playlist.HttpProxyIP != "" && playlist.HttpProxyPort != "" {
@@ -1198,8 +1211,8 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 					a = strings.Replace(a, "[URL]", url, -1)
 					args = append(args, a)
 
-					if len(Settings.UserAgent) != 0 {
-						args = append(args, fmt.Sprintf(":http-user-agent=%s", Settings.UserAgent))
+					if len(userAgent) != 0 {
+						args = append(args, fmt.Sprintf(":http-user-agent=%s", userAgent))
 					}
 
 					if len(playlist.HttpUserReferer) != 0 {
@@ -1407,8 +1420,7 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 					if !stream.Status {
 						stream.Status = true
-						playlist.Streams[streamID] = stream
-						BufferInformation.Store(playlistID, playlist)
+						setStreamStatus(playlistID, streamID, true)
 					}
 
 					tmpFile = fmt.Sprintf("%s%d.ts", tmpFolder, tmpSegment)
