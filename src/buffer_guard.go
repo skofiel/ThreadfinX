@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"sync"
+	"time"
 )
 
 /*
@@ -152,4 +153,19 @@ func removeStreamSegment(folder, name string) error {
 	}
 
 	return bufferVFS.RemoveAll(getPlatformFile(folder + name))
+}
+
+// inactivityTimeout is how long the buffer waits for data from FFmpeg/VLC
+// before declaring the stream dead. Configurable via buffer.inactivity.timeout;
+// a non-positive value disables the watchdog.
+func inactivityTimeout() time.Duration {
+	systemMutex.Lock()
+	var seconds = Settings.BufferInactivityTimeout
+	systemMutex.Unlock()
+
+	if seconds <= 0 {
+		return 0
+	}
+
+	return time.Duration(seconds) * time.Second
 }

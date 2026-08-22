@@ -326,6 +326,8 @@ func getErrMsg(errCode int) (errMsg string) {
 	case 2021:
 		errMsg = fmt.Sprintf("VLC binary was not found. Check the VLC path binary in the Threadfin settings.")
 
+	case 2097:
+		errMsg = "Your FFmpeg options have no read timeout (-rw_timeout) and no -i flag to attach one to. A backend that accepts the connection and then goes silent will hang the stream indefinitely."
 	case 2098:
 		errMsg = fmt.Sprintf("Updates are disabled in the settings")
 	case 2099:

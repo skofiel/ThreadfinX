@@ -22,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -1292,33 +1293,59 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 			buffer := make([]byte, 128*1024) // 128KB buffer for better throughput
 			reader := bufio.NewReader(stdOut)
 
-			timeoutCtx, timeoutCancel := context.WithCancel(context.Background())
-			var timeoutSeconds int32
+			// Inactivity watchdog.
+			//
+			// The old timeout only armed while tmpSegment == 1, so it stopped
+			// existing the moment the first segment was written. After that a
+			// backend that accepted the connection and went quiet - what
+			// happens when the provider blocks the VPN exit node - left
+			// reader.Read blocked forever: no data, no EOF, no client check,
+			// the FFmpeg process still alive and the tuner still occupied until
+			// Threadfin was restarted.
+			//
+			// The watchdog now runs for the whole life of the stream and kills
+			// the process when nothing has arrived for the configured window,
+			// which unblocks the read and lets the normal error path run.
+			watchdogCtx, stopWatchdog := context.WithCancel(context.Background())
+
+			var lastData atomic.Int64
+			lastData.Store(time.Now().UnixNano())
+
+			var inactive atomic.Bool
 
 			go func() {
+				var window = inactivityTimeout()
+				if window <= 0 {
+					return
+				}
+
+				var ticker = time.NewTicker(time.Second)
+				defer ticker.Stop()
+
 				for {
 					select {
-					case <-timeoutCtx.Done():
+					case <-watchdogCtx.Done():
 						return
-					case <-time.After(1 * time.Second):
-						timeoutSeconds++
+
+					case <-ticker.C:
+						if time.Since(time.Unix(0, lastData.Load())) < window {
+							continue
+						}
+
+						inactive.Store(true)
+						showInfo(fmt.Sprintf("Streaming Status:No data from %s for %s, ending stream", bufferType, window))
+
+						if cmd.Process != nil {
+							cmd.Process.Kill()
+						}
+
+						return
 					}
 				}
 			}()
 
 			// Inner read loop: read data from FFmpeg/VLC stdout and write to segment files
 			for {
-
-				if timeoutSeconds >= 20 && tmpSegment == 1 {
-					cmd.Process.Kill()
-					err = errors.New("Timeout")
-					ShowError(err, 4006)
-					addErrorToStream(err)
-					cmd.Wait()
-					timeoutCancel()
-					f.Close()
-					return
-				}
 
 				if fileSize == 0 && !stream.Status {
 					showInfo("Streaming Status:Receive data from " + bufferType)
@@ -1328,13 +1355,17 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 					cmd.Process.Kill()
 					f.Close()
 					cmd.Wait()
-					timeoutCancel()
+					stopWatchdog()
 					return
 				}
 
 				n, err := reader.Read(buffer)
 				if err == io.EOF {
 					break
+				}
+
+				if n > 0 {
+					lastData.Store(time.Now().UnixNano())
 				}
 
 				fileSize = fileSize + len(buffer[:n])
@@ -1344,7 +1375,7 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 					ShowError(err, 0)
 					addErrorToStream(err)
 					cmd.Wait()
-					timeoutCancel()
+					stopWatchdog()
 					f.Close()
 					return
 				}
@@ -1352,7 +1383,10 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 				if fileSize >= bufferSize/2 {
 
 					if tmpSegment == 1 && !stream.Status && !streamStatusClosed {
-						timeoutCancel()
+						// Only quietens the stderr log from here on. The
+						// watchdog has its own lifetime and must keep running:
+						// cancelling it here is what left a stalled stream
+						// hanging forever once the first segment was written.
 						close(streamStatus)
 						streamStatusClosed = true
 						showInfo(fmt.Sprintf("Streaming Status:Buffering data from %s", bufferType))
@@ -1389,7 +1423,7 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 						ShowError(err, 0)
 						addErrorToStream(err)
 						cmd.Wait()
-						timeoutCancel()
+						stopWatchdog()
 						return
 					}
 
@@ -1397,11 +1431,22 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 			} // End inner read loop
 
-			// FFmpeg/VLC exited (EOF). Clean up this iteration.
+			// FFmpeg/VLC exited (EOF), either on its own or because the
+			// watchdog killed it. Clean up this iteration.
 			cmd.Process.Kill()
 			cmd.Wait()
-			timeoutCancel()
+			stopWatchdog()
 			f.Close()
+
+			if inactive.Load() {
+				// EC 4006. Report it before deciding on a retry so a client
+				// waiting in Loop 1 stops waiting.
+				var timeoutErr = fmt.Errorf("no data from %s for %s", bufferType, inactivityTimeout())
+				ShowError(timeoutErr, 4006)
+				addErrorToStream(timeoutErr)
+
+				return
+			}
 
 			// Retry decision: only retry if stream was producing data (tmpSegment > 1).
 			// If it failed before the first segment, the stream is likely invalid.

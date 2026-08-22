@@ -295,6 +295,12 @@ type SettingsStruct struct {
 	Buffer            string   `json:"buffer"`
 	BufferSize        int      `json:"buffer.size.kb"`
 	BufferTimeout     float64  `json:"buffer.timeout"`
+	// BufferInactivityTimeout bounds how long the buffer waits for data from
+	// FFmpeg/VLC before declaring the stream dead. Seconds; 0 disables it.
+	BufferInactivityTimeout int `json:"buffer.inactivity.timeout"`
+	// SchemaVersion records which settings migrations have run. See
+	// settings_migrate.go.
+	SchemaVersion int `json:"settings.schema.version"`
 	CacheImages       bool     `json:"cache.images"`
 	EpgSource         string   `json:"epgSource"`
 	FFmpegOptions     string   `json:"ffmpeg.options"`

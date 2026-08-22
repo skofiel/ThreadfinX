@@ -132,6 +132,10 @@ func loadSettings() (settings SettingsStruct, err error) {
 	defaults["buffer"] = "-"
 	defaults["buffer.size.kb"] = 1024
 	defaults["buffer.timeout"] = 500
+	defaults["buffer.inactivity.timeout"] = 20
+	// Existing installs have no schema version, so they report 0 and every
+	// migration runs once. See settings_migrate.go.
+	defaults["settings.schema.version"] = 0
 	defaults["cache.images"] = false
 	defaults["epgSource"] = "PMS"
 	defaults["ffmpeg.options"] = System.FFmpeg.DefaultOptions
@@ -207,6 +211,11 @@ func loadSettings() (settings SettingsStruct, err error) {
 		settings.VLCPath = searchFileInOS("cvlc")
 	}
 
+	// Bring configuration saved by an older build up to date. Defaults above
+	// only fill in absent keys, so anything already written to settings.json
+	// has to be migrated explicitly.
+	migrateSettings(&settings)
+
 	// Initialze virutal filesystem for the Buffer
 	initBufferVFS()
 
@@ -242,6 +251,10 @@ func saveSettings(settings SettingsStruct) (err error) {
 
 	if settings.BufferTimeout < 0 {
 		settings.BufferTimeout = 0
+	}
+
+	if settings.BufferInactivityTimeout < 0 {
+		settings.BufferInactivityTimeout = 0
 	}
 
 	System.Folder.Temp = settings.TempPath + settings.UUID + string(os.PathSeparator)
