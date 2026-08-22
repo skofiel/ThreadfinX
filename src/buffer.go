@@ -1231,6 +1231,20 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 
 		}
 
+		// Pre-flight: ask the upstream hop whether the channel is still there
+		// before spending 20 seconds of the viewer's time finding out through
+		// FFmpeg. A rotated-away channel id answers 404 immediately, and there
+		// is no point retrying that one.
+		if probe := probeStreamOrigin(url, userAgent); !probe.Reachable {
+			showInfo(fmt.Sprintf("Streaming Status:Upstream did not answer for %s (%s)", stream.ChannelName, probe))
+		} else if probe.Gone {
+			var goneErr = fmt.Errorf("channel %s is no longer published upstream (HTTP %d)", stream.ChannelName, probe.StatusCode)
+			ShowError(goneErr, 4008)
+			addErrorToStream(goneErr)
+
+			return
+		}
+
 		// Retry loop: when FFmpeg/VLC exits on a stream that was working,
 		// restart on the same URL before falling through to backup channels.
 		const maxSameURLRetries = 3
@@ -1242,12 +1256,12 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 			var tmpFile = fmt.Sprintf("%s%d.ts", tmpFolder, tmpSegment)
 
 			f, err := bufferVFS.Create(tmpFile)
-			f.Close()
 			if err != nil {
 				ShowError(err, 0)
 				addErrorToStream(err)
 				return
 			}
+			f.Close()
 
 			var cmd = exec.Command(path, args...)
 			cmd.Env = append(os.Environ(), "DISPLAY=:0")
@@ -1283,12 +1297,15 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 				scanner := bufio.NewScanner(logOut)
 				scanner.Split(bufio.ScanLines)
 				for scanner.Scan() {
-					debug = fmt.Sprintf("%s log:%s", bufferType, strings.TrimSpace(scanner.Text()))
+					// Local, not the enclosing `debug`: that one is also
+					// written by the read loop, and sharing it was a data race
+					// for no benefit.
+					var line = fmt.Sprintf("%s log:%s", bufferType, strings.TrimSpace(scanner.Text()))
 					select {
 					case <-streamStatus:
-						showDebug(debug, 1)
+						showDebug(line, 1)
 					default:
-						showInfo(debug)
+						showInfo(line)
 					}
 					time.Sleep(time.Duration(10) * time.Millisecond)
 				}
@@ -1325,6 +1342,9 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 			lastData.Store(time.Now().UnixNano())
 
 			var inactive atomic.Bool
+
+			// Non-EOF read error, reported after the loop.
+			var readErr error
 
 			go func() {
 				var window = inactivityTimeout()
@@ -1373,7 +1393,15 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 				}
 
 				n, err := reader.Read(buffer)
-				if err == io.EOF {
+				if err != nil {
+					// Only io.EOF used to end the loop. Any other error left
+					// n == 0 and the loop spinning without sleeping or making
+					// progress, which pins a core on a machine that has four.
+					if !errors.Is(err, io.EOF) {
+						showDebug(fmt.Sprintf("%s read error: %s", bufferType, err), 1)
+						readErr = err
+					}
+
 					break
 				}
 
@@ -1431,9 +1459,16 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 					_, errCreate = bufferVFS.Create(tmpFile)
 					f, errOpen = bufferVFS.OpenFile(tmpFile, os.O_APPEND|os.O_WRONLY, 0600)
 					if errCreate != nil || errOpen != nil {
+						// Report the error that actually happened: this used to
+						// pass the enclosing err, which is usually nil here.
+						var segmentErr = errCreate
+						if segmentErr == nil {
+							segmentErr = errOpen
+						}
+
 						cmd.Process.Kill()
-						ShowError(err, 0)
-						addErrorToStream(err)
+						ShowError(segmentErr, 0)
+						addErrorToStream(segmentErr)
 						cmd.Wait()
 						stopWatchdog()
 						return
@@ -1460,18 +1495,40 @@ func thirdPartyBuffer(streamID int, playlistID string, useBackup bool, backupNum
 				return
 			}
 
+			if readErr != nil {
+				ShowError(readErr, 1204)
+				addErrorToStream(readErr)
+
+				return
+			}
+
 			// Retry decision: only retry if stream was producing data (tmpSegment > 1).
 			// If it failed before the first segment, the stream is likely invalid.
 			if tmpSegment > 1 && retryCount < maxSameURLRetries {
 				retryCount++
-				showInfo(fmt.Sprintf("Streaming Status:%s exited after %d segments, retry %d/%d in %ds...",
-					bufferType, tmpSegment-1, retryCount, maxSameURLRetries, retryDelaySec))
+
+				// Exponential backoff. A fixed two seconds meant three rapid
+				// restarts against a URL the provider had already rotated
+				// away, which is three FFmpeg launches and six seconds of
+				// nothing for the viewer.
+				var delay = time.Duration(retryDelaySec<<(retryCount-1)) * time.Second
+
+				showInfo(fmt.Sprintf("Streaming Status:%s exited after %d segments, retry %d/%d in %s...",
+					bufferType, tmpSegment-1, retryCount, maxSameURLRetries, delay))
 
 				if !clientConnection(stream) {
 					return
 				}
 
-				time.Sleep(time.Duration(retryDelaySec) * time.Second)
+				// Sleep in short slices so a client leaving during the backoff
+				// is noticed promptly instead of after the full delay.
+				for waited := time.Duration(0); waited < delay; waited += 250 * time.Millisecond {
+					time.Sleep(250 * time.Millisecond)
+
+					if !clientConnection(stream) {
+						return
+					}
+				}
 
 				if !clientConnection(stream) {
 					return

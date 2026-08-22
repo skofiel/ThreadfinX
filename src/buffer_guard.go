@@ -2,7 +2,9 @@ package src
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"os"
 	"sync"
 	"time"
 )
@@ -168,4 +170,82 @@ func inactivityTimeout() time.Duration {
 	}
 
 	return time.Duration(seconds) * time.Second
+}
+
+// liveBufferFolders returns the folder of every stream currently registered.
+func liveBufferFolders() map[string]bool {
+	var live = make(map[string]bool)
+
+	Lock.RLock()
+	defer Lock.RUnlock()
+
+	BufferInformation.Range(func(_, value interface{}) bool {
+		playlist, ok := value.(Playlist)
+		if !ok {
+			return true
+		}
+
+		for _, stream := range playlist.Streams {
+			if stream.Folder != "" {
+				live[stream.Folder] = true
+			}
+		}
+
+		return true
+	})
+
+	return live
+}
+
+// sweepOrphanedBuffers frees buffer folders that no longer belong to any
+// registered stream.
+//
+// The buffer lives in RAM (memfs), roughly 10 MB per stream at the default
+// buffer size, and a folder is normally freed by clientConnection when the last
+// viewer leaves. Anything that ends a stream without going through that path -
+// a panic in the handler, a producer goroutine that never returns - used to
+// leak the folder until Threadfin was restarted. On a Pi that is expected to
+// run for weeks, that adds up.
+func sweepOrphanedBuffers() {
+	if _, err := bufferVFS.Stat(System.Folder.Temp); fsIsNotExistErr(err) {
+		return
+	}
+
+	var live = liveBufferFolders()
+
+	playlists, err := bufferVFS.ReadDir(getPlatformPath(System.Folder.Temp))
+	if err != nil {
+		return
+	}
+
+	for _, playlist := range playlists {
+		if !playlist.IsDir() {
+			continue
+		}
+
+		var playlistFolder = System.Folder.Temp + playlist.Name() + string(os.PathSeparator)
+
+		streams, err := bufferVFS.ReadDir(getPlatformPath(playlistFolder))
+		if err != nil {
+			continue
+		}
+
+		for _, stream := range streams {
+			if !stream.IsDir() {
+				continue
+			}
+
+			var folder = playlistFolder + stream.Name() + string(os.PathSeparator)
+
+			if live[folder] {
+				continue
+			}
+
+			showDebug(fmt.Sprintf("Buffer Status:Releasing orphaned buffer folder %s", folder), 1)
+
+			if err := closeStreamBuffer(folder); err != nil {
+				ShowError(err, 4005)
+			}
+		}
+	}
 }

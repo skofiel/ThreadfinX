@@ -291,18 +291,35 @@ func jsonToInterface(content string) (tmpMap interface{}, err error) {
 
 }
 
+// saveMapToJSONFile writes a JSON file, atomically.
+//
+// It used to call os.Create and drop the returned handle on the floor before
+// calling os.WriteFile on the same path: one leaked file descriptor and one
+// wasted full write per call, across 28 call sites, on a box expected to run
+// for weeks without a restart.
+//
+// The output is no longer indented either. These files - xepg.json above all -
+// are machine-written and machine-read, and the indentation was inflating every
+// write to a Raspberry Pi's SD card for nobody's benefit.
 func saveMapToJSONFile(file string, tmpMap interface{}) error {
 
 	var filename = getPlatformFile(file)
-	jsonString, err := json.MarshalIndent(tmpMap, "", "  ")
 
+	jsonString, err := json.Marshal(tmpMap)
 	if err != nil {
 		return err
 	}
 
-	os.Create(filename)
-	err = os.WriteFile(filename, []byte(jsonString), 0644)
-	if err != nil {
+	// Write to a sibling temp file and rename, so a crash or a full disk
+	// cannot leave a half-written config behind.
+	var tmpName = filename + ".tmp"
+
+	if err := os.WriteFile(tmpName, jsonString, 0644); err != nil {
+		return err
+	}
+
+	if err := os.Rename(tmpName, filename); err != nil {
+		os.Remove(tmpName)
 		return err
 	}
 

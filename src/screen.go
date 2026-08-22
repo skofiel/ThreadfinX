@@ -372,6 +372,8 @@ func getErrMsg(errCode int) (errMsg string) {
 		errMsg = fmt.Sprintf("Server connection timeout")
 	case 4007:
 		errMsg = fmt.Sprintf("Old temporary buffer file could not be deleted")
+	case 4008:
+		errMsg = "The channel is no longer published by the upstream server. The provider has most likely rotated its channel ids; refresh the playlist."
 
 	// Buffer (M3U8)
 	case 4050:

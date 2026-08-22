@@ -80,6 +80,10 @@ func maintenance() {
 			systemMutex.Unlock()
 		}
 
+		// Release buffer folders whose stream is gone. They live in RAM, so a
+		// leaked one is never reclaimed until a restart.
+		sweepOrphanedBuffers()
+
 		time.Sleep(60 * time.Second)
 
 	}
