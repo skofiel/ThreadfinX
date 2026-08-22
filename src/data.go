@@ -529,7 +529,7 @@ func saveXEpgMapping(request RequestStruct) (err error) {
 
 	var tmp = Data.XEPG
 
-	Data.Cache.StreamingURLS = make(map[string]StreamInfo)
+	resetStreamingURLCache()
 
 	Data.Cache.Images, err = imgcache.New(System.Folder.ImagesCache, fmt.Sprintf("%s://%s/images/", System.ServerProtocol.WEB, System.Domain), Settings.CacheImages)
 	if err != nil {

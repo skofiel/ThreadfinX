@@ -1734,12 +1734,31 @@ func isInInactiveList(channelURL string) bool {
 func createM3UFile() {
 
 	showInfo("XEPG:" + fmt.Sprintf("Create M3U file (%s)", System.File.M3U))
+
+	// Stage the streaming URLs this rebuild produces and swap them in when it
+	// finishes. Lookups keep resolving against the previous set throughout, so
+	// active players are never handed a 404, and ids the provider has retired
+	// stop resolving the moment the swap lands instead of living forever.
+	beginStreamingURLRebuild()
+
 	_, err := buildM3U([]string{})
 	if err != nil {
 		ShowError(err, 000)
+
+		// A failed rebuild must not drop channels that are still valid.
+		abortStreamingURLRebuild()
+		saveMapToJSONFile(System.File.URLS, snapshotStreamingURLs())
+
+		return
 	}
 
-	saveMapToJSONFile(System.File.URLS, Data.Cache.StreamingURLS)
+	urls, dropped := commitStreamingURLRebuild()
+
+	if dropped > 0 {
+		showInfo(fmt.Sprintf("XEPG:Retired %d streaming URL(s) the provider no longer publishes", dropped))
+	}
+
+	saveMapToJSONFile(System.File.URLS, urls)
 
 	return
 }

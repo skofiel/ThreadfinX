@@ -325,13 +325,9 @@ func createStreamingURL(streamingType, playlistID, channelNumber, channelName, u
 	var streamInfo StreamInfo
 	var serverProtocol string
 
-	if len(Data.Cache.StreamingURLS) == 0 {
-		Data.Cache.StreamingURLS = make(map[string]StreamInfo)
-	}
-
 	var urlID = getMD5(fmt.Sprintf("%s-%s", playlistID, url))
 
-	if s, ok := Data.Cache.StreamingURLS[urlID]; ok {
+	if s, ok := lookupStreamingURL(urlID); ok {
 		streamInfo = s
 
 	} else {
@@ -343,10 +339,12 @@ func createStreamingURL(streamingType, playlistID, channelNumber, channelName, u
 		streamInfo.PlaylistID = playlistID
 		streamInfo.ChannelNumber = channelNumber
 		streamInfo.URLid = urlID
-
-		Data.Cache.StreamingURLS[urlID] = streamInfo
-
 	}
+
+	// Re-store on every call: during a rebuild this is what puts the entry into
+	// the staging map, so a channel the provider still publishes survives the
+	// swap even when it was already cached.
+	storeStreamingURL(urlID, streamInfo)
 
 	switch streamingType {
 
@@ -371,21 +369,11 @@ func createStreamingURL(streamingType, playlistID, channelNumber, channelName, u
 
 func getStreamInfo(urlID string) (streamInfo StreamInfo, err error) {
 
-	if len(Data.Cache.StreamingURLS) == 0 {
-
-		tmp, err := loadJSONFileToMap(System.File.URLS)
-		if err != nil {
-			return streamInfo, err
-		}
-
-		err = json.Unmarshal([]byte(mapToJSON(tmp)), &Data.Cache.StreamingURLS)
-		if err != nil {
-			return streamInfo, err
-		}
-
+	if err := loadStreamingURLsFromDisk(); err != nil {
+		return streamInfo, err
 	}
 
-	if s, ok := Data.Cache.StreamingURLS[urlID]; ok {
+	if s, ok := lookupStreamingURL(urlID); ok {
 		s.URL = strings.Trim(s.URL, "\r\n")
 
 		streamInfo = s

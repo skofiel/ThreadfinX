@@ -188,7 +188,7 @@ func getLineup() (jsonContent []byte, err error) {
 
 	Data.Cache.PMS = nil
 
-	saveMapToJSONFile(System.File.URLS, Data.Cache.StreamingURLS)
+	saveMapToJSONFile(System.File.URLS, snapshotStreamingURLs())
 
 	return
 }
