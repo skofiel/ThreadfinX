@@ -249,8 +249,9 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 		playlist.Clients[streamID] = client
 
 		// Publish only now: until this point the maps are private to this
-		// goroutine, so building them needs no lock.
-		registerPlaylist(playlist)
+		// goroutine, so building them needs no lock. The id can come back
+		// changed if another client registered this playlist first.
+		streamID = registerPlaylist(playlist, streamID)
 
 	} else {
 		playlist = p
@@ -275,8 +276,6 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 				httpStatusError(w, r, 404)
 				return
 			}
-
-			client.Connection = connections
 
 			debug = fmt.Sprintf("Restream Status:Playlist: %s - Channel: %s - Connections: %d", playlist.PlaylistName, stream.ChannelName, connections)
 
@@ -334,11 +333,10 @@ func bufferingStream(playlistID string, streamingURL string, backupStream1 *Back
 			// Playlist allows another stream (Tuner limit not yet reached)
 			// Create default values for the stream
 			stream = ThisStream{}
-			client = ThisClient{}
 
 			streamID = nextStreamID(playlistID)
 
-			client.Connection = 1
+			// addStream registers the first client for this stream.
 			stream.URL = streamingURL
 			stream.ChannelName = channelName
 			stream.Status = false

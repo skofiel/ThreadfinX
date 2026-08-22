@@ -28,7 +28,7 @@ func TestBufferStateIsRaceFree(t *testing.T) {
 		Streams:      make(map[int]ThisStream),
 	}
 
-	registerPlaylist(playlist)
+	registerPlaylist(playlist, 0)
 	t.Cleanup(func() { BufferInformation.Delete(playlistID) })
 
 	for i := 0; i < 4; i++ {
@@ -118,7 +118,7 @@ func TestSyncOldSegmentsCopiesTheSlice(t *testing.T) {
 		PlaylistID: playlistID,
 		Clients:    make(map[int]ThisClient),
 		Streams:    make(map[int]ThisStream),
-	})
+	}, 0)
 	t.Cleanup(func() { BufferInformation.Delete(playlistID) })
 
 	addStream(playlistID, 0, ThisStream{MD5: "md5"})
@@ -152,7 +152,7 @@ func TestJoinStreamCountsEveryClient(t *testing.T) {
 		PlaylistID: playlistID,
 		Clients:    make(map[int]ThisClient),
 		Streams:    make(map[int]ThisStream),
-	})
+	}, 0)
 	t.Cleanup(func() { BufferInformation.Delete(playlistID) })
 
 	addStream(playlistID, 0, ThisStream{MD5: "md5"})
@@ -177,5 +177,54 @@ func TestJoinStreamCountsEveryClient(t *testing.T) {
 	// addStream registers the first client, then every join adds one.
 	if want := 1 + joins; got != want {
 		t.Fatalf("connection count = %d, want %d: increments were lost to a race", got, want)
+	}
+}
+
+// TestRegisterPlaylistDoesNotClobberAConcurrentFirstStream: two clients opening
+// the first channel of a playlist at the same moment both find nothing
+// registered and both build a playlist. Overwriting would discard a stream that
+// already has a producer goroutine feeding it, leaving that client watching a
+// buffer nothing will ever fill.
+func TestRegisterPlaylistDoesNotClobberAConcurrentFirstStream(t *testing.T) {
+	const playlistID = "M-register-race"
+
+	t.Cleanup(func() { BufferInformation.Delete(playlistID) })
+
+	build := func(url string) Playlist {
+		p := Playlist{
+			PlaylistID: playlistID,
+			Tuner:      4,
+			Clients:    map[int]ThisClient{0: {Connection: 1}},
+			Streams:    map[int]ThisStream{0: {URL: url, MD5: getMD5(url)}},
+		}
+		return p
+	}
+
+	firstID := registerPlaylist(build("http://192.168.1.211:8080/live/admin/movistar/1"), 0)
+	secondID := registerPlaylist(build("http://192.168.1.211:8080/live/admin/movistar/2"), 0)
+
+	if firstID == secondID {
+		t.Fatalf("both streams were given id %d; one overwrote the other", firstID)
+	}
+
+	for _, want := range []struct {
+		id  int
+		url string
+	}{
+		{firstID, "http://192.168.1.211:8080/live/admin/movistar/1"},
+		{secondID, "http://192.168.1.211:8080/live/admin/movistar/2"},
+	} {
+		stream, ok := getStreamSnapshot(playlistID, want.id)
+		if !ok {
+			t.Fatalf("stream %d disappeared", want.id)
+		}
+
+		if stream.URL != want.url {
+			t.Fatalf("stream %d has URL %s, want %s", want.id, stream.URL, want.url)
+		}
+	}
+
+	if got := getStreamCount(playlistID); got != 2 {
+		t.Fatalf("playlist holds %d streams, want 2", got)
 	}
 }

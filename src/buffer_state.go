@@ -156,13 +156,45 @@ func syncOldSegments(playlistID string, streamID int, oldSegments []string) {
 	BufferInformation.Store(playlistID, playlist)
 }
 
-// registerPlaylist stores a freshly built playlist for a stream that is the
-// first on its playlist.
-func registerPlaylist(playlist Playlist) {
+// registerPlaylist publishes a freshly built playlist for what the caller
+// believes is the first stream on it, and returns the stream id actually in
+// effect.
+//
+// Two clients opening the first channel of a playlist at the same moment both
+// find nothing registered and both build a playlist. A plain Store would let
+// the second overwrite the first, discarding a stream that already has a
+// producer goroutine feeding it. So a playlist that appeared in the meantime is
+// merged into instead, under a free id.
+func registerPlaylist(playlist Playlist, streamID int) (effectiveID int) {
 	Lock.Lock()
 	defer Lock.Unlock()
 
-	BufferInformation.Store(playlist.PlaylistID, playlist)
+	p, found := BufferInformation.Load(playlist.PlaylistID)
+	if !found {
+		BufferInformation.Store(playlist.PlaylistID, playlist)
+		return streamID
+	}
+
+	existing, ok := p.(Playlist)
+	if !ok {
+		BufferInformation.Store(playlist.PlaylistID, playlist)
+		return streamID
+	}
+
+	effectiveID = streamID
+	for {
+		if _, taken := existing.Streams[effectiveID]; !taken {
+			break
+		}
+		effectiveID++
+	}
+
+	existing.Streams[effectiveID] = playlist.Streams[streamID]
+	existing.Clients[effectiveID] = playlist.Clients[streamID]
+
+	BufferInformation.Store(playlist.PlaylistID, existing)
+
+	return effectiveID
 }
 
 // joinStream attaches another client to a stream that is already running and

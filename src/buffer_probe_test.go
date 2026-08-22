@@ -124,7 +124,7 @@ func TestSweepReleasesOrphanedBuffers(t *testing.T) {
 		Folder:     playlistFolder,
 		Clients:    make(map[int]ThisClient),
 		Streams:    make(map[int]ThisStream),
-	})
+	}, 0)
 	t.Cleanup(func() { BufferInformation.Delete(playlistID) })
 
 	addStream(playlistID, 0, ThisStream{MD5: liveMD5, Folder: liveFolder})
